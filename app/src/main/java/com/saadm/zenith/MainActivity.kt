@@ -13,15 +13,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.AddChart
 import androidx.compose.material.icons.rounded.PersonAdd
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
@@ -39,6 +40,7 @@ import com.saadm.zenith.ui.settings.SettingsScreen
 import com.saadm.zenith.ui.settings.TransitionStyle
 import com.saadm.zenith.ui.settings.normalizeTransitionDurationMillis
 import com.saadm.zenith.ui.theme.ZenithTheme
+import com.saadm.zenith.ui.transactions.AddTransactionFlow
 import com.saadm.zenith.ui.transactions.TransactionsScreen
 import kotlinx.coroutines.launch
 
@@ -79,6 +81,7 @@ class MainActivity : ComponentActivity() {
                     appPreferences.transitionDurationMillis
                 )
                 val transitionStyle = appPreferences.transitionStyle
+                var showAddTransactionSheet by rememberSaveable { mutableStateOf(false) }
 
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -88,15 +91,7 @@ class MainActivity : ComponentActivity() {
                         NavRoute.Home.route -> PrimaryActionSpec(
                             icon = Icons.Rounded.Add,
                             contentDescription = "Add transaction",
-                            onClick = { println("[Home] add transaction") }
-                        )
-                        NavRoute.Transactions.route -> PrimaryActionSpec(
-                            icon = Icons.Rounded.Add,
-                            contentDescription = "Add transaction",
-                            onClick = { println("[transactions] add transaction") }
-//                            icon = Icons.Rounded.AddChart,
-//                            contentDescription = "Add budget",
-//                            onClick = { println("Transactions action: add budget") }
+                            onClick = { showAddTransactionSheet = true }
                         )
                         NavRoute.People.route -> PrimaryActionSpec(
                             icon = Icons.Rounded.PersonAdd,
@@ -106,7 +101,7 @@ class MainActivity : ComponentActivity() {
                         else -> PrimaryActionSpec(
                             icon = Icons.Rounded.Add,
                             contentDescription = "Add transaction",
-                            onClick = { println("[transactions] add transaction") }
+                            onClick = { showAddTransactionSheet = true }
 //                            icon = Icons.Rounded.Tune,
 //                            contentDescription = "Open quick actions",
 //                            onClick = { println("Settings action: open bottom sheet") }
@@ -224,6 +219,11 @@ class MainActivity : ComponentActivity() {
                                  }
                              )
                           }
+                      }
+                      if (showAddTransactionSheet) {
+                          AddTransactionFlow(
+                              onDismissRequest = { showAddTransactionSheet = false }
+                          )
                       }
                   }
               }

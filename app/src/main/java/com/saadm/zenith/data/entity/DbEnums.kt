@@ -24,5 +24,6 @@ enum class AccountType {
 enum class BudgetPeriod {
     MONTHLY,
     WEEKLY,
+    DAILY,
     CUSTOM
 }

@@ -25,21 +25,46 @@ import com.saadm.zenith.data.entity.TransactionEntity
 		AccountEntity::class,
 		BudgetEntity::class
 	],
-	version = 2,
+	version = 3,
 	exportSchema = false
 )
 @TypeConverters(DbTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
 	companion object {
-		val MIGRATION_1_2 = object : Migration(1, 2) {
-			override fun migrate(db: SupportSQLiteDatabase) {
+		private data class SeedCategory(
+			val name: String,
+			val emoji: String,
+			val colorHex: String,
+			val applicableTo: String,
+			val sortOrder: Int,
+			val isDefault: Boolean
+		)
+
+		private val DEFAULT_CATEGORIES = listOf(
+			SeedCategory("Uncategorized", "TAG", "#9E9E9E", "BOTH", 0, true),
+			SeedCategory("Food", "DINE", "#FF7043", "EXPENSE", 1, false),
+			SeedCategory("Transport", "COMMUTE", "#42A5F5", "EXPENSE", 2, false),
+			SeedCategory("Utilities", "BILL", "#7E57C2", "EXPENSE", 3, false),
+			SeedCategory("Misc", "MORE", "#66BB6A", "BOTH", 4, false)
+		)
+
+		private fun seedDefaultCategories(db: SupportSQLiteDatabase) {
+			DEFAULT_CATEGORIES.forEach { category ->
 				db.execSQL(
 					"""
-					INSERT INTO categories (id, name, emoji, colorHex, applicableTo, sortOrder, isDefault, isDeleted)
-					SELECT 1, 'Uncategorized', 'TAG', '#9E9E9E', 'BOTH', 0, 1, 0
-					WHERE NOT EXISTS (SELECT 1 FROM categories)
+					INSERT INTO categories (name, emoji, colorHex, applicableTo, sortOrder, isDefault, isDeleted)
+					SELECT '${category.name}', '${category.emoji}', '${category.colorHex}', '${category.applicableTo}', ${category.sortOrder}, ${if (category.isDefault) 1 else 0}, 0
+					WHERE NOT EXISTS (
+						SELECT 1 FROM categories WHERE LOWER(name) = LOWER('${category.name}')
+					)
 					""".trimIndent()
 				)
+			}
+		}
+
+		val MIGRATION_1_2 = object : Migration(1, 2) {
+			override fun migrate(db: SupportSQLiteDatabase) {
+				seedDefaultCategories(db)
 
 				db.execSQL(
 					"""
@@ -86,6 +111,19 @@ abstract class AppDatabase : RoomDatabase() {
 				db.execSQL("CREATE INDEX IF NOT EXISTS index_transactions_categoryId ON transactions(categoryId)")
 				db.execSQL("CREATE INDEX IF NOT EXISTS index_transactions_transactedAt ON transactions(transactedAt)")
 				db.execSQL("CREATE INDEX IF NOT EXISTS index_transactions_isDeleted ON transactions(isDeleted)")
+			}
+		}
+
+		val MIGRATION_2_3 = object : Migration(2, 3) {
+			override fun migrate(db: SupportSQLiteDatabase) {
+				seedDefaultCategories(db)
+			}
+		}
+
+		val DB_CREATE_CALLBACK = object : Callback() {
+			override fun onCreate(db: SupportSQLiteDatabase) {
+				super.onCreate(db)
+				seedDefaultCategories(db)
 			}
 		}
 	}
