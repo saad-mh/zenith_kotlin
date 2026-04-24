@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddChart
+import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -87,17 +88,28 @@ class MainActivity : ComponentActivity() {
                         NavRoute.Home.route -> PrimaryActionSpec(
                             icon = Icons.Rounded.Add,
                             contentDescription = "Add transaction",
-                            onClick = { println("Home action: add transaction") }
+                            onClick = { println("[Home] add transaction") }
                         )
                         NavRoute.Transactions.route -> PrimaryActionSpec(
-                            icon = Icons.Rounded.AddChart,
-                            contentDescription = "Add budget",
-                            onClick = { println("Transactions action: add budget") }
+                            icon = Icons.Rounded.Add,
+                            contentDescription = "Add transaction",
+                            onClick = { println("[transactions] add transaction") }
+//                            icon = Icons.Rounded.AddChart,
+//                            contentDescription = "Add budget",
+//                            onClick = { println("Transactions action: add budget") }
+                        )
+                        NavRoute.People.route -> PrimaryActionSpec(
+                            icon = Icons.Rounded.PersonAdd,
+                            contentDescription = "Add payee",
+                            onClick = { println("[people] add payee") }
                         )
                         else -> PrimaryActionSpec(
-                            icon = Icons.Rounded.Tune,
-                            contentDescription = "Open quick actions",
-                            onClick = { println("Settings action: open bottom sheet") }
+                            icon = Icons.Rounded.Add,
+                            contentDescription = "Add transaction",
+                            onClick = { println("[transactions] add transaction") }
+//                            icon = Icons.Rounded.Tune,
+//                            contentDescription = "Open quick actions",
+//                            onClick = { println("Settings action: open bottom sheet") }
                         )
                     }
                 }

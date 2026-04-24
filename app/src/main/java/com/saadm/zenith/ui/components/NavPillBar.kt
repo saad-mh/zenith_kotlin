@@ -43,6 +43,7 @@ sealed class NavRoute(val route: String) {
     object Home : NavRoute("home")
     object Transactions : NavRoute("insights")
     object Settings : NavRoute("settings")
+    object People: NavRoute("people")
 }
 
 data class NavItem(
