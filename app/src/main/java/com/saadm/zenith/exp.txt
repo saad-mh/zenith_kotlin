@@ -1,0 +1,105 @@
+// ─── Enums ────────────────────────────────────────────────────
+
+enum class TxnType { INCOME, EXPENSE, DUE_TO, DUE_FROM }
+
+enum class SettlementStatus { PENDING, PARTIAL, SETTLED }
+// Only meaningful on DUE_TO / DUE_FROM rows.
+// Derived at query time — not stored.
+
+// ─── Entities ─────────────────────────────────────────────────
+
+@Entity(tableName = "transactions",
+    foreignKeys = [
+        ForeignKey(entity = PayeeEntity::class,
+            parentColumns = ["id"], childColumns = ["payeeId"],
+            onDelete = ForeignKey.SET_NULL),
+        ForeignKey(entity = AccountEntity::class,
+            parentColumns = ["id"], childColumns = ["accountId"],
+            onDelete = ForeignKey.SET_NULL),
+        ForeignKey(entity = CategoryEntity::class,
+            parentColumns = ["id"], childColumns = ["categoryId"],
+            onDelete = ForeignKey.SET_NULL),
+    ],
+    indices = [
+        Index("payeeId"), Index("accountId"),
+        Index("transactedAt"), Index("isDeleted")
+    ]
+)
+data class TransactionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+
+    val amount: Long,               // store in paise/cents — never Float or Double
+    val type: TxnType,
+    val transactedAt: Long,         // epoch millis, user-editable
+    val createdAt: Long,            // epoch millis, system-set, immutable
+    val updatedAt: Long,            // epoch millis, updated on every edit
+
+    val categoryId: Long?,          // FK → categories
+    val payeeId: Long?,             // FK → payees (non-null for DUE_TO / DUE_FROM)
+    val accountId: Long?,           // FK → accounts (cash, UPI, card, etc.)
+
+    val note: String?,              // user memo
+    val receiptUri: String?,        // local file URI
+    val currency: String = "INR",   // ISO 4217
+
+    val isDeleted: Boolean = false, // soft delete
+    val deletedAt: Long? = null     // when it was soft-deleted
+)
+
+// ─────────────────────────────────────────────────────────────
+
+@Entity(tableName = "payees")
+data class PayeeEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val avatarUri: String?,         // local photo or null (use initials fallback)
+    val phone: String?,             // optional contact link
+    val upiId: String?,             // for "settle via UPI" shortcut
+    val createdAt: Long,
+    val isDeleted: Boolean = false
+)
+
+// ─────────────────────────────────────────────────────────────
+
+@Entity(tableName = "categories")
+data class CategoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val emoji: String,              // single emoji glyph, e.g. "🍔"
+    val colorHex: String,           // e.g. "#1D9E75"
+    val applicableTo: String,       // "EXPENSE", "INCOME", or "BOTH"
+    val sortOrder: Int,             // user-defined reorder
+    val isDefault: Boolean = false, // seeded defaults, not user-deletable
+    val isDeleted: Boolean = false
+)
+
+// ─────────────────────────────────────────────────────────────
+
+@Entity(tableName = "accounts")
+data class AccountEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,               // "SBI Debit", "GPay UPI", "Wallet"
+    val type: AccountType,          // CASH, UPI, DEBIT_CARD, CREDIT_CARD, BANK
+    val colorHex: String,
+    val emoji: String,
+    val sortOrder: Int,
+    val isDeleted: Boolean = false
+)
+
+enum class AccountType { CASH, UPI, DEBIT_CARD, CREDIT_CARD, BANK_TRANSFER }
+
+// ─────────────────────────────────────────────────────────────
+
+@Entity(tableName = "budgets")
+data class BudgetEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val categoryId: Long?,          // null = overall budget (not per-category)
+    val limitAmount: Long,          // in paise
+    val periodType: BudgetPeriod,   // MONTHLY, WEEKLY, CUSTOM
+    val startDate: Long?,           // epoch millis, for CUSTOM period
+    val endDate: Long?,
+    val currency: String = "INR",
+    val isActive: Boolean = true
+)
+
+enum class BudgetPeriod { MONTHLY, WEEKLY, CUSTOM }
