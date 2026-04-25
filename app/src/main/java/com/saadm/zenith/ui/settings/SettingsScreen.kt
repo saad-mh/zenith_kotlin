@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.settings
 
+import android.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -24,6 +25,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +52,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.CurrencyExchange
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Upload
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.saadm.zenith.data.db.DatabaseProvider
 import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.preferences.AppPreferences
@@ -130,40 +141,17 @@ fun SettingsScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when (currentDestination) {
-                SettingsDestination.Root -> SettingsRootContent(onOpen = ::navigateTo)
-
-                SettingsDestination.General -> GeneralSettingsContent(
+                SettingsDestination.Root -> SettingsRootContent(
                     appearanceMode = appPreferences.appearanceMode,
-                    onAppearanceModeSelected = { mode ->
-                        coroutineScope.launch { preferencesStore.updateAppearanceMode(mode) }
-                    },
+                    onAppearanceClick = { navigateTo(SettingsDestination.Appearance) },
                     notificationsEnabled = appPreferences.notificationsEnabled,
                     onNotificationsEnabledChange = { enabled ->
                         coroutineScope.launch { preferencesStore.updateNotificationsEnabled(enabled) }
-                    }
-                )
-
-                SettingsDestination.Data -> DataSettingsContent(
+                    },
                     defaultCurrency = appPreferences.defaultCurrency,
-                    onDefaultCurrencySelected = { currency ->
-                        coroutineScope.launch { preferencesStore.updateDefaultCurrency(currency) }
-                    },
-                    onCategoriesClick = { navigateTo(SettingsDestination.Categories) }
-                )
-
-                SettingsDestination.Qol -> QolSettingsContent(
-                    transitionDurationMillis = normalizeTransitionDurationMillis(appPreferences.transitionDurationMillis),
-                    onTransitionDurationSelected = { duration ->
-                        coroutineScope.launch {
-                            preferencesStore.updateTransitionDurationMillis(
-                                normalizeTransitionDurationMillis(duration)
-                            )
-                        }
-                    },
-                    transitionStyle = appPreferences.transitionStyle,
-                    onTransitionStyleSelected = { style ->
-                        coroutineScope.launch { preferencesStore.updateTransitionStyle(style) }
-                    },
+                    onCurrencyClick = { navigateTo(SettingsDestination.DefaultCurrency) },
+                    animationSummary = "${normalizeTransitionDurationMillis(appPreferences.transitionDurationMillis)} ms • ${appPreferences.transitionStyle.label}",
+                    onAnimationsClick = { navigateTo(SettingsDestination.Animations) },
                     hapticsEnabled = appPreferences.hapticsEnabled,
                     onHapticsEnabledChange = { enabled ->
                         coroutineScope.launch { preferencesStore.updateHapticsEnabled(enabled) }
@@ -175,6 +163,38 @@ fun SettingsScreen() {
                     labsEnabled = appPreferences.labsEnabled,
                     onLabsEnabledChange = { enabled ->
                         coroutineScope.launch { preferencesStore.updateLabsEnabled(enabled) }
+                    },
+                    onCategoriesClick = { navigateTo(SettingsDestination.Categories) },
+                    onImportClick = { println("[settings] import requested") },
+                    onExportClick = { println("[settings] export requested") }
+                )
+
+                SettingsDestination.Appearance -> AppearanceSettingsContent(
+                    selectedMode = appPreferences.appearanceMode,
+                    onModeSelected = { mode ->
+                        coroutineScope.launch { preferencesStore.updateAppearanceMode(mode) }
+                    }
+                )
+
+                SettingsDestination.DefaultCurrency -> CurrencySettingsContent(
+                    selectedCurrency = appPreferences.defaultCurrency,
+                    onSelected = { currency ->
+                        coroutineScope.launch { preferencesStore.updateDefaultCurrency(currency) }
+                    }
+                )
+
+                SettingsDestination.Animations -> AnimationSettingsContent(
+                    selectedDurationMillis = normalizeTransitionDurationMillis(appPreferences.transitionDurationMillis),
+                    onDurationSelected = { duration ->
+                        coroutineScope.launch {
+                            preferencesStore.updateTransitionDurationMillis(
+                                normalizeTransitionDurationMillis(duration)
+                            )
+                        }
+                    },
+                    selectedStyle = appPreferences.transitionStyle,
+                    onStyleSelected = { style ->
+                        coroutineScope.launch { preferencesStore.updateTransitionStyle(style) }
                     }
                 )
 
@@ -276,156 +296,280 @@ fun SettingsScreen() {
 }
 
 @Composable
-private fun SettingsRootContent(onOpen: (SettingsDestination) -> Unit) {
-    Text(
-        text = "Primary sections",
-        style = MaterialTheme.typography.labelLarge
-    )
-
-    SettingsSectionCard(
-        title = "General",
-        subtitle = "Appearance, Notifications",
-        onClick = { onOpen(SettingsDestination.General) }
-    )
-    SettingsSectionCard(
-        title = "Data",
-        subtitle = "Default Currency, Categories, Import/Export",
-        onClick = { onOpen(SettingsDestination.Data) }
-    )
-    SettingsSectionCard(
-        title = "QOL",
-        subtitle = "Animations, Haptics, Reports, Labs",
-        onClick = { onOpen(SettingsDestination.Qol) }
-    )
-}
-
-@Composable
-private fun SettingsSectionCard(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleSmall)
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun GeneralSettingsContent(
+private fun SettingsRootContent(
     appearanceMode: String,
-    onAppearanceModeSelected: (String) -> Unit,
+    onAppearanceClick: () -> Unit,
     notificationsEnabled: Boolean,
-    onNotificationsEnabledChange: (Boolean) -> Unit
+    onNotificationsEnabledChange: (Boolean) -> Unit,
+    defaultCurrency: String,
+    onCurrencyClick: () -> Unit,
+    animationSummary: String,
+    onAnimationsClick: () -> Unit,
+    hapticsEnabled: Boolean,
+    onHapticsEnabledChange: (Boolean) -> Unit,
+    reportsEnabled: Boolean,
+    onReportsEnabledChange: (Boolean) -> Unit,
+    labsEnabled: Boolean,
+    onLabsEnabledChange: (Boolean) -> Unit,
+    onCategoriesClick: () -> Unit,
+    onImportClick: () -> Unit,
+    onExportClick: () -> Unit
 ) {
-    // Appearance
     Text(
-        text = "Appearance",
+        text = "General",
         style = MaterialTheme.typography.labelLarge
     )
-    Text(
-        text = "Choose how Zenith should look.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    AppearanceModeOption.entries.forEach { option ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onAppearanceModeSelected(option.value) }
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            RadioButton(
-                selected = appearanceMode.equals(option.value, ignoreCase = true),
-                onClick = { onAppearanceModeSelected(option.value) }
-            )
-            Text(text = option.label)
-        }
+
+    SettingsGroup {
+        SettingsNavigationRow(
+            icon = Icons.Rounded.DarkMode,
+            title = "Appearance",
+            value = appearanceModeLabel(appearanceMode),
+            onClick = onAppearanceClick
+        )
+        SettingsToggleRow(
+            icon = Icons.Rounded.Notifications,
+            title = "Notifications",
+            checked = notificationsEnabled,
+            onCheckedChange = onNotificationsEnabledChange
+        )
+        SettingsNavigationRow(
+            icon = Icons.Rounded.GraphicEq,
+            title = "Animations",
+            value = animationSummary,
+            onClick = onAnimationsClick
+        )
+        SettingsToggleRow(
+            icon = Icons.Rounded.GraphicEq,
+            title = "Haptics",
+            checked = hapticsEnabled,
+            onCheckedChange = onHapticsEnabledChange
+        )
     }
 
-    Spacer(modifier = Modifier.padding(8.dp))
-
-    // Notifications
     Text(
-        text = "Notifications",
+        text = "Data",
+        style = MaterialTheme.typography.labelLarge,
+        modifier = Modifier.padding(top = 12.dp)
+    )
+    SettingsGroup {
+        SettingsNavigationRow(
+            icon = Icons.Rounded.Category,
+            title = "Categories",
+            value = null,
+            onClick = onCategoriesClick
+        )
+        SettingsNavigationRow(
+            icon = Icons.Rounded.CurrencyExchange,
+            title = "Currency",
+            value = defaultCurrency,
+            onClick = onCurrencyClick
+        )
+        SettingsActionRow(
+            icon = Icons.Rounded.Download,
+            title = "Import Data",
+            onClick = onImportClick
+        )
+        SettingsActionRow(
+            icon = Icons.Rounded.Upload,
+            title = "Export Data",
+            onClick = onExportClick
+        )
+    }
+
+    Text(
+        text = "QOL",
         style = MaterialTheme.typography.labelLarge
     )
+
+    SettingsGroup {
+        SettingsToggleRow(
+            icon = Icons.Rounded.AutoAwesome,
+            title = "Reports",
+            checked = reportsEnabled,
+            onCheckedChange = onReportsEnabledChange
+        )
+        SettingsToggleRow(
+            icon = Icons.Rounded.AutoAwesome,
+            title = "Labs",
+            checked = labsEnabled,
+            onCheckedChange = onLabsEnabledChange
+        )
+    }
+
     Text(
-        text = "Enable reminders and smart nudges.",
-        style = MaterialTheme.typography.bodyMedium
+        text = "More",
+        style = MaterialTheme.typography.labelLarge
     )
+
+    SettingsGroup {
+        SettingsNavigationRow(
+            icon = Icons.Rounded.AutoAwesome,
+            title = "About",
+            onClick = { },
+            value = null
+        )
+    }
+
+
+}
+
+@Composable
+private fun SettingsGroup(content: @Composable () -> Unit) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onNotificationsEnabledChange(!notificationsEnabled) }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SettingsNavigationRow(
+    icon: ImageVector,
+    title: String,
+    value: String?,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingsRowIcon(icon = icon)
+        Spacer(modifier = Modifier.size(12.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        if (value != null) {
             Text(
-                text = if (notificationsEnabled) "Enabled" else "Disabled",
-                style = MaterialTheme.typography.bodyLarge
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 8.dp)
             )
-            Switch(
-                checked = notificationsEnabled,
-                onCheckedChange = onNotificationsEnabledChange
+        }
+        Icon(
+            imageVector = Icons.Rounded.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+}
+
+@Composable
+private fun SettingsToggleRow(
+    icon: ImageVector,
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingsRowIcon(icon = icon)
+        Spacer(modifier = Modifier.size(12.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+}
+
+@Composable
+private fun SettingsActionRow(
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit
+) {
+    SettingsNavigationRow(
+        icon = icon,
+        title = title,
+        value = null,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun SettingsRowIcon(icon: ImageVector) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.size(28.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(16.dp)
             )
         }
     }
 }
 
 @Composable
-private fun DataSettingsContent(
-    defaultCurrency: String,
-    onDefaultCurrencySelected: (String) -> Unit,
-    onCategoriesClick: () -> Unit
+private fun AppearanceSettingsContent(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit
 ) {
-    val normalizedSelection = defaultCurrency.uppercase()
+    Text(
+        text = "Choose how Zenith should look.",
+        style = MaterialTheme.typography.bodyMedium
+    )
+
+    AppearanceModeOption.entries.forEach { option ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onModeSelected(option.value) }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = selectedMode.equals(option.value, ignoreCase = true),
+                onClick = { onModeSelected(option.value) }
+            )
+            Text(text = option.label)
+        }
+    }
+}
+
+@Composable
+private fun CurrencySettingsContent(
+    selectedCurrency: String,
+    onSelected: (String) -> Unit
+) {
+    val normalizedSelection = selectedCurrency.uppercase()
     var customCurrency by remember(normalizedSelection) {
         mutableStateOf(
             if (normalizedSelection in DEFAULT_CURRENCY_OPTIONS) "" else normalizedSelection
         )
     }
 
-    // Default Currency
-    Text(
-        text = "Default Currency",
-        style = MaterialTheme.typography.labelLarge
-    )
     Text(
         text = "Select your default currency for new records.",
         style = MaterialTheme.typography.bodyMedium
     )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -435,229 +579,70 @@ private fun DataSettingsContent(
         DEFAULT_CURRENCY_OPTIONS.forEach { currency ->
             FilterChip(
                 selected = normalizedSelection == currency,
-                onClick = { onDefaultCurrencySelected(currency) },
+                onClick = { onSelected(currency) },
                 label = { Text(currency) }
             )
         }
     }
+
     OutlinedTextField(
         value = customCurrency,
         onValueChange = {
             customCurrency = it.uppercase().take(4)
             if (customCurrency.length in 3..4) {
-                onDefaultCurrencySelected(customCurrency)
+                onSelected(customCurrency)
             }
         },
         label = { Text("Custom currency") },
         singleLine = true
     )
-
-    Spacer(modifier = Modifier.padding(8.dp))
-
-    // Categories
-    Text(
-        text = "Categories",
-        style = MaterialTheme.typography.labelLarge
-    )
-    Text(
-        text = "Add, edit, and delete categories.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    Button(
-        onClick = onCategoriesClick,
-        modifier = Modifier.padding(top = 4.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.ChevronRight,
-            contentDescription = null,
-            modifier = Modifier.padding(end = 6.dp)
-        )
-        Text("Manage categories")
-    }
-
-    Spacer(modifier = Modifier.padding(8.dp))
-
-    // Import / Export
-    Text(
-        text = "Import / Export",
-        style = MaterialTheme.typography.labelLarge
-    )
-    Text(
-        text = "Move data in and out of Zenith.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = { println("[settings] export requested") }) {
-            Text("Export")
-        }
-        Button(onClick = { println("[settings] import requested") }) {
-            Text("Import")
-        }
-    }
 }
 
 @Composable
-private fun QolSettingsContent(
-    transitionDurationMillis: Int,
-    onTransitionDurationSelected: (Int) -> Unit,
-    transitionStyle: TransitionStyle,
-    onTransitionStyleSelected: (TransitionStyle) -> Unit,
-    hapticsEnabled: Boolean,
-    onHapticsEnabledChange: (Boolean) -> Unit,
-    reportsEnabled: Boolean,
-    onReportsEnabledChange: (Boolean) -> Unit,
-    labsEnabled: Boolean,
-    onLabsEnabledChange: (Boolean) -> Unit
+private fun AnimationSettingsContent(
+    selectedDurationMillis: Int,
+    onDurationSelected: (Int) -> Unit,
+    selectedStyle: TransitionStyle,
+    onStyleSelected: (TransitionStyle) -> Unit
 ) {
-    // Animations
-    Text(
-        text = "Animations",
-        style = MaterialTheme.typography.labelLarge
-    )
     Text(
         text = "Duration",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        style = MaterialTheme.typography.labelLarge
     )
     TransitionDurationOptions.forEach { duration ->
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onTransitionDurationSelected(duration) }
+                .clickable { onDurationSelected(duration) }
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
-                selected = transitionDurationMillis == duration,
-                onClick = { onTransitionDurationSelected(duration) }
+                selected = selectedDurationMillis == duration,
+                onClick = { onDurationSelected(duration) }
             )
             Text(text = "$duration ms")
         }
     }
+
     Text(
         text = "Style",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.labelLarge,
         modifier = Modifier.padding(top = 8.dp)
     )
     TransitionStyle.entries.forEach { style ->
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onTransitionStyleSelected(style) }
+                .clickable { onStyleSelected(style) }
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
-                selected = transitionStyle == style,
-                onClick = { onTransitionStyleSelected(style) }
+                selected = selectedStyle == style,
+                onClick = { onStyleSelected(style) }
             )
             Text(text = style.label)
-        }
-    }
-
-    Spacer(modifier = Modifier.padding(8.dp))
-
-    // Haptics
-    Text(
-        text = "Haptics",
-        style = MaterialTheme.typography.labelLarge
-    )
-    Text(
-        text = "Use subtle vibration feedback for key actions.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onHapticsEnabledChange(!hapticsEnabled) }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = if (hapticsEnabled) "Enabled" else "Disabled",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Switch(
-                checked = hapticsEnabled,
-                onCheckedChange = onHapticsEnabledChange
-            )
-        }
-    }
-
-    Spacer(modifier = Modifier.padding(8.dp))
-
-    // Reports
-    Text(
-        text = "Reports",
-        style = MaterialTheme.typography.labelLarge
-    )
-    Text(
-        text = "Enable detailed trend cards and summaries.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onReportsEnabledChange(!reportsEnabled) }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = if (reportsEnabled) "Enabled" else "Disabled",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Switch(
-                checked = reportsEnabled,
-                onCheckedChange = onReportsEnabledChange
-            )
-        }
-    }
-
-    Spacer(modifier = Modifier.padding(8.dp))
-
-    // Labs
-    Text(
-        text = "Labs",
-        style = MaterialTheme.typography.labelLarge
-    )
-    Text(
-        text = "Opt into experimental features.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onLabsEnabledChange(!labsEnabled) }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = if (labsEnabled) "Enabled" else "Disabled",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Switch(
-                checked = labsEnabled,
-                onCheckedChange = onLabsEnabledChange
-            )
         }
     }
 }
@@ -855,9 +840,9 @@ private fun CategoryEditorDialog(
 
 private enum class SettingsDestination(val route: String, val title: String) {
     Root("root", "Settings"),
-    General("general", "General"),
-    Data("data", "Data"),
-    Qol("qol", "QOL"),
+    Appearance("appearance", "Appearance"),
+    DefaultCurrency("default_currency", "Currency"),
+    Animations("animations", "Animations"),
     Categories("categories", "Categories");
 
     companion object {
@@ -895,7 +880,7 @@ private fun buildCategoryMeta(category: CategoryEntity): String {
     return if (category.isDefault) "$target • Default" else target
 }
 
-private val DEFAULT_CURRENCY_OPTIONS = listOf("USD", "EUR", "GBP", "PKR", "INR")
+private val DEFAULT_CURRENCY_OPTIONS = listOf("USD", "EUR", "GBP", "INR")
 
 private val CATEGORY_EMOJI_OPTIONS = listOf(
     "🏷️", "🍔", "🚌", "💡", "🛍️", "🏠", "🎬", "💊", "📚", "💰"
