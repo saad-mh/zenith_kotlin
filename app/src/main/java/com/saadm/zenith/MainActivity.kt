@@ -20,7 +20,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,7 +41,6 @@ import com.saadm.zenith.ui.settings.normalizeTransitionDurationMillis
 import com.saadm.zenith.ui.theme.ZenithTheme
 import com.saadm.zenith.ui.transactions.AddTransactionFlow
 import com.saadm.zenith.ui.transactions.TransactionsScreen
-import kotlinx.coroutines.launch
 
 private fun bottomNavIndex(route: String?): Int? {
     val index = navItems.indexOfFirst { it.route.route == route }
@@ -75,8 +73,6 @@ class MainActivity : ComponentActivity() {
                 val appPreferences by appPreferencesStore.preferencesFlow.collectAsState(
                     initial = AppPreferences()
                 )
-                val coroutineScope = rememberCoroutineScope()
-
                 val transitionDurationMillis = normalizeTransitionDurationMillis(
                     appPreferences.transitionDurationMillis
                 )
@@ -202,22 +198,7 @@ class MainActivity : ComponentActivity() {
                          composable(NavRoute.Home.route) { HomeScreen() }
                          composable(NavRoute.Transactions.route) { TransactionsScreen() }
                          composable(NavRoute.Settings.route) {
-                             SettingsScreen(
-                                 selectedDurationMillis = transitionDurationMillis,
-                                 onDurationSelected = { duration ->
-                                     coroutineScope.launch {
-                                         appPreferencesStore.updateTransitionDurationMillis(
-                                             normalizeTransitionDurationMillis(duration)
-                                         )
-                                     }
-                                 },
-                                 selectedStyle = transitionStyle,
-                                 onStyleSelected = { style ->
-                                     coroutineScope.launch {
-                                         appPreferencesStore.updateTransitionStyle(style)
-                                     }
-                                 }
-                             )
+                             SettingsScreen()
                           }
                       }
                       if (showAddTransactionSheet) {
