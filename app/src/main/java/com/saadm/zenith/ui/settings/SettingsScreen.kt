@@ -1,12 +1,12 @@
 package com.saadm.zenith.ui.settings
 
-import android.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.CurrencyExchange
@@ -67,6 +68,7 @@ import com.saadm.zenith.data.preferences.AppPreferences
 import com.saadm.zenith.data.preferences.AppPreferencesStore
 import kotlinx.coroutines.launch
 import androidx.core.graphics.toColorInt
+import androidx.emoji2.emojipicker.EmojiPickerView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -654,6 +656,16 @@ private fun CategoryManagementContent(
     onEditClick: (CategoryEntity) -> Unit,
     onDeleteClick: (CategoryEntity) -> Unit
 ) {
+    val sortedCategories = remember(categories) {
+        categories.sortedWith(compareBy<CategoryEntity> { it.sortOrder }.thenBy { it.id })
+    }
+    val expenseCategories = remember(sortedCategories) {
+        sortedCategories.filter { it.appliesToExpense() }
+    }
+    val incomeCategories = remember(sortedCategories) {
+        sortedCategories.filter { it.appliesToIncome() }
+    }
+
     Text(
         text = "Add, edit, or remove categories.",
         style = MaterialTheme.typography.bodyMedium
@@ -671,64 +683,124 @@ private fun CategoryManagementContent(
         Text("Add category")
     }
 
-    categories
-        .sortedWith(compareBy<CategoryEntity> { it.sortOrder }.thenBy { it.id })
-        .forEach { category ->
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(36.dp),
-                            shape = MaterialTheme.shapes.small,
-                            color = parseColorHex(category.colorHex).copy(alpha = 0.18f)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(text = normalizeCategoryEmoji(category.emoji))
-                            }
-                        }
-                        Spacer(modifier = Modifier.size(10.dp))
-                        Column {
-                            Text(
-                                text = category.name,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = buildCategoryMeta(category),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { onEditClick(category) }) {
-                            Icon(
-                                imageVector = Icons.Rounded.Edit,
-                                contentDescription = "Edit ${category.name}"
-                            )
-                        }
-                        IconButton(onClick = { onDeleteClick(category) }) {
-                            Icon(
-                                imageVector = Icons.Rounded.Delete,
-                                contentDescription = "Delete ${category.name}"
-                            )
-                        }
+    CategorySection(
+        title = "Expense categories",
+        categories = expenseCategories,
+        onEditClick = onEditClick,
+        onDeleteClick = onDeleteClick
+    )
+
+    CategorySection(
+        title = "Income categories",
+        categories = incomeCategories,
+        onEditClick = onEditClick,
+        onDeleteClick = onDeleteClick
+    )
+}
+
+@Composable
+private fun CategorySection(
+    title: String,
+    categories: List<CategoryEntity>,
+    onEditClick: (CategoryEntity) -> Unit,
+    onDeleteClick: (CategoryEntity) -> Unit
+) {
+    Text(
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 6.dp)
+    )
+
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (categories.isEmpty()) {
+            Text(
+                text = "No categories yet",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+            )
+        } else {
+            Column {
+                categories.forEachIndexed { index, category ->
+                    CategoryRow(
+                        category = category,
+                        onEditClick = onEditClick,
+                        onDeleteClick = onDeleteClick
+                    )
+                    if (index != categories.lastIndex) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CategoryRow(
+    category: CategoryEntity,
+    onEditClick: (CategoryEntity) -> Unit,
+    onDeleteClick: (CategoryEntity) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(36.dp),
+                shape = MaterialTheme.shapes.small,
+                color = parseColorHex(category.colorHex).copy(alpha = 0.18f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = normalizeCategoryEmoji(category.emoji))
+                }
+            }
+            Spacer(modifier = Modifier.size(10.dp))
+            Column {
+                Text(
+                    text = category.name,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = buildCategoryMeta(category),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(22.dp),
+                shape = MaterialTheme.shapes.small,
+                color = parseColorHex(category.colorHex)
+            ) {}
+            IconButton(onClick = { onEditClick(category) }) {
+                Icon(
+                    imageVector = Icons.Rounded.Edit,
+                    contentDescription = "Edit ${category.name}"
+                )
+            }
+            IconButton(onClick = { onDeleteClick(category) }) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = "Delete ${category.name}"
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -747,6 +819,7 @@ private fun CategoryEditorDialog(
     var colorHex by remember(initialColorHex) { mutableStateOf(initialColorHex) }
     var applicableTo by remember(initialApplicableTo) { mutableStateOf(initialApplicableTo) }
     var isDefault by remember(initialIsDefault) { mutableStateOf(initialIsDefault) }
+    var showEmojiPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -760,24 +833,22 @@ private fun CategoryEditorDialog(
                     singleLine = true
                 )
 
-                Text(
-                    text = "Emoji",
-                    style = MaterialTheme.typography.labelLarge
-                )
-                Row(
+                OutlinedTextField(
+                    value = normalizeCategoryEmoji(emoji),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Emoji") },
+                    singleLine = true,
+                    supportingText = { Text("Tap Pick to open the emoji picker") },
+                    trailingIcon = {
+                        TextButton(onClick = { showEmojiPicker = true }) {
+                            Text("Pick")
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    CATEGORY_EMOJI_OPTIONS.forEach { option ->
-                        FilterChip(
-                            selected = normalizeCategoryEmoji(emoji) == option,
-                            onClick = { emoji = option },
-                            label = { Text(option) }
-                        )
-                    }
-                }
+                        .clickable { showEmojiPicker = true }
+                )
 
                 OutlinedTextField(
                     value = colorHex,
@@ -836,6 +907,46 @@ private fun CategoryEditorDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
+
+    if (showEmojiPicker) {
+        EmojiPickerDialog(
+            onDismiss = { showEmojiPicker = false },
+            onEmojiSelected = { pickedEmoji ->
+                emoji = pickedEmoji
+                showEmojiPicker = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun EmojiPickerDialog(
+    onDismiss: () -> Unit,
+    onEmojiSelected: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pick emoji") },
+        text = {
+            AndroidView(
+                factory = { context ->
+                    EmojiPickerView(context).apply {
+                        setOnEmojiPickedListener { item ->
+                            onEmojiSelected(item.emoji)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 private enum class SettingsDestination(val route: String, val title: String) {
@@ -882,10 +993,6 @@ private fun buildCategoryMeta(category: CategoryEntity): String {
 
 private val DEFAULT_CURRENCY_OPTIONS = listOf("USD", "EUR", "GBP", "INR")
 
-private val CATEGORY_EMOJI_OPTIONS = listOf(
-    "🏷️", "🍔", "🚌", "💡", "🛍️", "🏠", "🎬", "💊", "📚", "💰"
-)
-
 private fun normalizeCategoryEmoji(raw: String): String {
     return when (raw.trim().uppercase()) {
         "TAG" -> "🏷️"
@@ -895,6 +1002,14 @@ private fun normalizeCategoryEmoji(raw: String): String {
         "MORE" -> "🛍️"
         else -> raw.ifBlank { "🏷️" }
     }
+}
+
+private fun CategoryEntity.appliesToExpense(): Boolean {
+    return applicableTo.equals("EXPENSE", ignoreCase = true) || applicableTo.equals("BOTH", ignoreCase = true)
+}
+
+private fun CategoryEntity.appliesToIncome(): Boolean {
+    return applicableTo.equals("INCOME", ignoreCase = true) || applicableTo.equals("BOTH", ignoreCase = true)
 }
 
 private fun normalizeColorHex(raw: String): String {

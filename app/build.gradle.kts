@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     add("ksp", "androidx.room:room-compiler:2.8.4")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.emoji2:emoji2-emojipicker:1.5.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
