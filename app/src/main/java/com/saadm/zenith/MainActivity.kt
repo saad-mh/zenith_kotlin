@@ -215,9 +215,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun PreviewMain() {
-    MainActivity().setContent {
-        ZenithTheme {
-            HomeScreen()
-        }
-    }
+    MainActivity()
 }
