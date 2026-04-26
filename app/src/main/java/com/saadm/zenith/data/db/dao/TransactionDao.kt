@@ -18,4 +18,13 @@ interface TransactionDao {
 
 	@Query("SELECT * FROM transactions WHERE isDeleted = 0 ORDER BY transactedAt DESC, id DESC")
 	fun observeAllActive(): Flow<List<TransactionEntity>>
+
+	@Query("""
+        SELECT * FROM transactions
+        WHERE isDeleted = 0
+        ORDER BY transactedAt DESC
+        LIMIT 5
+    """)
+	fun getRecentTransactions(): Flow<List<TransactionEntity>>
+
 }

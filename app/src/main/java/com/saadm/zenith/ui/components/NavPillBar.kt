@@ -41,9 +41,10 @@ import androidx.navigation.compose.rememberNavController
 
 sealed class NavRoute(val route: String) {
     object Home : NavRoute("home")
-    object Transactions : NavRoute("insights")
+    object Transactions : NavRoute("transactions")
     object Settings : NavRoute("settings")
     object People: NavRoute("people")
+    object Insights: NavRoute("insights")
 }
 
 data class NavItem(
@@ -68,7 +69,7 @@ val navItems = listOf(
         iconSelected = Icons.Rounded.Home
     ),
     NavItem(
-        NavRoute.Transactions, "Insights",
+        NavRoute.Insights, "Insights",
         Icons.Rounded.Analytics,
         iconUnselected = Icons.Outlined.PieChart,
         iconSelected = Icons.Rounded.PieChart
