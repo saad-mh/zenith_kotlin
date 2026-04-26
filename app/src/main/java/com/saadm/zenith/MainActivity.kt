@@ -197,6 +197,7 @@ class MainActivity : ComponentActivity() {
                      ) {
                          composable(NavRoute.Home.route) { HomeScreen() }
                          composable(NavRoute.Transactions.route) { TransactionsScreen() }
+                         composable(NavRoute.People.route) { /* TODO: PeopleScreen() */ }
                          composable(NavRoute.Settings.route) {
                              SettingsScreen()
                           }
@@ -212,8 +213,10 @@ class MainActivity : ComponentActivity() {
       }
  }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun PreviewMain() {
-    MainActivity()
+fun MainActivityPreview() {
+    ZenithTheme {
+            HomeScreen()
+    }
 }
