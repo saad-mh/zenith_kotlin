@@ -1,19 +1,26 @@
 package com.saadm.zenith.ui.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -21,6 +28,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,7 +58,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -64,11 +75,13 @@ import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.saadm.zenith.data.db.DatabaseProvider
 import com.saadm.zenith.data.entity.CategoryEntity
+import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.data.preferences.AppPreferences
 import com.saadm.zenith.data.preferences.AppPreferencesStore
 import kotlinx.coroutines.launch
 import androidx.core.graphics.toColorInt
 import androidx.emoji2.emojipicker.EmojiPickerView
+import androidx.room.withTransaction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,6 +228,26 @@ fun SettingsScreen() {
                                     }
                             }
                         }
+                    },
+                    onReorder = { ordered ->
+                        coroutineScope.launch {
+                            if (ordered.isEmpty()) {
+                                return@launch
+                            }
+                            appDatabase.withTransaction {
+                                ordered.forEachIndexed { index, category ->
+                                    val shouldBeDefault = index == 0
+                                    if (category.sortOrder != index || category.isDefault != shouldBeDefault) {
+                                        categoryDao.update(
+                                            category.copy(
+                                                sortOrder = index,
+                                                isDefault = shouldBeDefault
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 )
             }
@@ -227,13 +260,13 @@ fun SettingsScreen() {
             initialName = "",
             initialEmoji = "🏷️",
             initialColorHex = "#9E9E9E",
-            initialApplicableTo = "EXPENSE",
+            initialTxnType = TxnType.EXPENSE,
             initialIsDefault = false,
             onDismiss = { showCreateDialog = false },
-            onSave = { name, emoji, colorHex, applicableTo, isDefault ->
+            onSave = { name, emoji, colorHex, txnType, isDefault ->
                 coroutineScope.launch {
                     if (isDefault) {
-                        categories.filter { it.isDefault }.forEach { existingDefault ->
+                        categories.filter { it.txnType == txnType && it.isDefault }.forEach { existingDefault ->
                             categoryDao.update(existingDefault.copy(isDefault = false))
                         }
                     }
@@ -244,7 +277,7 @@ fun SettingsScreen() {
                             name = name.trim(),
                             emoji = normalizeCategoryEmoji(emoji),
                             colorHex = normalizeColorHex(colorHex),
-                            applicableTo = applicableTo,
+                            txnType = txnType,
                             sortOrder = nextSortOrder,
                             isDefault = isDefault,
                             isDeleted = false
@@ -262,13 +295,13 @@ fun SettingsScreen() {
             initialName = category.name,
             initialEmoji = normalizeCategoryEmoji(category.emoji),
             initialColorHex = normalizeColorHex(category.colorHex),
-            initialApplicableTo = category.applicableTo,
+            initialTxnType = category.txnType,
             initialIsDefault = category.isDefault,
             onDismiss = { editingCategory = null },
-            onSave = { name, emoji, colorHex, applicableTo, isDefault ->
+            onSave = { name, emoji, colorHex, txnType, isDefault ->
                 coroutineScope.launch {
                     if (isDefault && !category.isDefault) {
-                        categories.filter { it.isDefault && it.id != category.id }
+                        categories.filter { it.txnType == txnType && it.isDefault && it.id != category.id }
                             .forEach { existingDefault ->
                                 categoryDao.update(existingDefault.copy(isDefault = false))
                             }
@@ -279,13 +312,13 @@ fun SettingsScreen() {
                             name = name.trim(),
                             emoji = normalizeCategoryEmoji(emoji),
                             colorHex = normalizeColorHex(colorHex),
-                            applicableTo = applicableTo,
+                            txnType = txnType,
                             isDefault = isDefault
                         )
                     )
 
                     if (category.isDefault && !isDefault) {
-                        categories.firstOrNull { it.id != category.id }?.let { fallback ->
+                        categories.firstOrNull { it.txnType == category.txnType && it.id != category.id }?.let { fallback ->
                             categoryDao.update(fallback.copy(isDefault = true))
                         }
                     }
@@ -654,16 +687,17 @@ private fun CategoryManagementContent(
     categories: List<CategoryEntity>,
     onCreateClick: () -> Unit,
     onEditClick: (CategoryEntity) -> Unit,
-    onDeleteClick: (CategoryEntity) -> Unit
+    onDeleteClick: (CategoryEntity) -> Unit,
+    onReorder: (List<CategoryEntity>) -> Unit
 ) {
     val sortedCategories = remember(categories) {
         categories.sortedWith(compareBy<CategoryEntity> { it.sortOrder }.thenBy { it.id })
     }
     val expenseCategories = remember(sortedCategories) {
-        sortedCategories.filter { it.appliesToExpense() }
+        sortedCategories.filter { it.txnType == TxnType.EXPENSE }
     }
     val incomeCategories = remember(sortedCategories) {
-        sortedCategories.filter { it.appliesToIncome() }
+        sortedCategories.filter { it.txnType == TxnType.INCOME }
     }
 
     Text(
@@ -687,14 +721,16 @@ private fun CategoryManagementContent(
         title = "Expense categories",
         categories = expenseCategories,
         onEditClick = onEditClick,
-        onDeleteClick = onDeleteClick
+        onDeleteClick = onDeleteClick,
+        onReorder = onReorder
     )
 
     CategorySection(
         title = "Income categories",
         categories = incomeCategories,
         onEditClick = onEditClick,
-        onDeleteClick = onDeleteClick
+        onDeleteClick = onDeleteClick,
+        onReorder = onReorder
     )
 }
 
@@ -703,8 +739,18 @@ private fun CategorySection(
     title: String,
     categories: List<CategoryEntity>,
     onEditClick: (CategoryEntity) -> Unit,
-    onDeleteClick: (CategoryEntity) -> Unit
+    onDeleteClick: (CategoryEntity) -> Unit,
+    onReorder: (List<CategoryEntity>) -> Unit
 ) {
+    var ordered by remember(categories) { mutableStateOf(categories) }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragAccumulated by remember { mutableFloatStateOf(0f) }
+    val swapThresholdPx = with(LocalDensity.current) { 28.dp.toPx() }
+
+    LaunchedEffect(categories) {
+        ordered = categories
+    }
+
     Text(
         text = title.uppercase(),
         style = MaterialTheme.typography.labelMedium,
@@ -717,7 +763,7 @@ private fun CategorySection(
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (categories.isEmpty()) {
+        if (ordered.isEmpty()) {
             Text(
                 text = "No categories yet",
                 style = MaterialTheme.typography.bodyMedium,
@@ -725,15 +771,57 @@ private fun CategorySection(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
             )
         } else {
-            Column {
-                categories.forEachIndexed { index, category ->
-                    CategoryRow(
-                        category = category,
-                        onEditClick = onEditClick,
-                        onDeleteClick = onDeleteClick
-                    )
-                    if (index != categories.lastIndex) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ordered.forEachIndexed { index, category ->
+                    val handleModifier = Modifier
+                        .size(28.dp)
+                        .pointerInput(ordered, draggingIndex) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    draggingIndex = ordered.indexOfFirst { it.id == category.id }
+                                    dragAccumulated = 0f
+                                },
+                                onDragCancel = {
+                                    draggingIndex = null
+                                    dragAccumulated = 0f
+                                },
+                                onDragEnd = {
+                                    draggingIndex = null
+                                    dragAccumulated = 0f
+                                    onReorder(ordered)
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    val currentIndex = draggingIndex ?: return@detectDragGestures
+                                    dragAccumulated += dragAmount.y
+                                    if (dragAccumulated > swapThresholdPx && currentIndex < ordered.lastIndex) {
+                                        ordered = ordered.toMutableList().apply {
+                                            add(currentIndex + 1, removeAt(currentIndex))
+                                        }
+                                        draggingIndex = currentIndex + 1
+                                        dragAccumulated = 0f
+                                    } else if (dragAccumulated < -swapThresholdPx && currentIndex > 0) {
+                                        ordered = ordered.toMutableList().apply {
+                                            add(currentIndex - 1, removeAt(currentIndex))
+                                        }
+                                        draggingIndex = currentIndex - 1
+                                        dragAccumulated = 0f
+                                    }
+                                }
+                            )
+                        }
+
+                    Column {
+                        CategoryRow(
+                            category = category,
+                            isTopDefault = index == 0,
+                            dragHandleModifier = handleModifier,
+                            onEditClick = onEditClick,
+                            onDeleteClick = onDeleteClick
+                        )
+                        if (index != ordered.lastIndex) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                        }
                     }
                 }
             }
@@ -742,14 +830,39 @@ private fun CategorySection(
 }
 
 @Composable
+private fun AnotherCategorySection(
+    title: String,
+    categories: List<CategoryEntity>,
+    onEditClick: (CategoryEntity) -> Unit,
+    onDeleteClick: (CategoryEntity) -> Unit,
+    onReorder: (List<CategoryEntity>) -> Unit
+) {
+    var ordered by remember(categories) { mutableStateOf(categories) }
+}
+
+@Composable
+@Suppress("ModifierParameter")
 private fun CategoryRow(
     category: CategoryEntity,
+    isTopDefault: Boolean,
+    dragHandleModifier: Modifier,
     onEditClick: (CategoryEntity) -> Unit,
     onDeleteClick: (CategoryEntity) -> Unit
 ) {
+    val highlightColor by animateColorAsState(
+        targetValue = if (isTopDefault) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        } else {
+            Color.Transparent
+        },
+        label = "defaultHighlight"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(highlightColor, shape = MaterialTheme.shapes.small)
+            .clickable { onEditClick(category) }
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -769,10 +882,30 @@ private fun CategoryRow(
             }
             Spacer(modifier = Modifier.size(10.dp))
             Column {
-                Text(
-                    text = category.name,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = category.name,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    AnimatedVisibility(
+                        visible = isTopDefault,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = "D",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = buildCategoryMeta(category),
                     style = MaterialTheme.typography.bodySmall,
@@ -799,6 +932,13 @@ private fun CategoryRow(
                     contentDescription = "Delete ${category.name}"
                 )
             }
+            Box(modifier = dragHandleModifier, contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.DragHandle,
+                    contentDescription = "Reorder ${category.name}",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -809,15 +949,15 @@ private fun CategoryEditorDialog(
     initialName: String,
     initialEmoji: String,
     initialColorHex: String,
-    initialApplicableTo: String,
+    initialTxnType: TxnType,
     initialIsDefault: Boolean,
     onDismiss: () -> Unit,
-    onSave: (name: String, emoji: String, colorHex: String, applicableTo: String, isDefault: Boolean) -> Unit
+    onSave: (name: String, emoji: String, colorHex: String, txnType: TxnType, isDefault: Boolean) -> Unit
 ) {
     var name by remember(initialName) { mutableStateOf(initialName) }
     var emoji by remember(initialEmoji) { mutableStateOf(initialEmoji) }
     var colorHex by remember(initialColorHex) { mutableStateOf(initialColorHex) }
-    var applicableTo by remember(initialApplicableTo) { mutableStateOf(initialApplicableTo) }
+    var txnType by remember(initialTxnType) { mutableStateOf(initialTxnType) }
     var isDefault by remember(initialIsDefault) { mutableStateOf(initialIsDefault) }
     var showEmojiPicker by remember { mutableStateOf(false) }
 
@@ -865,17 +1005,20 @@ private fun CategoryEditorDialog(
                 )
 
                 Text(
-                    text = "Applies to",
+                    text = "Type",
                     style = MaterialTheme.typography.labelLarge
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CategoryApplicableOption.entries.forEach { option ->
-                        FilterChip(
-                            selected = applicableTo == option.value,
-                            onClick = { applicableTo = option.value },
-                            label = { Text(option.label) }
-                        )
-                    }
+                    FilterChip(
+                        selected = txnType == TxnType.EXPENSE,
+                        onClick = { txnType = TxnType.EXPENSE },
+                        label = { Text("Expense") }
+                    )
+                    FilterChip(
+                        selected = txnType == TxnType.INCOME,
+                        onClick = { txnType = TxnType.INCOME },
+                        label = { Text("Income") }
+                    )
                 }
 
                 Row(
@@ -896,7 +1039,7 @@ private fun CategoryEditorDialog(
             TextButton(
                 onClick = {
                     if (name.isNotBlank()) {
-                        onSave(name, emoji, colorHex, applicableTo, isDefault)
+                        onSave(name, emoji, colorHex, txnType, isDefault)
                     }
                 }
             ) {
@@ -969,12 +1112,6 @@ private enum class AppearanceModeOption(val value: String, val label: String) {
     Dark("DARK", "Dark")
 }
 
-private enum class CategoryApplicableOption(val value: String, val label: String) {
-    Expense("EXPENSE", "Expense"),
-    Income("INCOME", "Income"),
-    Both("BOTH", "Both")
-}
-
 private fun appearanceModeLabel(rawMode: String): String {
     return AppearanceModeOption.entries
         .firstOrNull { it.value.equals(rawMode, ignoreCase = true) }
@@ -983,12 +1120,12 @@ private fun appearanceModeLabel(rawMode: String): String {
 }
 
 private fun buildCategoryMeta(category: CategoryEntity): String {
-    val target = when (category.applicableTo.uppercase()) {
-        "EXPENSE" -> "Expense"
-        "INCOME" -> "Income"
-        else -> "Both"
+    val target = when (category.txnType) {
+        TxnType.EXPENSE -> "Expense"
+        TxnType.INCOME -> "Income"
+        else -> "Other"
     }
-    return if (category.isDefault) "$target • Default" else target
+    return target
 }
 
 private val DEFAULT_CURRENCY_OPTIONS = listOf("USD", "EUR", "GBP", "INR")
@@ -1004,13 +1141,6 @@ private fun normalizeCategoryEmoji(raw: String): String {
     }
 }
 
-private fun CategoryEntity.appliesToExpense(): Boolean {
-    return applicableTo.equals("EXPENSE", ignoreCase = true) || applicableTo.equals("BOTH", ignoreCase = true)
-}
-
-private fun CategoryEntity.appliesToIncome(): Boolean {
-    return applicableTo.equals("INCOME", ignoreCase = true) || applicableTo.equals("BOTH", ignoreCase = true)
-}
 
 private fun normalizeColorHex(raw: String): String {
     val cleaned = raw.trim().removePrefix("#")

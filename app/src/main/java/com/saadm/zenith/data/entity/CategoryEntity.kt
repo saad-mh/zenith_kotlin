@@ -9,7 +9,7 @@ data class CategoryEntity(
 	val name: String,
 	val emoji: String,
 	val colorHex: String,
-	val applicableTo: String,
+	val txnType: TxnType,
 	val sortOrder: Int,
 	val isDefault: Boolean = false,
 	val isDeleted: Boolean = false

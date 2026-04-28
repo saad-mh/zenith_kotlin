@@ -3,11 +3,11 @@ package com.saadm.zenith.ui.add
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,8 +27,6 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -49,8 +47,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.room.withTransaction
 import com.saadm.zenith.data.db.DatabaseProvider
 import com.saadm.zenith.data.db.dao.CategoryDao
@@ -65,6 +62,7 @@ import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.entity.PayeeEntity
 import com.saadm.zenith.data.entity.TransactionEntity
 import com.saadm.zenith.data.entity.TxnType
+import com.saadm.zenith.ui.components.CategoryPicker
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDateTime
@@ -72,7 +70,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import kotlinx.coroutines.launch
-import androidx.core.graphics.toColorInt
 
 private enum class AddStep {
     Type,
@@ -109,11 +106,33 @@ fun AddTransactionFlow(
     var transactedAt by rememberSaveable { mutableStateOf(System.currentTimeMillis()) }
     var amountError by rememberSaveable { mutableStateOf<String?>(null) }
 
-    val defaultCategoryId = remember(categories) {
-        categories.firstOrNull { it.isDefault }?.id ?: categories.firstOrNull()?.id
+    // Resolve the category type (INCOME or EXPENSE) based on selected transaction type
+    val categoryTypeForCurrentTxn = remember(selectedType) {
+        when (selectedType) {
+            TxnType.INCOME, TxnType.DUE_FROM -> TxnType.INCOME
+            TxnType.EXPENSE, TxnType.DUE_TO -> TxnType.EXPENSE
+            null -> null
+        }
     }
 
-    LaunchedEffect(defaultCategoryId, selectedCategoryId) {
+    // Filter categories by the resolved type
+    val filteredCategories = remember(categories, categoryTypeForCurrentTxn) {
+        if (categoryTypeForCurrentTxn == null) {
+            emptyList()
+        } else {
+            categories
+                .filter { it.txnType == categoryTypeForCurrentTxn }
+                .sortedWith(compareBy<CategoryEntity> { it.sortOrder }.thenBy { it.id })
+        }
+    }
+
+    // Get default category ID for the current type
+    val defaultCategoryId = remember(filteredCategories) {
+        filteredCategories.firstOrNull { it.isDefault }?.id
+            ?: filteredCategories.firstOrNull()?.id
+    }
+
+    LaunchedEffect(defaultCategoryId, selectedCategoryId, categoryTypeForCurrentTxn) {
         if (selectedCategoryId == null && defaultCategoryId != null) {
             selectedCategoryId = defaultCategoryId
         }
@@ -195,7 +214,7 @@ fun AddTransactionFlow(
                     amountError = amountError,
                     transactedAt = transactedAt,
                     selectedPayee = payees.firstOrNull { it.id == selectedPayeeId },
-                    categories = categories,
+                    categories = filteredCategories,
                     selectedCategoryId = selectedCategoryId,
                     onAmountChange = {
                         amountInput = it.filter { ch -> ch.isDigit() || ch == '.' }
@@ -233,12 +252,10 @@ fun AddTransactionFlow(
                             val now = System.currentTimeMillis()
                             val resolvedCategoryId = appDatabase.withTransaction {
                                 when {
-                                    type == TxnType.DUE_FROM -> {
-                                        defaultCategoryId ?: createDefaultCategory(categoryDao)
-                                    }
                                     selectedCategoryId != null -> selectedCategoryId!!
                                     defaultCategoryId != null -> defaultCategoryId
-                                    else -> createDefaultCategory(categoryDao)
+                                    categoryTypeForCurrentTxn != null -> createDefaultCategory(categoryDao, categoryTypeForCurrentTxn)
+                                    else -> createDefaultCategory(categoryDao, TxnType.EXPENSE)
                                 }
                             }
 
@@ -283,40 +300,83 @@ private fun TypeChooserStep(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Transactions",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+        Column {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(all = 16.dp)
+            ) {
+                Text(
+                    text = "Transactions",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .padding(8.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .zIndex(0f)
+                )
+            }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TypeCard(
-                title = "Income",
-                emoji = "💸",
-                modifier = Modifier.weight(1f),
-                onClick = { onTypeSelected(TxnType.INCOME) }
-            )
-            TypeCard(
-                title = "Expense",
-                emoji = "🙁",
-                modifier = Modifier.weight(1f),
-                onClick = { onTypeSelected(TxnType.EXPENSE) }
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TypeCard(
+                    title = "Income",
+                    emoji = "💸",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTypeSelected(TxnType.INCOME) }
+                )
+                TypeCard(
+                    title = "Expense",
+                    emoji = "🙁",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTypeSelected(TxnType.EXPENSE) }
+                )
+            }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TypeCard(
-                title = "Due To",
-                emoji = "🧎",
-                modifier = Modifier.weight(1f),
-                onClick = { onTypeSelected(TxnType.DUE_TO) }
-            )
-            TypeCard(
-                title = "Due From",
-                emoji = "🏃",
-                modifier = Modifier.weight(1f),
-                onClick = { onTypeSelected(TxnType.DUE_FROM) }
-            )
+        Column {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(all = 16.dp)
+            ) {
+                Text(
+                    text = "Dues",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .padding(8.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .zIndex(0f)
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TypeCard(
+                    title = "Due To",
+                    emoji = "🧎",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTypeSelected(TxnType.DUE_TO) }
+                )
+                TypeCard(
+                    title = "Due From",
+                    emoji = "🏃",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTypeSelected(TxnType.DUE_FROM) }
+                )
+            }
         }
     }
 }
@@ -455,7 +515,6 @@ private fun BoxedInitials(name: String) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailsStep(
     txnType: TxnType,
@@ -476,9 +535,11 @@ private fun DetailsStep(
     val dateText = remember(transactedAt) { formatDate(transactedAt) }
     val timeText = remember(transactedAt) { formatTime(transactedAt) }
     val showCategory = txnType != TxnType.DUE_FROM
+    var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     Column(
-        modifier = modifier,
+        modifier = modifier.verticalScroll(scrollState, enabled = !isCategoryDropdownExpanded),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
@@ -553,24 +614,13 @@ private fun DetailsStep(
                 text = "Category",
                 style = MaterialTheme.typography.titleSmall
             )
-            FlowRow(
+            CategoryPicker(
+                categories = categories,
+                selectedCategoryId = selectedCategoryId,
+                onCategorySelected = onCategorySelected,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                categories.forEach { category ->
-                    val chipColor = categoryColor(category.colorHex)
-                    FilterChip(
-                        selected = selectedCategoryId == category.id,
-                        onClick = { onCategorySelected(category.id) },
-                        label = { Text("${categoryEmoji(category.emoji)} ${category.name}") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = chipColor,
-                            selectedLabelColor = readableContentColor(chipColor)
-                        )
-                    )
-                }
-            }
+                onExpanded = { isExpanded -> isCategoryDropdownExpanded = isExpanded }
+            )
         }
 
         Row(
@@ -680,45 +730,18 @@ private fun showTimePicker(
     ).show()
 }
 
-private suspend fun createDefaultCategory(categoryDao: CategoryDao): Long {
+private suspend fun createDefaultCategory(categoryDao: CategoryDao, txnType: TxnType): Long {
     return categoryDao.upsert(
         CategoryEntity(
             name = "Uncategorized",
             emoji = "TAG",
             colorHex = "#9E9E9E",
-            applicableTo = "BOTH",
+            txnType = txnType,
             sortOrder = 0,
             isDefault = true
         )
     )
 }
-
-private fun categoryEmoji(raw: String): String {
-    return when (raw.trim().uppercase()) {
-        "TAG" -> "🏷️"
-        "DINE" -> "🍔"
-        "COMMUTE" -> "🚌"
-        "BILL" -> "💡"
-        "MORE" -> "🛍️"
-        else -> raw.ifBlank { "🏷️" }
-    }
-}
-
-private fun categoryColor(raw: String): Color {
-    val cleaned = raw.trim().removePrefix("#")
-    val valid = cleaned.length == 6 && cleaned.all { it.isDigit() || it.uppercaseChar() in 'A'..'F' }
-    val normalized = if (valid) "#${cleaned.uppercase()}" else "#9E9E9E"
-    return try {
-        Color(normalized.toColorInt())
-    } catch (_: IllegalArgumentException) {
-        Color(0xFF9E9E9E)
-    }
-}
-
-private fun readableContentColor(background: Color): Color {
-    return if (background.luminance() < 0.45f) Color.White else Color.Black
-}
-
 
 @Preview
 @Composable
