@@ -80,6 +80,9 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
-    implementation("com.google.dagger:hilt-android:2.57.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android.v2571)
+    ksp(libs.hilt.android.compiler.v2571)
+
+    testImplementation(libs.mockito.kotlin)
 }

@@ -72,12 +72,14 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Upload
+import androidx.compose.material.icons.rounded.People
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.saadm.zenith.data.db.DatabaseProvider
 import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.data.preferences.AppPreferences
 import com.saadm.zenith.data.preferences.AppPreferencesStore
+import com.saadm.zenith.ui.people.PeopleManagementContent
 import kotlinx.coroutines.launch
 import androidx.core.graphics.toColorInt
 import androidx.emoji2.emojipicker.EmojiPickerView
@@ -180,6 +182,7 @@ fun SettingsScreen() {
                         coroutineScope.launch { preferencesStore.updateLabsEnabled(enabled) }
                     },
                     onCategoriesClick = { navigateTo(SettingsDestination.Categories) },
+                    onPeopleClick = { navigateTo(SettingsDestination.People) },
                     onImportClick = { println("[settings] import requested") },
                     onExportClick = { println("[settings] export requested") }
                 )
@@ -250,6 +253,8 @@ fun SettingsScreen() {
                         }
                     }
                 )
+
+                SettingsDestination.People -> PeopleManagementContent()
             }
         }
     }
@@ -332,23 +337,24 @@ fun SettingsScreen() {
 
 @Composable
 private fun SettingsRootContent(
-    appearanceMode: String,
-    onAppearanceClick: () -> Unit,
-    notificationsEnabled: Boolean,
-    onNotificationsEnabledChange: (Boolean) -> Unit,
-    defaultCurrency: String,
-    onCurrencyClick: () -> Unit,
-    animationSummary: String,
-    onAnimationsClick: () -> Unit,
-    hapticsEnabled: Boolean,
-    onHapticsEnabledChange: (Boolean) -> Unit,
-    reportsEnabled: Boolean,
-    onReportsEnabledChange: (Boolean) -> Unit,
-    labsEnabled: Boolean,
-    onLabsEnabledChange: (Boolean) -> Unit,
-    onCategoriesClick: () -> Unit,
-    onImportClick: () -> Unit,
-    onExportClick: () -> Unit
+	appearanceMode: String,
+	onAppearanceClick: () -> Unit,
+	notificationsEnabled: Boolean,
+	onNotificationsEnabledChange: (Boolean) -> Unit,
+	defaultCurrency: String,
+	onCurrencyClick: () -> Unit,
+	animationSummary: String,
+	onAnimationsClick: () -> Unit,
+	hapticsEnabled: Boolean,
+	onHapticsEnabledChange: (Boolean) -> Unit,
+	reportsEnabled: Boolean,
+	onReportsEnabledChange: (Boolean) -> Unit,
+	labsEnabled: Boolean,
+	onLabsEnabledChange: (Boolean) -> Unit,
+	onCategoriesClick: () -> Unit,
+	onPeopleClick: () -> Unit,
+	onImportClick: () -> Unit,
+	onExportClick: () -> Unit
 ) {
     Text(
         text = "General",
@@ -382,24 +388,30 @@ private fun SettingsRootContent(
         )
     }
 
-    Text(
-        text = "Data",
-        style = MaterialTheme.typography.labelLarge,
-        modifier = Modifier.padding(top = 12.dp)
-    )
-    SettingsGroup {
-        SettingsNavigationRow(
-            icon = Icons.Rounded.Category,
-            title = "Categories",
-            value = null,
-            onClick = onCategoriesClick
-        )
-        SettingsNavigationRow(
-            icon = Icons.Rounded.CurrencyExchange,
-            title = "Currency",
-            value = defaultCurrency,
-            onClick = onCurrencyClick
-        )
+	Text(
+		text = "Data",
+		style = MaterialTheme.typography.labelLarge,
+		modifier = Modifier.padding(top = 12.dp)
+	)
+	SettingsGroup {
+		SettingsNavigationRow(
+			icon = Icons.Rounded.Category,
+			title = "Categories",
+			value = null,
+			onClick = onCategoriesClick
+		)
+		SettingsNavigationRow(
+			icon = Icons.Rounded.People,
+			title = "People",
+			value = null,
+			onClick = onPeopleClick
+		)
+		SettingsNavigationRow(
+			icon = Icons.Rounded.CurrencyExchange,
+			title = "Currency",
+			value = defaultCurrency,
+			onClick = onCurrencyClick
+		)
         SettingsActionRow(
             icon = Icons.Rounded.Download,
             title = "Import Data",
@@ -1093,17 +1105,18 @@ private fun EmojiPickerDialog(
 }
 
 private enum class SettingsDestination(val route: String, val title: String) {
-    Root("root", "Settings"),
-    Appearance("appearance", "Appearance"),
-    DefaultCurrency("default_currency", "Currency"),
-    Animations("animations", "Animations"),
-    Categories("categories", "Categories");
+	Root("root", "Settings"),
+	Appearance("appearance", "Appearance"),
+	DefaultCurrency("default_currency", "Currency"),
+	Animations("animations", "Animations"),
+	Categories("categories", "Categories"),
+	People("people", "People");
 
-    companion object {
-        fun fromRoute(route: String): SettingsDestination {
-            return entries.firstOrNull { it.route == route } ?: Root
-        }
-    }
+	companion object {
+		fun fromRoute(route: String): SettingsDestination {
+			return entries.firstOrNull { it.route == route } ?: Root
+		}
+	}
 }
 
 private enum class AppearanceModeOption(val value: String, val label: String) {

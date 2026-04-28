@@ -18,4 +18,13 @@ interface PayeeDao {
 
 	@Query("SELECT * FROM payees WHERE isDeleted = 0 ORDER BY name COLLATE NOCASE ASC")
 	fun observeAllActive(): Flow<List<PayeeEntity>>
+
+	@Query("SELECT * FROM payees WHERE id = :id LIMIT 1")
+	suspend fun getById(id: Long): PayeeEntity?
+
+	@Query("SELECT * FROM payees WHERE id = :id LIMIT 1")
+	fun observeById(id: Long): Flow<PayeeEntity?>
+
+	@Query("UPDATE payees SET isDeleted = 1 WHERE id = :id")
+	suspend fun softDelete(id: Long)
 }

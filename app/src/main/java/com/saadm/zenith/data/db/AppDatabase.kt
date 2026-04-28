@@ -9,11 +9,13 @@ import com.saadm.zenith.data.db.converter.DbTypeConverters
 import com.saadm.zenith.data.db.dao.AccountDao
 import com.saadm.zenith.data.db.dao.BudgetDao
 import com.saadm.zenith.data.db.dao.CategoryDao
+import com.saadm.zenith.data.db.dao.PayeeBalanceDao
 import com.saadm.zenith.data.db.dao.PayeeDao
 import com.saadm.zenith.data.db.dao.TransactionDao
 import com.saadm.zenith.data.entity.AccountEntity
 import com.saadm.zenith.data.entity.BudgetEntity
 import com.saadm.zenith.data.entity.CategoryEntity
+import com.saadm.zenith.data.entity.PayeeBalanceView
 import com.saadm.zenith.data.entity.PayeeEntity
 import com.saadm.zenith.data.entity.TransactionEntity
 import com.saadm.zenith.data.entity.TxnType
@@ -26,12 +28,17 @@ import com.saadm.zenith.data.entity.TxnType
 		AccountEntity::class,
 		BudgetEntity::class
 	],
-	version = 4,
+	views = [
+		PayeeBalanceView::class
+	],
+	version = 6,
 	exportSchema = false
 )
 @TypeConverters(DbTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
 	companion object {
+		private const val PAYEE_BALANCES_VIEW_CREATE_SQL = "CREATE VIEW `payee_balances` AS SELECT\n\t\t\tp.id,\n\t\t\tp.name,\n\t\t\tp.avatarUri,\n\t\t\tp.phone,\n\t\t\tp.upiId,\n\t\t\tp.createdAt,\n\t\t\tp.isDeleted,\n\t\t\tCOALESCE(SUM(CASE WHEN t.type = 'DUE_TO' AND t.isDeleted = 0 THEN t.amount ELSE 0 END), 0) as dueToAmount,\n\t\t\tCOALESCE(SUM(CASE WHEN t.type = 'DUE_FROM' AND t.isDeleted = 0 THEN t.amount ELSE 0 END), 0) as dueFromAmount,\n\t\t\tCOUNT(DISTINCT CASE WHEN t.isDeleted = 0 THEN t.id END) as transactionCount,\n\t\t\tMAX(CASE WHEN t.isDeleted = 0 THEN t.transactedAt ELSE NULL END) as lastInteractionAt\n\t\tFROM payees p\n\t\tLEFT JOIN transactions t ON p.id = t.payeeId\n\t\tGROUP BY p.id"
+
 		private data class SeedCategory(
 			val name: String,
 			val emoji: String,
@@ -127,6 +134,8 @@ abstract class AppDatabase : RoomDatabase() {
 		val MIGRATION_3_4 = object : Migration(3, 4) {
 			override fun migrate(db: SupportSQLiteDatabase) {
 				// Create new categories table with txnType column
+				// Recreate the view to ensure Room validates against the current SQL definition.
+				db.execSQL("DROP VIEW IF EXISTS payee_balances")
 				db.execSQL(
 					"""
 					CREATE TABLE IF NOT EXISTS categories_new (
@@ -194,6 +203,21 @@ abstract class AppDatabase : RoomDatabase() {
 			}
 		}
 
+		val MIGRATION_4_5 = object : Migration(4, 5) {
+			override fun migrate(db: SupportSQLiteDatabase) {
+				db.execSQL("DROP VIEW IF EXISTS payee_balances")
+				db.execSQL(PAYEE_BALANCES_VIEW_CREATE_SQL)
+			}
+		}
+
+		val MIGRATION_5_6 = object : Migration(5, 6) {
+			override fun migrate(db: SupportSQLiteDatabase) {
+				db.execSQL("DROP VIEW IF EXISTS payee_balances")
+				db.execSQL(PAYEE_BALANCES_VIEW_CREATE_SQL)
+			}
+		}
+
+
 		val DB_CREATE_CALLBACK = object : Callback() {
 			override fun onCreate(db: SupportSQLiteDatabase) {
 				super.onCreate(db)
@@ -202,11 +226,9 @@ abstract class AppDatabase : RoomDatabase() {
 		}
 	}
 
-	// ...existing code...
-
-
 	abstract fun transactionDao(): TransactionDao
 	abstract fun payeeDao(): PayeeDao
+	abstract fun payeeBalanceDao(): PayeeBalanceDao
 	abstract fun categoryDao(): CategoryDao
 	abstract fun accountDao(): AccountDao
 	abstract fun budgetDao(): BudgetDao

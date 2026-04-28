@@ -36,13 +36,12 @@ import com.saadm.zenith.ui.components.PrimaryActionSpec
 import com.saadm.zenith.ui.components.navItems
 import com.saadm.zenith.ui.home.HomeScreen
 import com.saadm.zenith.ui.insights.InsightsScreen
-import com.saadm.zenith.ui.people.PeopleScreen
 import com.saadm.zenith.ui.settings.SettingsScreen
 import com.saadm.zenith.ui.settings.TransitionStyle
 import com.saadm.zenith.ui.settings.normalizeTransitionDurationMillis
 import com.saadm.zenith.ui.theme.ZenithTheme
 import com.saadm.zenith.ui.add.AddTransactionFlow
-import com.saadm.zenith.ui.transactions.TransactionsScreen
+import dagger.hilt.android.AndroidEntryPoint
 
 private fun bottomNavIndex(route: String?): Int? {
     val index = navItems.indexOfFirst { it.route.route == route }
@@ -65,7 +64,7 @@ private fun slideDirectionFor(
     }
 }
 
-//@HiltAndroidApp
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -221,6 +220,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainActivityPreview() {
     ZenithTheme {
-            HomeScreen()
+        HomeScreen()
     }
 }
