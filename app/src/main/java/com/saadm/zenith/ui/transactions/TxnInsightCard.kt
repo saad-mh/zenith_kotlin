@@ -19,13 +19,14 @@ import com.saadm.zenith.ui.components.TxnRow
 import kotlin.time.ExperimentalTime
 
 
-@Composable
-fun TxnInsightCard(
-    viewModel: TxnListViewModel = hiltViewModel()
-) {
-    val recentTransactions by viewModel.recentTransactions.collectAsState()
-    TxnInsightCardContent(recentTransactions = recentTransactions)
-}
+// TODO: Change back when done
+//@Composable
+//fun TxnInsightCard(
+//    viewModel: TxnListViewModel = hiltViewModel()
+//) {
+//    val recentTransactions by viewModel.recentTransactions.collectAsState()
+//    TxnInsightCardContent(recentTransactions = recentTransactions)
+//}
 
 @Composable
 fun TxnInsightCardContent(
@@ -70,7 +71,8 @@ fun TxnInsightCardContent(
 @Preview
 @Composable
 fun PreviewTxnInsightCard() {
-    TxnInsightCard(
-
-    )
+    // TODO: Change back when done
+//    TxnInsightCard(
+//
+//    )
 }

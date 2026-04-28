@@ -41,9 +41,8 @@ import com.saadm.zenith.ui.settings.SettingsScreen
 import com.saadm.zenith.ui.settings.TransitionStyle
 import com.saadm.zenith.ui.settings.normalizeTransitionDurationMillis
 import com.saadm.zenith.ui.theme.ZenithTheme
-import com.saadm.zenith.ui.transactions.AddTransactionFlow
+import com.saadm.zenith.ui.add.AddTransactionFlow
 import com.saadm.zenith.ui.transactions.TransactionsScreen
-import dagger.hilt.android.HiltAndroidApp
 
 private fun bottomNavIndex(route: String?): Int? {
     val index = navItems.indexOfFirst { it.route.route == route }
@@ -66,7 +65,7 @@ private fun slideDirectionFor(
     }
 }
 
-@HiltAndroidApp
+//@HiltAndroidApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -200,8 +199,8 @@ class MainActivity : ComponentActivity() {
                         }
                      ) {
                          composable(NavRoute.Home.route) { HomeScreen() }
-                         composable(NavRoute.Transactions.route) { TransactionsScreen() }
-                         composable(NavRoute.People.route) { PeopleScreen() }
+//                         composable(NavRoute.Transactions.route) { TransactionsScreen() }
+//                         composable(NavRoute.People.route) { PeopleScreen() }
                         composable(NavRoute.Insights.route) { InsightsScreen() }
                          composable(NavRoute.Settings.route) {
                              SettingsScreen()

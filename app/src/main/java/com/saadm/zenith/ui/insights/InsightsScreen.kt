@@ -26,7 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.saadm.zenith.ui.people.PeopleMiniCard
 import com.saadm.zenith.ui.theme.ZenithTheme
-import com.saadm.zenith.ui.transactions.TxnInsightCard
+//import com.saadm.zenith.ui.transactions.TxnInsightCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +68,11 @@ fun InsightsScreen() {
                  InsightCard(
                      title = "Recent Transactions"
                  ) {
-                     TxnInsightCard()
+                     // TODO: Change back when done
+//                     TxnInsightCard()
+                     Text(
+                         text = "yuh"
+                     )
                  }
              }
              item {
@@ -114,8 +118,8 @@ fun InsightCard(title: String, modifier: Modifier = Modifier, content: @Composab
 @Composable
 fun PreviewInsightCard() {
     ZenithTheme {
-        InsightCard(title = "Preview Title") {
-            Text("Sample Content")
+        InsightCard(title = "Deez") {
+            Text("This boutta be lit")
         }
     }
 }

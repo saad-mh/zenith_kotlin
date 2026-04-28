@@ -6,16 +6,16 @@ A native Android finance management app built with Kotlin and Jetpack Compose. T
 
 ## Features
 
-- **Four transaction types** — Income, Expense, Due-To (you owe), Due-From (they owe you)
-- **Payee management** — Designated contacts with running net balances, settlement tracking, and transaction history per person
-- **Settlement flow** — Record full or partial payments; net balance updates automatically with no manual bookkeeping
-- **Analytics** — Income vs expense bar charts, category donut breakdown, spending trend line, monthly comparisons, and due balance overview
-- **Budgets** — Set per-category or overall monthly/weekly limits; progress tracked in real time
-- **Accounts** — Tag transactions to Cash, UPI, Debit, Credit, or Bank Transfer
-- **Categories** — Default set with emoji + color; fully customizable and reorderable
-- **Swipe actions** — Swipe right to edit, swipe left to delete (with Snackbar undo)
-- **Month selector** — Horizontal scroll pill row synced to a paged transaction list
-- **Offline first** — All data local by default; CSV/JSON export built in
+- **Four transaction types** - Income, Expense, Due-To (you owe), Due-From (they owe you)
+- **Payee management** - Designated contacts with running net balances, settlement tracking, and transaction history per person
+- **Settlement flow** - Record full or partial payments; net balance updates automatically with no manual bookkeeping
+- **Analytics** - Income vs expense bar charts, category donut breakdown, spending trend line, monthly comparisons, and due balance overview
+- **Budgets** - Set per-category or overall monthly/weekly limits; progress tracked in real time
+- **Accounts** - Tag transactions to Cash, UPI, Debit, Credit, or Bank Transfer
+- **Categories** - Default set with emoji + color; fully customizable and reorderable
+- **Swipe actions** - Swipe right to edit, swipe left to delete (with Snackbar undo)
+- **Month selector** - Horizontal scroll pill row synced to a paged transaction list
+- **Offline first** - All data local by default; CSV/JSON export built in
 
 ---
 
@@ -48,7 +48,7 @@ di/          → Hilt modules wiring everything together
 navigation/  → NavGraph, Screen sealed class, BottomNavBar
 ```
 
-**Single source of truth:** Transactions are the only stored data. All derived values — payee net balances, budget consumption, monthly totals, settlement status — are computed via Room `@Query` and `@DatabaseView`, never stored as redundant fields. The `payee_balances` view recomputes automatically whenever the transactions table changes.
+**Single source of truth:** Transactions are the only stored data. All derived values - payee net balances, budget consumption, monthly totals, settlement status - are computed via Room `@Query` and `@DatabaseView`, never stored as redundant fields. The `payee_balances` view recomputes automatically whenever the transactions table changes.
 
 ---
 
@@ -183,7 +183,9 @@ app/src/main/
 | Analytics (Tab)    | Charts - bar, donut, trend line, category ranking, due breakdown                       |
 | Settings           | Profile, categories, accounts, budgets, data export                                    |
 
-Navigation: bottom bar with 3 tabs. Add is in the PrimaryActionButton, on all screens except People. Settings is accessed via the Home screen header icon, not the nav bar.
+Navigation: bottom bar with 3 tabs. Add is in the PrimaryActionButton, on all screens except People. 
+
+[//]: # (Settings screen is accessed via the Home screen header icon, not the nav bar.)
 
 ---
 
@@ -205,7 +207,7 @@ cd zenith-kotlin
 
 Open the `zenith-kotlin` project in Android Studio, let Gradle sync, and run on a device or emulator (API 26+).
 
-No API keys, no network configuration required — the app is fully offline.
+No API keys, no network configuration required - the app is fully offline.
 
 ### Build
 
@@ -224,8 +226,8 @@ No API keys, no network configuration required — the app is fully offline.
 - [ ] Google Drive backup (opt-in)
 - [ ] Multi-device sync via (???)
 - [ ] Recurring transaction templates
-- [ ] Widget — home screen balance summary
-- [ ] UPI deep link on payee settle-up (im stupid dont expect all these)
+- [ ] Widget - home screen balance summary
+- [ ] UPI deep link on payee settle-up (im stupid don't expect all these)
 - [ ] Multi-currency support
 
 ---

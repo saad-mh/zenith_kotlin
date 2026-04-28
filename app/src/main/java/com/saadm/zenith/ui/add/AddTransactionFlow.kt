@@ -1,7 +1,8 @@
-package com.saadm.zenith.ui.transactions
+package com.saadm.zenith.ui.add
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -55,9 +56,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.room.withTransaction
 import com.saadm.zenith.data.db.DatabaseProvider
+import com.saadm.zenith.data.db.dao.CategoryDao
 import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.entity.PayeeEntity
 import com.saadm.zenith.data.entity.TransactionEntity
@@ -69,6 +72,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 private enum class AddStep {
     Type,
@@ -617,7 +621,7 @@ private fun formatTime(epochMillis: Long): String {
 }
 
 private fun showDatePicker(
-    context: android.content.Context,
+    context: Context,
     initialMillis: Long,
     onDatePicked: (Long) -> Unit
 ) {
@@ -647,7 +651,7 @@ private fun showDatePicker(
 }
 
 private fun showTimePicker(
-    context: android.content.Context,
+    context: Context,
     initialMillis: Long,
     onTimePicked: (Long) -> Unit
 ) {
@@ -676,7 +680,7 @@ private fun showTimePicker(
     ).show()
 }
 
-private suspend fun createDefaultCategory(categoryDao: com.saadm.zenith.data.db.dao.CategoryDao): Long {
+private suspend fun createDefaultCategory(categoryDao: CategoryDao): Long {
     return categoryDao.upsert(
         CategoryEntity(
             name = "Uncategorized",
@@ -705,7 +709,7 @@ private fun categoryColor(raw: String): Color {
     val valid = cleaned.length == 6 && cleaned.all { it.isDigit() || it.uppercaseChar() in 'A'..'F' }
     val normalized = if (valid) "#${cleaned.uppercase()}" else "#9E9E9E"
     return try {
-        Color(android.graphics.Color.parseColor(normalized))
+        Color(normalized.toColorInt())
     } catch (_: IllegalArgumentException) {
         Color(0xFF9E9E9E)
     }
@@ -713,4 +717,13 @@ private fun categoryColor(raw: String): Color {
 
 private fun readableContentColor(background: Color): Color {
     return if (background.luminance() < 0.45f) Color.White else Color.Black
+}
+
+
+@Preview
+@Composable
+fun PreviewAddTransactionFlow() {
+    AddTransactionFlow(
+        onDismissRequest = {}
+    )
 }
