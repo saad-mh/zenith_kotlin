@@ -42,7 +42,7 @@ fun PayeeEditorDialog(
 					onValueChange = { name = it },
 					label = { Text("Name") },
 					singleLine = true,
-					placeholder = { Text("e.g., John Doe") }
+					placeholder = { Text("e.g., Deez") }
 				)
 
 				OutlinedTextField(
@@ -50,7 +50,7 @@ fun PayeeEditorDialog(
 					onValueChange = { phone = it },
 					label = { Text("Phone (optional)") },
 					singleLine = true,
-					placeholder = { Text("+91 XXXXX XXXXX") }
+					placeholder = { Text("+91 11111 22222") }
 				)
 
 				OutlinedTextField(
@@ -58,7 +58,7 @@ fun PayeeEditorDialog(
 					onValueChange = { upiId = it },
 					label = { Text("UPI ID (optional)") },
 					singleLine = true,
-					placeholder = { Text("user@upi") }
+					placeholder = { Text("kyabaathai@hdfcbank") }
 				)
 
 				OutlinedTextField(
@@ -66,7 +66,7 @@ fun PayeeEditorDialog(
 					onValueChange = { avatarUri = it },
 					label = { Text("Avatar URI (optional)") },
 					singleLine = true,
-					placeholder = { Text("file:///...") }
+					placeholder = { Text("oops.com/img/1919") }
 				)
 			}
 		},
