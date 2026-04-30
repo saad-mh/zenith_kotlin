@@ -2,6 +2,7 @@ package com.saadm.zenith.di
 
 import com.saadm.zenith.data.db.dao.PayeeBalanceDao
 import com.saadm.zenith.data.db.dao.PayeeDao
+import com.saadm.zenith.data.db.dao.TransactionDao
 import com.saadm.zenith.data.repository.PayeeRepoImpl
 import com.saadm.zenith.domain.repository.PayeeRepo
 import dagger.Module
@@ -21,7 +22,8 @@ object RepositoryModule {
 	@Singleton
 	fun providePayeeRepo(
 		payeeDao: PayeeDao,
-		payeeBalanceDao: PayeeBalanceDao
-	): PayeeRepo = PayeeRepoImpl(payeeDao, payeeBalanceDao)
+		payeeBalanceDao: PayeeBalanceDao,
+		transactionDao: TransactionDao
+	): PayeeRepo = PayeeRepoImpl(payeeDao, payeeBalanceDao, transactionDao)
 }
 

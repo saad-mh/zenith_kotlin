@@ -87,7 +87,7 @@ import androidx.room.withTransaction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
     val context = LocalContext.current
     val appDatabase = remember(context.applicationContext) {
         DatabaseProvider.getInstance(context.applicationContext)
@@ -254,7 +254,7 @@ fun SettingsScreen() {
                     }
                 )
 
-                SettingsDestination.People -> PeopleManagementContent()
+                SettingsDestination.People -> PeopleManagementContent(onNavigateToPayee)
             }
         }
     }

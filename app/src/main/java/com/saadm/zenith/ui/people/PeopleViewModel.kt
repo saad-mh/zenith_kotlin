@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.saadm.zenith.data.entity.PayeeEntity
 import com.saadm.zenith.domain.model.Payee
 import com.saadm.zenith.domain.repository.PayeeRepo
+import kotlinx.coroutines.flow.Flow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,9 @@ class PeopleViewModel @Inject constructor(
 			started = SharingStarted.WhileSubscribed(5000),
 			initialValue = emptyList()
 		)
+
+	/** Observe one payee with live transaction history for details screens. */
+	fun observePayeeById(id: Long): Flow<Payee?> = payeeRepo.observeById(id)
 
 	/**
 	 * Add or update a payee.

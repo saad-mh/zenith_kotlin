@@ -299,16 +299,34 @@ object TxnRowDefaults {
     )
 
     fun formatAmount(amount: Long, type: TxnType, currency: String): String {
+        // Amount is provided in the smallest currency unit (e.g. cents/paise).
+        // Convert to major unit by dividing by 100 and format with 2 decimal places.
         val magnitude = abs(amount)
+        val value = magnitude / 100.0
         val sign = when (type) {
             TxnType.INCOME, TxnType.DUE_FROM -> ""
             TxnType.EXPENSE, TxnType.DUE_TO -> "-"
         }
-        val currencySymbol = runCatching {
-            Currency.getInstance(currency.uppercase(Locale.ROOT)).symbol
-        }.getOrDefault(currency.uppercase(Locale.ROOT))
-        val grouped = NumberFormat.getIntegerInstance().format(magnitude)
-        return "$sign$currencySymbol$grouped"
+
+        val formatted = runCatching {
+            val nf = NumberFormat.getCurrencyInstance()
+            nf.currency = Currency.getInstance(currency.uppercase(Locale.ROOT))
+            nf.minimumFractionDigits = 2
+            nf.maximumFractionDigits = 2
+            // Format the numeric value (positive) and include currency symbol according to locale
+            nf.format(value)
+        }.getOrElse {
+            // Fallback: format number with 2 decimals and prepend currency symbol or code
+            val currencySymbol = runCatching {
+                Currency.getInstance(currency.uppercase(Locale.ROOT)).symbol
+            }.getOrDefault(currency.uppercase(Locale.ROOT))
+            val nf = NumberFormat.getNumberInstance()
+            nf.minimumFractionDigits = 2
+            nf.maximumFractionDigits = 2
+            "$currencySymbol${nf.format(value)}"
+        }
+
+        return if (sign.isEmpty()) formatted else "$sign$formatted"
     }
 
     fun formatTime(transactedAt: Long): String {

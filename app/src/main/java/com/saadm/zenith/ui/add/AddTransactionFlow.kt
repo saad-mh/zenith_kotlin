@@ -254,7 +254,11 @@ fun AddTransactionFlow(
                                 when {
                                     selectedCategoryId != null -> selectedCategoryId!!
                                     defaultCategoryId != null -> defaultCategoryId
-                                    categoryTypeForCurrentTxn != null -> createDefaultCategory(categoryDao, categoryTypeForCurrentTxn)
+                                    categoryTypeForCurrentTxn != null -> createDefaultCategory(
+                                        categoryDao,
+                                        categoryTypeForCurrentTxn
+                                    )
+
                                     else -> createDefaultCategory(categoryDao, TxnType.EXPENSE)
                                 }
                             }
@@ -284,7 +288,8 @@ fun AddTransactionFlow(
                         .fillMaxHeight(0.95f)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .imePadding()
-                        .navigationBarsPadding()
+                        .navigationBarsPadding(),
+                    onPayeeClick = {  },
                 )
             }
         }
@@ -528,9 +533,10 @@ private fun DetailsStep(
     onCategorySelected: (Long) -> Unit,
     onDateClick: () -> Unit,
     onTimeClick: () -> Unit,
+    onPayeeClick: () -> Unit,
     onClose: () -> Unit,
     onSave: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val dateText = remember(transactedAt) { formatDate(transactedAt) }
     val timeText = remember(transactedAt) { formatTime(transactedAt) }
@@ -540,7 +546,8 @@ private fun DetailsStep(
 
     Column(
         modifier = modifier.verticalScroll(scrollState, enabled = !isCategoryDropdownExpanded),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -573,7 +580,8 @@ private fun DetailsStep(
 
         if (selectedPayee != null) {
             AssistChip(
-                onClick = {},
+                modifier = Modifier,
+                onClick = { onPayeeClick() },
                 enabled = false,
                 label = { Text("Payee: ${selectedPayee.name}") },
                 colors = AssistChipDefaults.assistChipColors(
@@ -746,7 +754,27 @@ private suspend fun createDefaultCategory(categoryDao: CategoryDao, txnType: Txn
 @Preview
 @Composable
 fun PreviewAddTransactionFlow() {
-    AddTransactionFlow(
-        onDismissRequest = {}
-    )
+   DetailsStep(
+       txnType = TxnType.DUE_TO,
+       amountInput = "100",
+       amountError = null,
+       transactedAt = System.currentTimeMillis(),
+       selectedPayee = PayeeEntity(
+           id = 1,
+           name = "Limca",
+           avatarUri = null,
+           phone = "+91 99999 11111",
+           upiId = "limca@upi",
+           createdAt = System.currentTimeMillis()
+       ),
+       categories = emptyList(),
+       selectedCategoryId = null,
+       onAmountChange = {},
+       onCategorySelected = {},
+       onDateClick = {},
+       onTimeClick = {},
+       onClose = {},
+       onPayeeClick = {},
+       onSave = {}
+   )
 }

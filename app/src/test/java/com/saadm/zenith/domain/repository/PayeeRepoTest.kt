@@ -2,7 +2,10 @@ package com.saadm.zenith.domain.repository
 
 import com.saadm.zenith.data.db.dao.PayeeBalanceDao
 import com.saadm.zenith.data.db.dao.PayeeDao
+import com.saadm.zenith.data.db.dao.TransactionDao
 import com.saadm.zenith.data.entity.PayeeBalanceView
+import com.saadm.zenith.data.entity.TransactionEntity
+import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.data.repository.PayeeRepoImpl
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -25,12 +28,15 @@ class PayeeRepoTest {
 	@Mock
 	private lateinit var payeeBalanceDao: PayeeBalanceDao
 
+	@Mock
+	private lateinit var transactionDao: TransactionDao
+
 	private lateinit var repo: PayeeRepo
 
 	@Before
 	fun setUp() {
 		MockitoAnnotations.openMocks(this)
-		repo = PayeeRepoImpl(payeeDao, payeeBalanceDao)
+		repo = PayeeRepoImpl(payeeDao, payeeBalanceDao, transactionDao)
 	}
 
 	@Test
@@ -126,6 +132,62 @@ class PayeeRepoTest {
 		// Then: Balance is settled
 		assertFalse(payee.hasActiveBalance())
 		assertEquals("settled", payee.balanceText())
+	}
+
+	@Test
+	fun testObserveByIdIncludesTransactions() = runBlocking {
+		val payeeId = 1L
+		val balance = PayeeBalanceView(
+			id = payeeId,
+			name = "Alice",
+			avatarUri = null,
+			phone = null,
+			upiId = null,
+			createdAt = System.currentTimeMillis(),
+			isDeleted = false,
+			dueToAmount = 1000,
+			dueFromAmount = 500,
+			transactionCount = 2,
+			lastInteractionAt = System.currentTimeMillis()
+		)
+		val txns = listOf(
+			TransactionEntity(
+				id = 11L,
+				amount = 1000,
+				type = TxnType.DUE_TO,
+				transactedAt = 200L,
+				createdAt = 200L,
+				updatedAt = 200L,
+				categoryId = 1L,
+				payeeId = payeeId,
+				accountId = null,
+				note = "Lunch",
+				receiptUri = null
+			),
+			TransactionEntity(
+				id = 12L,
+				amount = 500,
+				type = TxnType.DUE_FROM,
+				transactedAt = 300L,
+				createdAt = 300L,
+				updatedAt = 300L,
+				categoryId = 1L,
+				payeeId = payeeId,
+				accountId = null,
+				note = "Tea",
+				receiptUri = null
+			)
+		)
+
+		`when`(payeeBalanceDao.observeById(payeeId)).thenReturn(flowOf(balance))
+		`when`(transactionDao.observeActiveByPayeeId(payeeId)).thenReturn(flowOf(txns))
+
+		val emissions = mutableListOf<com.saadm.zenith.domain.model.Payee?>()
+		repo.observeById(payeeId).collect { emissions.add(it) }
+
+		assertEquals(1, emissions.size)
+		assertNotNull(emissions[0])
+		assertEquals(2, emissions[0]!!.transactions.size)
 	}
 }
 

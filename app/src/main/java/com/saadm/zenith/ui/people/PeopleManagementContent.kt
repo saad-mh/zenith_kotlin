@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.people
 
+import android.annotation.SuppressLint
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -21,6 +25,8 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,17 +44,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Blue
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.core.net.toUri
 import com.saadm.zenith.data.db.DatabaseProvider
-import com.saadm.zenith.data.db.dao.PayeeBalanceDao
 import com.saadm.zenith.data.entity.PayeeEntity
 import com.saadm.zenith.domain.model.Payee
 import kotlinx.coroutines.launch
@@ -58,7 +66,9 @@ import kotlinx.coroutines.launch
  * Payees are displayed as cards showing identity info and derived balance summaries.
  */
 @Composable
-fun PeopleManagementContent() {
+fun PeopleManagementContent(
+    onPayeeClick: (Long) -> Unit = {}
+) {
     val context = LocalContext.current
     val appDatabase = remember(context.applicationContext) {
         DatabaseProvider.getInstance(context.applicationContext)
@@ -90,13 +100,17 @@ fun PeopleManagementContent() {
     var editingPayee by remember { mutableStateOf<Payee?>(null) }
 
     Text(
-        text = "Add, edit, or remove people",
+        text = "Choose your people carefully.",
         style = MaterialTheme.typography.bodyMedium
     )
 
     Button(
         onClick = { showCreateDialog = true },
-        modifier = Modifier.padding(top = 4.dp)
+        modifier = Modifier.padding(top = 4.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     ) {
         Icon(
             imageVector = Icons.Rounded.Add,
@@ -115,7 +129,7 @@ fun PeopleManagementContent() {
                 .padding(top = 12.dp)
         ) {
             Text(
-                text = "No people yet. Add someone to get started.",
+                text = "I don't see anyone. Perhaps expand your circle?",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -130,8 +144,8 @@ fun PeopleManagementContent() {
                 .fillMaxWidth()
                 .padding(top = 12.dp)
         ) {
-            Column {
-                payees.forEachIndexed { index, payee ->
+                    Column {
+                                payees.forEachIndexed { index, payee ->
 //					PayeeRow(
 //						payee = payee,
 //						onEditClick = { editingPayee = payee },
@@ -146,6 +160,7 @@ fun PeopleManagementContent() {
 //					}
                     PayeeCard(
                         payee = payee,
+                        onClick = { onPayeeClick(payee.id) },
                         onEditClick = { editingPayee = payee },
                         onDeleteClick = {
                             coroutineScope.launch {
@@ -216,13 +231,14 @@ fun PeopleManagementContent() {
 @Composable
 private fun PayeeRow(
     payee: Payee,
+    onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onEditClick() }
+            .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -235,8 +251,8 @@ private fun PayeeRow(
 
             // Show secondary info: phone, UPI, or interaction count
             val secondaryText = when {
-                payee.phone != null -> payee.phone!!
-                payee.upiId != null -> payee.upiId!!
+                payee.phone != null -> payee.phone
+                payee.upiId != null -> payee.upiId
                 payee.transactionCount > 0 -> "${payee.transactionCount} transactions"
                 else -> "No contact info"
             }
@@ -289,8 +305,9 @@ private fun PayeeRow(
 
 
 @Composable
-private fun PayeeCard(
+private fun PayeeCardA(
     payee: Payee,
+    onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -303,7 +320,7 @@ private fun PayeeCard(
     ) {
         Column(
             modifier = Modifier
-                .clickable { onEditClick() }
+                .clickable { onClick() }
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -389,7 +406,7 @@ private fun PayeeCard(
                                 modifier = Modifier,
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
-                            ){
+                            ) {
                                 Icon(
                                     modifier = Modifier
                                         .padding(start = 4.dp),
@@ -412,12 +429,12 @@ private fun PayeeCard(
                         }
 
                         // Transaction count
-                        Box{
+                        Box {
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
                                     .background(
-                                        Color.Blue.copy(0.2f),
+                                        Blue.copy(0.2f),
                                         shape = RoundedCornerShape(8.dp)
                                     )
                                     .zIndex(0f)
@@ -473,8 +490,7 @@ private fun PayeeCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                         )
-                    }
-                    else {
+                    } else {
                         Text(
                             text = "settled",
                             style = MaterialTheme.typography.titleMedium,
@@ -492,6 +508,244 @@ private fun PayeeCard(
     }
 }
 
+@SuppressLint("Range")
+@Composable
+fun PayeeCard(
+    payee: Payee,
+    onClick: () -> Unit = {},
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
+    val width: Float = 200f
+    val height: Float = 100f
+
+    val shapeType: Shape = RoundedCornerShape(12.dp)
+    val color: Color = MaterialTheme.colorScheme.surfaceVariant
+
+    val shadowElevation: Dp = 4.dp
+
+
+    Surface(
+        modifier = Modifier,
+        shape = shapeType,
+        shadowElevation = shadowElevation
+    ) {
+        Column(
+            modifier = Modifier
+                .clickable { onClick() }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier,
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AvatarPFP(payee = payee)
+                    Text(
+                        text = payee.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(start = 10.dp)
+                    )
+                }
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                when {
+                                    payee.netBalance < 0 -> MaterialTheme.colorScheme.error.copy(0.5f)
+                                    payee.netBalance > 0 -> Color.Green.copy(0.2f)
+                                    else -> Color.DarkGray.copy(0.5f)
+                                },
+                                shape = RoundedCornerShape(10.dp),
+
+                            )
+                            .zIndex(0f)
+                    )
+                    Text(
+                        text = payee.formatCompact(payee.netBalance),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = when {
+                            payee.netBalance < 0 -> MaterialTheme.colorScheme.error
+                            payee.netBalance > 0 -> Color.Green.copy(0.5f)
+                            else -> Color.DarkGray
+                        },
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(start = 10.dp)
+                            .zIndex(1f)
+                    )
+
+                }
+
+            }
+            Row(
+                modifier = Modifier
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    // Content for the first box (e.g., due to amount)
+                    Text(
+                        text = "You owe: ${payee.formatCompact(payee.dueToAmount)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    // Content for the second box (e.g., due from amount)
+                    Text(
+                        text = "Owed to you: ${payee.formatCompact(payee.dueFromAmount)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Transactions: ${payee.transactionCount}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Box(
+                    modifier = Modifier.weight(if (payee.lastInteractionAt != null) 1f else {
+                        0.1f
+                    }
+                    )
+                ) {
+                    payee.lastInteractionAt?.let {
+                        Text(
+                            text = "Last interaction: ${payee.formatRelativeTime(it)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+
+                        )
+                    }
+                }
+
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        // TODO: Implement settle up logic
+                    },
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountBalanceWallet,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                    Text(
+                        text = "Settle Up"
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                Button(
+                    onClick = { onEditClick() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Edit")
+                }
+
+                Button(
+                    onClick = { onDeleteClick() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Delete")
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+private fun AvatarPFP(payee: Payee) {
+    val avatarUri: Uri? = payee.avatarUri?.toUri()
+    val initials = payee.name.take(2).uppercase()
+
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .background(MaterialTheme.colorScheme.primary, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        if (avatarUri != null) {
+            // TODO: Implement image loading for avatarUri
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        } else {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun PreviewPayeeCard() {
@@ -503,11 +757,18 @@ private fun PreviewPayeeCard() {
             phone = "+91 9877669696",
             upiId = "hellomamacita@upi",
             createdAt = System.currentTimeMillis(),
-            dueToAmount = 2500000,
-            dueFromAmount = 1250000,
-            transactionCount = 24
+            dueToAmount = 120000,
+            dueFromAmount = 2350000,
+            transactionCount = 24,
+//            lastInteractionAt = System.currentTimeMillis() - 60 * 60 * 24 * 1000
         ),
         onEditClick = { },
         onDeleteClick = { }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PreviewPayeeScreen() {
+    PeopleManagementContent()
 }

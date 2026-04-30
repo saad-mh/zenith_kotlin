@@ -50,4 +50,61 @@ data class TransactionEntity(
 	val currency: String = "INR",
 	val isDeleted: Boolean = false,
 	val deletedAt: Long? = null
-)
+) {
+	fun formatCompact(amount: Long): String {
+		val rupees = amount / 100.0
+		val abs = kotlin.math.abs(rupees)
+
+		val formatted = when {
+			abs >= 1_00_000 -> {
+				val value = abs / 1_00_000
+				if (value % 1.0 == 0.0) "${value.toInt()}L"
+				else "%.1fL".format(value)
+			}
+
+			abs >= 1_000 -> {
+				val value = abs / 1_000
+				if (value % 1.0 == 0.0) "${value.toInt()}k"
+				else "%.1fk".format(value)
+			}
+
+			else -> abs.toInt().toString()
+		}
+
+		return when {
+			amount > 0 -> formatted
+			amount < 0 -> formatted
+			else -> "none"
+		}
+	}
+
+	companion object {
+		fun formatCompact(amount: Long): String {
+			val rupees = amount / 100.0
+			val abs = kotlin.math.abs(rupees)
+
+			val formatted = when {
+				abs >= 1_00_000 -> {
+					val value = abs / 1_00_000
+					if (value % 1.0 == 0.0) "${value.toInt()}L"
+					else "%.1fL".format(value)
+				}
+
+				abs >= 1_000 -> {
+					val value = abs / 1_000
+					if (value % 1.0 == 0.0) "${value.toInt()}k"
+					else "%.1fk".format(value)
+				}
+
+				else -> abs.toInt().toString()
+			}
+
+			return when {
+				amount > 0 -> formatted
+				amount < 0 -> formatted
+				else -> "none"
+			}
+		}
+	}
+
+}

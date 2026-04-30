@@ -2,10 +2,14 @@ package com.saadm.zenith.data.repository
 
 import com.saadm.zenith.data.db.dao.PayeeBalanceDao
 import com.saadm.zenith.data.db.dao.PayeeDao
+import com.saadm.zenith.data.db.dao.TransactionDao
+import com.saadm.zenith.data.entity.PayeeBalanceView
 import com.saadm.zenith.data.entity.PayeeEntity
+import com.saadm.zenith.data.entity.TransactionEntity
 import com.saadm.zenith.domain.model.Payee
 import com.saadm.zenith.domain.repository.PayeeRepo
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -17,63 +21,47 @@ import javax.inject.Inject
  */
 class PayeeRepoImpl @Inject constructor(
 	private val payeeDao: PayeeDao,
-	private val payeeBalanceDao: PayeeBalanceDao
+	private val payeeBalanceDao: PayeeBalanceDao,
+	private val transactionDao: TransactionDao
 ) : PayeeRepo {
 
 	override fun observeAllActive(): Flow<List<Payee>> {
 		return payeeBalanceDao.observeAllActive().map { balances ->
 			balances.map { balance ->
-				Payee(
-					id = balance.id,
-					name = balance.name,
-					avatarUri = balance.avatarUri,
-					phone = balance.phone,
-					upiId = balance.upiId,
-					createdAt = balance.createdAt,
-					dueToAmount = balance.dueToAmount,
-					dueFromAmount = balance.dueFromAmount,
-					netBalance = balance.netBalanceAmount(),
-					transactionCount = balance.transactionCount,
-					lastInteractionAt = balance.lastInteractionAt
-				)
+				balance.toDomain()
 			}
 		}
 	}
 
 	override fun observeById(id: Long): Flow<Payee?> {
-		return payeeBalanceDao.observeById(id).map { balance ->
-			balance?.let {
-				Payee(
-					id = it.id,
-					name = it.name,
-					avatarUri = it.avatarUri,
-					phone = it.phone,
-					upiId = it.upiId,
-					createdAt = it.createdAt,
-					dueToAmount = it.dueToAmount,
-					dueFromAmount = it.dueFromAmount,
-					netBalance = it.netBalanceAmount(),
-					transactionCount = it.transactionCount,
-					lastInteractionAt = it.lastInteractionAt
-				)
-			}
+		return combine(
+			payeeBalanceDao.observeById(id),
+			transactionDao.observeActiveByPayeeId(id)
+		) { balance, transactions ->
+			balance?.toDomain(transactions)
 		}
 	}
 
 	override suspend fun getById(id: Long): Payee? {
 		val balance = payeeBalanceDao.getById(id) ?: return null
+		val transactions = transactionDao.getActiveByPayeeId(id)
+		return balance.toDomain(transactions)
+	}
+
+	private fun PayeeBalanceView.toDomain(transactions: List<TransactionEntity> = emptyList()): Payee {
 		return Payee(
-			id = balance.id,
-			name = balance.name,
-			avatarUri = balance.avatarUri,
-			phone = balance.phone,
-			upiId = balance.upiId,
-			createdAt = balance.createdAt,
-			dueToAmount = balance.dueToAmount,
-			dueFromAmount = balance.dueFromAmount,
-			netBalance = balance.netBalanceAmount(),
-			transactionCount = balance.transactionCount,
-			lastInteractionAt = balance.lastInteractionAt
+			id = id,
+			name = name,
+			avatarUri = avatarUri,
+			phone = phone,
+			upiId = upiId,
+			createdAt = createdAt,
+			dueToAmount = dueToAmount,
+			dueFromAmount = dueFromAmount,
+			netBalance = netBalanceAmount(),
+			transactionCount = transactionCount,
+			lastInteractionAt = lastInteractionAt,
+			transactions = transactions
 		)
 	}
 

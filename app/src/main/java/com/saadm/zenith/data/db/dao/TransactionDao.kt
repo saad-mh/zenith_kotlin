@@ -19,6 +19,28 @@ interface TransactionDao {
 	@Query("SELECT * FROM transactions WHERE isDeleted = 0 ORDER BY transactedAt DESC, id DESC")
 	fun observeAllActive(): Flow<List<TransactionEntity>>
 
+	@Query(
+		"""
+		SELECT * FROM transactions
+		WHERE payeeId = :payeeId
+		  AND isDeleted = 0
+		  AND type IN ('DUE_TO', 'DUE_FROM')
+		ORDER BY transactedAt DESC, id DESC
+		"""
+	)
+	fun observeActiveByPayeeId(payeeId: Long): Flow<List<TransactionEntity>>
+
+	@Query(
+		"""
+		SELECT * FROM transactions
+		WHERE payeeId = :payeeId
+		  AND isDeleted = 0
+		  AND type IN ('DUE_TO', 'DUE_FROM')
+		ORDER BY transactedAt DESC, id DESC
+		"""
+	)
+	suspend fun getActiveByPayeeId(payeeId: Long): List<TransactionEntity>
+
 	@Query("""
         SELECT * FROM transactions
         WHERE isDeleted = 0

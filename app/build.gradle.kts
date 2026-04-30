@@ -85,4 +85,6 @@ dependencies {
     ksp(libs.hilt.android.compiler.v2571)
 
     testImplementation(libs.mockito.kotlin)
+
+    implementation(libs.androidx.compose.material)
 }

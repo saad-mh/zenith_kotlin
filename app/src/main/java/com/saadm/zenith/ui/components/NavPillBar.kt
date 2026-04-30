@@ -45,7 +45,12 @@ sealed class NavRoute(val route: String) {
     object Settings : NavRoute("settings")
     object People: NavRoute("people")
     object Insights: NavRoute("insights")
+    // Dedicated route for payee details screen that accepts a payeeId path argument.
+    object PayeeDetails : NavRoute("payee_details/{payeeId}")
 }
+
+/** Helper to build a concrete payee details route with an id. */
+fun payeeDetailsRoute(payeeId: Long): String = "payee_details/$payeeId"
 
 data class NavItem(
     val route: NavRoute,
