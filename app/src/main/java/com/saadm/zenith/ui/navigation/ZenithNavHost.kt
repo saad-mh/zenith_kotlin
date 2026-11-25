@@ -186,7 +186,8 @@ fun ZenithNavHost(
         composable(Destination.Transactions.route) {
             TransactionsScreen(
                 onBack = { navController.popBackStack() },
-                onAdd = { navController.navigate(Destination.AddTransaction.route) { launchSingleTop = true } }
+                onAdd = { navController.navigate(Destination.ADD_ROUTE) { launchSingleTop = true } },
+                onEdit = { id -> navController.navigate(Destination.editRoute(id)) }
             )
         }
         composable(Destination.Payees.route) {
@@ -204,7 +205,10 @@ fun ZenithNavHost(
                 onBack = { navController.popBackStack() }
             )
         }
-        dialog(Destination.AddTransaction.route) {
+        dialog(
+            route = Destination.AddTransaction.route,
+            arguments = listOf(navArgument(TXN_ID_ARG) { type = NavType.LongType; defaultValue = 0L })
+        ) {
             AddTransactionFlow(onDismissRequest = { navController.popBackStack() })
         }
     }

@@ -4,6 +4,9 @@ package com.saadm.zenith.ui.navigation
 // so back stacks saved by earlier builds still resolve.
 const val PAYEE_ID_ARG = "payeeId"
 
+// Optional on the add route: set to edit that transaction.
+const val TXN_ID_ARG = "txnId"
+
 /**
  * Every navigable screen. Call sites use these objects rather than literal strings.
  * The route strings are the ones already in use, so saved back stacks keep working.
@@ -16,12 +19,16 @@ sealed class Destination(val route: String) {
     data object Transactions : Destination("transactions")
     data object Payees : Destination("people")
     data object Categories : Destination("categories")
-    data object AddTransaction : Destination("add")
+    data object AddTransaction : Destination("add?$TXN_ID_ARG={$TXN_ID_ARG}")
     data object PayeeDetails : Destination("payee_details/{$PAYEE_ID_ARG}")
 
     companion object {
         /** Top-level tabs, in pill order. */
         val topLevelTabs: List<Destination> = listOf(Overview, Insights, Settings)
+
+        const val ADD_ROUTE = "add"
+
+        fun editRoute(txnId: Long): String = "add?$TXN_ID_ARG=$txnId"
 
         fun payeeDetailsRoute(payeeId: Long): String = "payee_details/$payeeId"
 

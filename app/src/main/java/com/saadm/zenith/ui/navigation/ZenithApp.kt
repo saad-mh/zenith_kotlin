@@ -47,7 +47,7 @@ fun ZenithApp(transitionDurationMillis: Int, transitionStyle: TransitionStyle) {
         PrimaryActionSpec(
             icon = Icons.Rounded.Add,
             contentDescription = "Add transaction",
-            onClick = { navController.navigate(Destination.AddTransaction.route) { launchSingleTop = true } }
+            onClick = { navController.navigate(Destination.ADD_ROUTE) { launchSingleTop = true } }
         )
     }
 

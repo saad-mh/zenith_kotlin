@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.domain.transaction.TxnItem
 import com.saadm.zenith.domain.transaction.TxnNames
 import com.saadm.zenith.domain.transaction.dayLabel
@@ -27,6 +28,7 @@ fun TxnDetailSheet(
     item: TxnItem,
     names: TxnNames,
     today: LocalDate,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -46,6 +48,11 @@ fun TxnDetailSheet(
             item.shares.forEach { share ->
                 Share("${names.payees[share.payeeId] ?: "Someone"} owes you", share.amount)
             }
+        }
+        // Transfers are two linked rows and splits carry shares, so neither is edited here.
+        val transfer = item.txn.type == TxnType.TRANSFER_IN || item.txn.type == TxnType.TRANSFER_OUT
+        if (!transfer && item.shares.isEmpty()) {
+            SecondaryButton("Edit", onEdit, Modifier.fillMaxWidth())
         }
         SecondaryButton("Delete", { confirming = true }, Modifier.fillMaxWidth())
     }
