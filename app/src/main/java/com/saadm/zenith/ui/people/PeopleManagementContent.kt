@@ -59,6 +59,8 @@ import androidx.core.net.toUri
 import com.saadm.zenith.data.db.DatabaseProvider
 import com.saadm.zenith.data.entity.PayeeEntity
 import com.saadm.zenith.domain.model.Payee
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import kotlinx.coroutines.launch
 
 /**
@@ -67,7 +69,8 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun PeopleManagementContent(
-    onPayeeClick: (Long) -> Unit = {}
+    onPayeeClick: (Long) -> Unit = {},
+    createRequests: Int = 0
 ) {
     val context = LocalContext.current
     val appDatabase = remember(context.applicationContext) {
@@ -97,6 +100,14 @@ fun PeopleManagementContent(
     }
 
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    // Each increment from the caller opens the add dialog once.
+    var handledCreateRequests by rememberSaveable { mutableIntStateOf(createRequests) }
+    LaunchedEffect(createRequests) {
+        if (createRequests != handledCreateRequests) {
+            handledCreateRequests = createRequests
+            showCreateDialog = true
+        }
+    }
     var editingPayee by remember { mutableStateOf<Payee?>(null) }
 
     Text(

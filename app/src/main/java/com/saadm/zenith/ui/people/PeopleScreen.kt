@@ -19,14 +19,14 @@ import androidx.compose.ui.unit.dp
 import com.saadm.zenith.ui.theme.ZenithTheme
 
 @Composable
-fun PeopleScreen(onNavigateToPayee: (Long) -> Unit = {}) {
+fun PeopleScreen(onNavigateToPayee: (Long) -> Unit = {}, createRequests: Int = 0) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Use the full management content which lists payees; clicking a payee will invoke the
         // provided navigation callback with the payee id so the caller can navigate by id.
-        PeopleManagementContent(onPayeeClick = onNavigateToPayee)
+        PeopleManagementContent(onPayeeClick = onNavigateToPayee, createRequests = createRequests)
     }
 }
 
