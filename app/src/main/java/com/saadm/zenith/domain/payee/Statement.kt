@@ -16,13 +16,16 @@ private val statementDate = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENG
 /**
  * A plain-text balance statement to send to [name], written from the user to them: "you" is the
  * person, "I" is the user. [notes] holds each transaction's note. Newest entries first.
+ * [bold] marks the balance and the section heading with WhatsApp's *asterisks*; names and notes are never marked.
  */
 fun balanceStatement(
     name: String,
     ledger: PayeeLedger,
     notes: Map<Long, String?>,
-    zone: ZoneId = ZoneId.systemDefault()
+    zone: ZoneId = ZoneId.systemDefault(),
+    bold: Boolean = false
 ): String {
+    fun strong(text: String) = if (bold) "*$text*" else text
     val amount = MoneyFormatter.format(abs(ledger.net)).text
     val balance = when {
         ledger.net > 0 -> "You owe me $amount."
@@ -44,9 +47,9 @@ fun balanceStatement(
     }
     val earlier = ledger.history.size - recent.size
     return buildString {
-        append("Hi $name,\n").append(balance)
+        append("Hi $name,\n").append(strong(balance))
         if (recent.isNotEmpty()) {
-            append("\n\nRecent:\n").append(recent.joinToString("\n"))
+            append("\n\n").append(strong("Recent:")).append("\n").append(recent.joinToString("\n"))
             if (earlier > 0) append("\n($earlier earlier not shown)")
         }
     }

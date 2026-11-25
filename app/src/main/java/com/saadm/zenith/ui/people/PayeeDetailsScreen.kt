@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.people
 
+import com.saadm.zenith.ui.components.ZenithSwitch
 import com.saadm.zenith.ui.components.ActionSheet
 import com.saadm.zenith.ui.common.LocalBottomBarInset
 import com.saadm.zenith.ui.components.ZenithTextField
@@ -63,6 +64,7 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
     var settling by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
     var previewing by remember { mutableStateOf(false) }
+    val whatsappBold by viewModel.whatsappBold.collectAsState()
     val context = LocalContext.current
     val view = LocalView.current
     val loaded = state
@@ -105,7 +107,8 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
         val text = balanceStatement(
             loaded.payee.name,
             loaded.ledger,
-            loaded.transactions.mapValues { it.value.note }
+            loaded.transactions.mapValues { it.value.note },
+            bold = whatsappBold
         )
         // Shown in full first, so notes are never sent unseen.
         ActionSheet(
@@ -119,6 +122,7 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
             onDismiss = { previewing = false }
         ) {
             ZenithCard { Text(text, style = ZenithType.body, color = zenithColors().ink) }
+            ZenithSwitch("Bold for WhatsApp", whatsappBold, viewModel::setWhatsappBold)
             SecondaryButton(
                 "Copy",
                 {

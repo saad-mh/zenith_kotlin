@@ -53,7 +53,9 @@ data class AppPreferences(
     val addSheetOpens: Int = 0,
     /** A category id, or LAST_USED_CATEGORY, that new entries start with. Null is the built-in default. */
     val defaultExpenseCategory: Long? = null,
-    val defaultIncomeCategory: Long? = null
+    val defaultIncomeCategory: Long? = null,
+    /** Bold the balance and headings of a shared statement the WhatsApp way. */
+    val whatsappBold: Boolean = false
 )
 
 class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
@@ -104,7 +106,8 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
                 upiId = preferences[PreferenceKeys.UPI_ID].orEmpty(),
                 addSheetOpens = preferences[PreferenceKeys.ADD_SHEET_OPENS] ?: 0,
                 defaultExpenseCategory = preferences[PreferenceKeys.DEFAULT_EXPENSE_CATEGORY],
-                defaultIncomeCategory = preferences[PreferenceKeys.DEFAULT_INCOME_CATEGORY]
+                defaultIncomeCategory = preferences[PreferenceKeys.DEFAULT_INCOME_CATEGORY],
+                whatsappBold = preferences[PreferenceKeys.WHATSAPP_BOLD] ?: false
             )
         }
 
@@ -170,6 +173,8 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         categoryId
     )
 
+    suspend fun updateWhatsappBold(enabled: Boolean) = set(PreferenceKeys.WHATSAPP_BOLD, enabled)
+
     suspend fun countAddSheetOpen() {
         dataStore.edit { prefs -> prefs[PreferenceKeys.ADD_SHEET_OPENS] = (prefs[PreferenceKeys.ADD_SHEET_OPENS] ?: 0) + 1 }
     }
@@ -213,6 +218,7 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         val UPI_ID = stringPreferencesKey("upi_id")
         val ADD_SHEET_OPENS = intPreferencesKey("add_sheet_opens")
         val DEFAULT_EXPENSE_CATEGORY = longPreferencesKey("default_expense_category")
+        val WHATSAPP_BOLD = booleanPreferencesKey("whatsapp_bold")
         val DEFAULT_INCOME_CATEGORY = longPreferencesKey("default_income_category")
     }
 }

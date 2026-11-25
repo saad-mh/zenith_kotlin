@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.people
 
+import kotlinx.coroutines.flow.map
+import com.saadm.zenith.data.preferences.AppPreferencesStore
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -98,8 +100,17 @@ class PayeeDetailViewModel @Inject constructor(
     private val payeeRepo: PayeeRepo,
     transactions: TransactionRepo,
     accounts: AccountRepo,
-    private val recordSettlement: RecordSettlement
+    private val recordSettlement: RecordSettlement,
+    private val preferenceStore: AppPreferencesStore
 ) : ViewModel() {
+
+    val whatsappBold: StateFlow<Boolean> = preferenceStore.preferencesFlow
+        .map { it.whatsappBold }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun setWhatsappBold(enabled: Boolean) {
+        viewModelScope.launch { preferenceStore.updateWhatsappBold(enabled) }
+    }
 
     private val payeeId: Long = savedState.get<Long>(PAYEE_ID_ARG) ?: 0L
     private val today = LocalDate.now()
