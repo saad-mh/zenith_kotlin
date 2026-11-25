@@ -18,4 +18,26 @@ interface BudgetDao {
 
 	@Query("SELECT * FROM budgets WHERE isActive = 1")
 	fun observeActiveBudgets(): Flow<List<BudgetEntity>>
+
+	// A budget belongs to one month: its startDate is the first millisecond of that month.
+	@Query(
+		"""
+		SELECT * FROM budgets
+		WHERE isActive = 1 AND startDate = :periodStartMillis
+		ORDER BY (categoryId IS NULL) DESC, id ASC
+		"""
+	)
+	fun observeForPeriod(periodStartMillis: Long): Flow<List<BudgetEntity>>
+
+	@Query(
+		"""
+		SELECT * FROM budgets
+		WHERE isActive = 1 AND startDate = :periodStartMillis
+		ORDER BY (categoryId IS NULL) DESC, id ASC
+		"""
+	)
+	suspend fun getForPeriod(periodStartMillis: Long): List<BudgetEntity>
+
+	@Query("UPDATE budgets SET isActive = 0 WHERE id = :id")
+	suspend fun deactivate(id: Long)
 }
