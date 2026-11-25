@@ -2,6 +2,8 @@ package com.saadm.zenith.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.saadm.zenith.ui.components.StatusTone
+import com.saadm.zenith.ui.components.statusChipColors
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -30,7 +32,11 @@ class ContrastTest {
             val pairs = text.flatMap { (fg, f) -> surfaces.map { (bg, b) -> Triple("$fg on $bg", f, b) } } +
                 c.avatarTints.mapIndexed { i, t -> Triple("tint $i", t.fg, t.bg) } +
                 Triple("button text", c.onStrong, c.primaryStrong) +
-                Triple("selected tab", c.link, c.avatarTints[0].bg)
+                Triple("selected tab", c.link, c.avatarTints[0].bg) +
+                StatusTone.entries.map { tone ->
+                    val (fill, text) = statusChipColors(tone, c)
+                    Triple("chip $tone", text, fill)
+                }
             pairs.filter { ratio(it.second, it.third) < 4.5f }
                 .map { "$name: ${it.first} ${ratio(it.second, it.third)}" }
         }

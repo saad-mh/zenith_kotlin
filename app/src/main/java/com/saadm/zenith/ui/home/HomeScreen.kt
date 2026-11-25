@@ -1,5 +1,11 @@
 package com.saadm.zenith.ui.home
 
+import com.saadm.zenith.ui.components.charts.chart
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Canvas
 import com.saadm.zenith.ui.common.LocalBottomBarInset
 import com.saadm.zenith.ui.components.DayHeader
 import com.saadm.zenith.ui.components.Lu
@@ -160,7 +166,33 @@ private fun SpendCard(spend: MonthSpend) {
             previous = spend.lastMonth,
             modifier = Modifier.padding(top = ZenithSpacing.space2).height(64.dp)
         )
-        Text("Solid: this month · Dashed: $lastMonth", style = ZenithType.caption, color = colors.inkMuted)
+        Row(
+            modifier = Modifier.padding(top = ZenithSpacing.space1).clearAndSetSemantics {
+                contentDescription = "Solid line this month, dashed line $lastMonth"
+            },
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space4)
+        ) {
+            LineKey(thisMonth.shortMonthName(), dashed = false)
+            LineKey(lastMonth, dashed = true)
+        }
+    }
+}
+
+/** A short sample of a chart line, drawn the way the chart draws it, then its month. */
+@Composable
+private fun LineKey(label: String, dashed: Boolean) {
+    val colors = zenithColors()
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        Canvas(Modifier.size(width = 24.dp, height = 8.dp)) {
+            drawLine(
+                color = colors.chart(if (dashed) 2 else 0),
+                start = Offset(0f, size.height / 2),
+                end = Offset(size.width, size.height / 2),
+                strokeWidth = (if (dashed) 1.5f else 2f).dp.toPx(),
+                pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 5.dp.toPx())) else null
+            )
+        }
+        Text(label, style = ZenithType.caption, color = colors.inkMuted)
     }
 }
 

@@ -200,11 +200,6 @@ private fun CategorySheet(
             SecondaryButton("Merge", { confirming = true }, Modifier.fillMaxWidth(), enabled = mergeInto != null)
         }
         SecondaryButton("Archive", onArchive, Modifier.fillMaxWidth())
-        Text(
-            "Archiving hides the category from new entries. Existing entries keep it.",
-            style = ZenithType.caption,
-            color = colors.inkMuted
-        )
     }
 
     val target = mergeInto

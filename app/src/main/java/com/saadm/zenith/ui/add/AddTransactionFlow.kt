@@ -1,6 +1,5 @@
 package com.saadm.zenith.ui.add
 
-import com.saadm.zenith.ui.components.categoryIcon
 import com.saadm.zenith.ui.components.ZenithTextField
 import com.saadm.zenith.ui.components.Lu
 import androidx.compose.ui.unit.sp
@@ -20,7 +19,6 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -70,6 +68,7 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
     val form by viewModel.form.collectAsState()
     val options by viewModel.options.collectAsState()
     val saved by viewModel.saved.collectAsState()
+    val draftHint by viewModel.draftHint.collectAsState()
     var step by rememberSaveable { mutableStateOf(Step.Amount) }
     val context = LocalContext.current
 
@@ -109,7 +108,7 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
             Step.Amount -> AmountStep(
                 title = title,
                 onClose = onDismissRequest,
-                keepsDraft = viewModel.keepsDraft,
+                draftHint = draftHint,
                 form = form,
                 categories = options.categoriesFor(form),
                 payeeName = options.payees.firstOrNull { it.id == form.payeeId }?.name,
@@ -180,11 +179,12 @@ private fun DirectionChips(form: AddForm, onChange: ((AddForm) -> AddForm) -> Un
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AmountStep(
     title: String,
     onClose: () -> Unit,
-    keepsDraft: Boolean,
+    draftHint: Boolean,
     form: AddForm,
     categories: List<CategoryEntity>,
     payeeName: String?,
@@ -231,7 +231,7 @@ private fun AmountStep(
             Text("= ${MoneyFormatter.format(sum).text}", style = ZenithType.bodyStrong, color = colors.ink)
         }
         FilterChip(form.text.ifBlank { "Add note" }, false, onDetails, icon = Lu.lucide_ic_text_align_start)
-        if (form.amount.isNotEmpty() && keepsDraft) {
+        if (form.amount.isNotEmpty() && draftHint) {
             Text("Closing keeps this as a draft", style = ZenithType.caption, color = colors.inkMuted)
         }
         // A zero amount needs no telling off before anything is typed.
@@ -239,13 +239,11 @@ private fun AmountStep(
     }
 
     Column(verticalArrangement = gap) {
-        if (categories.isNotEmpty()) {
-            CategoryChips(form, categories, onChange, Modifier.horizontalScroll(rememberScrollState()))
-        }
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
         ) {
+            CategoryChooser(categories, form.categoryId) { id -> onChange { it.copy(categoryId = id, categoryPicked = true) } }
             FilterChip(dayLabel(form.date, today), false, onDetails, icon = Lu.lucide_ic_calendar)
             if (form.needsPayee) FilterChip(payeeName ?: "Choose person", false, onDetails, icon = Lu.lucide_ic_user)
             // A due moves no money, so it has no account.
@@ -260,25 +258,6 @@ private fun AmountStep(
             canSave = form.problem == null,
             onSave = onSave
         )
-    }
-}
-
-@Composable
-private fun CategoryChips(
-    form: AddForm,
-    categories: List<CategoryEntity>,
-    onChange: ((AddForm) -> AddForm) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
-        categories.forEach { category ->
-            FilterChip(
-                category.name,
-                form.categoryId == category.id,
-                { onChange { it.copy(categoryId = category.id, categoryPicked = true) } },
-                icon = categoryIcon(category.emoji)?.image
-            )
-        }
     }
 }
 
@@ -315,18 +294,7 @@ private fun DetailsStep(
     val categories = options.categoriesFor(form)
     if (categories.isNotEmpty()) {
         Label("Category")
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
-            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
-        ) {
-            categories.forEach { category ->
-                FilterChip(
-                    category.name,
-                    form.categoryId == category.id,
-                    { onChange { it.copy(categoryId = category.id, categoryPicked = true) } }
-                )
-            }
-        }
+        CategoryChooser(categories, form.categoryId) { id -> onChange { it.copy(categoryId = id, categoryPicked = true) } }
     }
 
     // A due moves no money, so it has no account.

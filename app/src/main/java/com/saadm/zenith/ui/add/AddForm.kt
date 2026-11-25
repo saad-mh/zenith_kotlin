@@ -16,7 +16,7 @@ enum class AddKind(val label: String, val types: List<TxnType>) {
     Expense("Expense", listOf(TxnType.EXPENSE)),
     Income("Income", listOf(TxnType.INCOME)),
     Owed("Owed", listOf(TxnType.DUE_TO, TxnType.DUE_FROM)),
-    Paid("You paid", listOf(TxnType.SETTLEMENT_TO, TxnType.SETTLEMENT_FROM));
+    Paid("Paid", listOf(TxnType.SETTLEMENT_TO, TxnType.SETTLEMENT_FROM));
 
     companion object {
         fun of(type: TxnType): AddKind = entries.firstOrNull { type in it.types } ?: Expense

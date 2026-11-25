@@ -64,7 +64,6 @@ fun WhoStep(
     val colors = zenithColors()
     ZenithTextButton("Back to amount", onBack)
     Text("Who's in this one?", style = ZenithType.subheading, color = colors.ink)
-    Text("You paid. Pick who shares it with you.", style = ZenithType.caption, color = colors.inkMuted)
     payees.forEach { payee ->
         val chosen = payee.id in form.people
         ListRow(

@@ -127,14 +127,12 @@ fun SettingsPageScreen(page: SettingsPage, onBack: () -> Unit, viewModel: Settin
                     )
                 }
                 SettingsPage.MonthStart -> {
-                    Hint("Budgets and Insights count a month from this day.")
                     DayGrid(preferences.monthStartDay, viewModel::setMonthStartDay)
                 }
                 SettingsPage.WeekStarts ->
                     Choices(null, WeekStart.entries, preferences.weekStart, { weekStartLabels.getValue(it) }, viewModel::setWeekStart)
                 SettingsPage.Split -> {
                     Choices(null, SplitMode.entries, preferences.defaultSplitMode, { splitModeLabels.getValue(it) }, viewModel::setSplitMode)
-                    Hint("How a new shared expense starts out. You can change it while splitting.")
                 }
                 SettingsPage.Accounts -> Accounts(loaded, viewModel)
                 SettingsPage.Licences -> Licences()
@@ -240,7 +238,7 @@ private fun Accounts(state: SettingsState, viewModel: SettingsViewModel) {
             }
         }
     } else {
-        Hint("No accounts yet. Add one to track what is in it.")
+        Hint("No accounts yet.")
     }
     PrimaryButton("Add account", { adding = true }, Modifier.fillMaxWidth())
     if (state.accounts.isNotEmpty()) {
@@ -311,7 +309,6 @@ private fun AccountSheet(
             error = if (balance == null) "Enter a number, with up to two decimals" else null
         )
         if (onArchive != null) {
-            Hint("Archiving hides the account. Its entries stay.")
             ZenithTextButton("Archive account", onArchive)
         }
     }

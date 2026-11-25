@@ -171,6 +171,8 @@ private fun BudgetsContent(
         if (!budgets.editable) {
             Text("Past months are read-only.", style = ZenithType.caption, color = colors.inkMuted)
         }
+        // The same line stays on a tile while the screen is up; it changes with the month and the next launch.
+        val quipKey = sessionQuipSalt + state.period.startDate.monthValue
         // One tile per row at large font sizes, otherwise two.
         val columns = if (LocalDensity.current.fontScale >= 1.3f) 1 else 2
         val daysLeft = ChronoUnit.DAYS.between(state.today, state.period.endDate).takeIf { state.isCurrentMonth }
@@ -191,6 +193,7 @@ private fun BudgetsContent(
                             line = line,
                             pace = budgets.pace.takeIf { state.isCurrentMonth },
                             daysLeft = daysLeft,
+                            quip = budgetQuip(line.status, quipKey + id.toInt(), MoneyFormatter.format(abs(line.left)).text),
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             onClick = if (budgets.editable) ({ onEdit(id, line.limit) }) else null
                         )
@@ -198,7 +201,6 @@ private fun BudgetsContent(
                     if (row.size < columns) Spacer(Modifier.weight(1f))
                 }
             }
-        Text("Unused amounts don't carry over.", style = ZenithType.caption, color = colors.inkMuted)
     }
 }
 
@@ -228,12 +230,17 @@ private fun Summary(state: BudgetsState, summary: BudgetSummary) {
             color = colors.inkMuted,
             modifier = Modifier.padding(vertical = ZenithSpacing.space2)
         )
+        val overall = when (summary.status) {
+            "Over budget" -> BudgetStatus.OVER
+            "Ahead of pace" -> BudgetStatus.NEARING
+            else -> BudgetStatus.ON_TRACK
+        }
         StatusTag(
-            summary.status,
-            when (summary.status) {
-                "Over budget" -> StatusTone.Negative
-                "Ahead of pace" -> StatusTone.Caution
-                else -> StatusTone.Positive
+            budgetQuip(overall, sessionQuipSalt + state.period.startDate.monthValue, MoneyFormatter.format(abs(summary.left)).text),
+            when (overall) {
+                BudgetStatus.OVER -> StatusTone.Negative
+                BudgetStatus.NEARING -> StatusTone.Caution
+                BudgetStatus.ON_TRACK -> StatusTone.Positive
             }
         )
         if (state.isCurrentMonth) {
@@ -266,11 +273,6 @@ private fun NoBudgets(
     val colors = zenithColors()
     ZenithCard {
         Text("Set your first budget", style = ZenithType.heading, color = colors.ink)
-        Text(
-            "Give each category a monthly limit. Zenith shows what's left, so you can adjust before the month ends.",
-            style = ZenithType.body,
-            color = colors.inkMuted
-        )
     }
     if (state.canCopyLastMonth) {
         PrimaryButton("Copy last month's budgets", onCopyLastMonth, Modifier.fillMaxWidth())
@@ -295,19 +297,10 @@ private fun NoBudgets(
     }
     ZenithTextButton("Start from scratch", onStartFromScratch, Modifier.fillMaxWidth())
     ZenithCard {
-        Text("How statuses read", style = ZenithType.bodyStrong, color = colors.ink)
-        listOf(
-            Triple("On track", StatusTone.Positive, "Under 85% of the limit"),
-            Triple("Nearing limit", StatusTone.Caution, "85% to 100%"),
-            Triple("Over budget", StatusTone.Negative, "Past the limit")
-        ).forEach { (word, tone, meaning) ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
-                modifier = Modifier.padding(top = ZenithSpacing.space2)
-            ) {
-                StatusTag(word, tone)
-                Text(meaning, style = ZenithType.caption, color = colors.inkMuted)
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+            StatusTag("Safe: under 85% of the limit", StatusTone.Positive)
+            StatusTag("Nearing limit: 85–100%", StatusTone.Caution)
+            StatusTag("Past the limit", StatusTone.Negative)
         }
     }
 }
@@ -381,11 +374,6 @@ private fun MonthPickerSheet(history: List<MonthBudgets>, onPick: (Int) -> Unit,
                 onClick = { onPick(back) }
             )
         }
-        Text(
-            "Each month keeps its own budgets. Past months are read-only.",
-            style = ZenithType.caption,
-            color = colors.inkMuted
-        )
     }
 }
 
