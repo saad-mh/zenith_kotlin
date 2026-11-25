@@ -39,17 +39,6 @@ fun CumulativeLine(
     )
 }
 
-/** Compact line for Overview: no axes, a fixed 40dp height, the end point marked. */
-@Composable
-fun Sparkline(values: List<Long>, modifier: Modifier = Modifier) {
-    val description = "Trend. " + (values.lastOrNull()?.let { "Latest ${MoneyFormatter.format(it).spoken}." } ?: "No data.")
-    LineSeriesCanvas(
-        series = listOf(values),
-        dashedSeries = null,
-        modifier = modifier.height(40.dp).semantics { contentDescription = description }
-    )
-}
-
 @Composable
 private fun LineSeriesCanvas(
     series: List<List<Long>>,

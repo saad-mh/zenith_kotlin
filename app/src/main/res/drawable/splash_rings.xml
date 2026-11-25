@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The icon's rings, drawing themselves in while the outer pair swings into place. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector android:width="288dp" android:height="288dp" android:viewportWidth="108" android:viewportHeight="108">
+            <group android:name="outer" android:pivotX="54" android:pivotY="54">
+                <path android:name="top" android:pathData="M29.62,49.48 A24.8,24.8 0 0,1 78.38,49.48" android:strokeColor="@color/splash_rings"
+                    android:strokeWidth="1.1" android:strokeLineCap="round" android:fillColor="#00000000" />
+                <path android:name="bottom" android:pathData="M78.38,58.52 A24.8,24.8 0 0,1 29.62,58.52" android:strokeColor="@color/splash_rings"
+                    android:strokeWidth="1.1" android:strokeLineCap="round" android:fillColor="#00000000" />
+            </group>
+                <path android:name="inner" android:pathData="M54.00,31.50 A22.5,22.5 0 1,1 54.00,76.50 A22.5,22.5 0 1,1 54.00,31.50" android:strokeColor="@color/splash_rings"
+                    android:strokeWidth="1.1" android:strokeLineCap="round" android:fillColor="#00000000" />
+        </vector>
+    </aapt:attr>
+    <target android:name="inner">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:startOffset="0" android:duration="420" android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+    <target android:name="top">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:startOffset="100" android:duration="420" android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+    <target android:name="bottom">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:startOffset="100" android:duration="420" android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+    <target android:name="outer">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="-120" android:valueTo="0"
+                android:duration="520" android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+</animated-vector>
