@@ -59,8 +59,8 @@ val ZenithLightColors = ZenithColors(
         AvatarTint(Color(0xFFDCEFE5), Color(0xFF17603D)),
     ),
     chartColors = listOf(
-        Color(0xFF5A5FB0), Color(0xFFB79B5E), Color(0xFF9EA4DE),
-        Color(0xFFD8CBA8), Color(0xFFD9DBF3), Color(0xFFBDB7C6),
+        Color(0xFF5A5FB0), Color(0xFF8A6A2E), Color(0xFF7C82CC),
+        Color(0xFF9C5A0A), Color(0xFF1F7A4F), Color(0xFF6D6877),
     ),
 )
 
@@ -89,8 +89,8 @@ val ZenithDarkColors = ZenithColors(
         AvatarTint(Color(0xFF1F3B2E), Color(0xFF93DCB4)),
     ),
     chartColors = listOf(
-        Color(0xFF8A91DC), Color(0xFFD9B86F), Color(0xFF5A5FB0),
-        Color(0xFF8F7A4A), Color(0xFFCFD2F5), Color(0xFF6F677B),
+        Color(0xFF8A91DC), Color(0xFFD9B86F), Color(0xFF6B71C4),
+        Color(0xFFA08950), Color(0xFFCFD2F5), Color(0xFF7C7489),
     ),
 )
 
@@ -120,8 +120,8 @@ val ZenithMonochromeColors = ZenithColors(
         AvatarTint(Color(0xFFC4C4C3), Color(0xFF1B1B1B)),
     ),
     chartColors = listOf(
-        Color(0xFF1F1F1F), Color(0xFF5E5E5E), Color(0xFF8F8F8F),
-        Color(0xFFB9B9B8), Color(0xFFDADAD9), Color(0xFFE9E9E8),
+        Color(0xFF1F1F1F), Color(0xFF4A4A4A), Color(0xFF6E6E6E),
+        Color(0xFF3A3A3A), Color(0xFF808080), Color(0xFF5C5C5C),
     ),
 )
 
@@ -154,7 +154,7 @@ val ZenithMonochromeDarkColors = ZenithColors(
     ),
     chartColors = listOf(
         Color(0xFFF0F0F0), Color(0xFFB3B3B3), Color(0xFF8A8A8A),
-        Color(0xFF5E5E5E), Color(0xFF3C3C3C), Color(0xFF2A2A2A),
+        Color(0xFF767676), Color(0xFFD4D4D4), Color(0xFF9E9E9E),
     ),
 )
 

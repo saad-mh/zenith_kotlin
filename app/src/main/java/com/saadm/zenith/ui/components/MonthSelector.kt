@@ -51,6 +51,7 @@ fun MonthSwitcher(
             style = ZenithType.bodyStrong,
             color = colors.ink,
             modifier = Modifier
+                .weight(1f, fill = false)
                 .then(
                     if (onLabelClick == null) Modifier
                     else Modifier.clickable(onClickLabel = "Choose month", role = Role.Button, onClick = onLabelClick)

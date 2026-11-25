@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.transactions
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.res.painterResource
 import com.saadm.zenith.ui.components.Lu
 import com.saadm.zenith.ui.components.DayHeader
@@ -128,6 +130,7 @@ fun TransactionsScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TxnListContent(
     state: TxnListState,
@@ -158,8 +161,13 @@ private fun TxnListContent(
                 state.query.query?.let { text ->
                     ZenithTextField(text, onQuery, "Search note, category or person")
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
+                // The count drops to its own line when the switcher needs the width.
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
                         if (state.query.allMonths) {
                             Text("All months", style = ZenithType.bodyStrong, color = colors.ink)
                         } else {
