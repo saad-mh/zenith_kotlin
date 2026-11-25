@@ -24,6 +24,8 @@ datastoreCore = "1.2.1"
 foundation = "1.11.0"
 
 [libraries]
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version = "1.79.0" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version = "1.79.0" }
 lucide-icons = { module = "com.composables:icons-lucide-android", version = "2.2.1" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }

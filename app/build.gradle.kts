@@ -67,6 +67,11 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // -Proborazzi.record rewrites the screenshots; -Proborazzi.verify compares against them.
+        unitTests.all { test ->
+            listOf("record", "verify").filter { project.hasProperty("roborazzi.$it") }
+                .forEach { test.systemProperty("roborazzi.test.$it", "true") }
+        }
     }
 
     // Unit tests read the exported schemas as debug assets; release builds do not carry them.
@@ -118,4 +123,8 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.room.testing)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
 }

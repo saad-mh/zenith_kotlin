@@ -177,7 +177,13 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsContent(state: SettingsState, actions: SettingsActions, modifier: Modifier = Modifier) {
+private fun SettingsContent(
+    state: SettingsState,
+    actions: SettingsActions,
+    modifier: Modifier = Modifier,
+    // A slot, so previews and screenshots can leave out the part that needs the app's injector.
+    debugTools: @Composable () -> Unit = { DebugTools() }
+) {
     val colors = zenithColors()
     val preferences = state.preferences
     val context = LocalContext.current
@@ -263,7 +269,7 @@ private fun SettingsContent(state: SettingsState, actions: SettingsActions, modi
             SettingsRow(Lu.lucide_ic_scale, Tile.Teal, "Open-source licences", onClick = { actions.page(SettingsPage.Licences) })
             SettingsRow(Lu.lucide_ic_info, Tile.Indigo, "Version", value = version)
         }
-        DebugTools()
+        debugTools()
         Text(
             "Created with love by Saad",
             style = ZenithType.caption,
@@ -318,7 +324,7 @@ private fun PassphraseSheet(
 }
 
 @Composable
-private fun DeleteAllSheet(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+internal fun DeleteAllSheet(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var typed by remember { mutableStateOf("") }
     ActionSheet(
         title = "Delete all data?",
@@ -336,7 +342,7 @@ private fun DeleteAllSheet(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
 
 @Preview
 @Composable
-private fun SettingsPreview() {
+internal fun SettingsPreview() {
     val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
-    PalettePreview { SettingsContent(SettingsState(AppPreferences(), emptyList()), actions) }
+    PalettePreview { SettingsContent(SettingsState(AppPreferences(), emptyList()), actions, debugTools = {}) }
 }

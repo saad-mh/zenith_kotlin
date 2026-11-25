@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      # Screenshots are not compared here: they were recorded on macOS and text renders differently on Linux.
+      - name: Unit, UI and screenshot-smoke tests
+        run: bash ./gradlew testDebugUnitTest
+      # Catches anything R8 cannot resolve. The APK is unsigned and thrown away.
+      - name: Shrunk release build
+        run: bash ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-reports
+          path: app/build/reports/tests

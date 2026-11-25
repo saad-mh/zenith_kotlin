@@ -213,7 +213,7 @@ private fun PayeeListRow(row: PayeeRow, onClick: () -> Unit) {
 
 @Preview
 @Composable
-private fun PeoplePreview() {
+internal fun PeoplePreview() {
     val rows = listOf(
         PayeeRow(Payee(1, "Dev", null, null, null, 0), PayeeLedger.of(emptyList()))
     )

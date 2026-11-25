@@ -379,7 +379,7 @@ private fun MonthPickerSheet(history: List<MonthBudgets>, onPick: (Int) -> Unit,
 
 @Preview
 @Composable
-private fun BudgetsPreview() {
+internal fun BudgetsPreview() {
     val today = LocalDate.of(2026, 10, 20)
     val period = MonthPeriods.containing(today)
     val budgets = MonthBudgets(

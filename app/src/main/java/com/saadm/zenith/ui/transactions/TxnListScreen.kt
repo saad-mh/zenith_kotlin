@@ -240,7 +240,7 @@ private fun TxnListContent(
 
 @Preview
 @Composable
-private fun TxnListPreview() {
+internal fun TxnListPreview() {
     val today = LocalDate.of(2026, 10, 20)
     val rows = listOf(
         TransactionEntity(
