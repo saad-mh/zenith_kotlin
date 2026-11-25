@@ -58,6 +58,8 @@ private fun LineSeriesCanvas(
 ) {
     val colors = zenithColors()
     val top = series.flatten().maxOrNull()?.coerceAtLeast(1L) ?: 1L
+    // One x scale for every series, so a month that is only part way through stops part way across.
+    val points = series.maxOfOrNull { it.size } ?: 0
     Canvas(modifier.fillMaxWidth()) {
         val pad = 6.dp.toPx()
         val width = size.width - 2 * pad
@@ -65,7 +67,7 @@ private fun LineSeriesCanvas(
         val dash = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))
         series.forEachIndexed { seriesIndex, values ->
             if (values.isEmpty()) return@forEachIndexed
-            val step = if (values.size > 1) width / (values.size - 1) else 0f
+            val step = if (points > 1) width / (points - 1) else 0f
             val path = Path()
             values.forEachIndexed { i, value ->
                 val point = Offset(pad + step * i, pad + height * (1 - value.toFloat() / top))
@@ -87,7 +89,7 @@ private fun LineSeriesCanvas(
                 drawCircle(
                     color = colors.chart(0),
                     radius = 4.dp.toPx(),
-                    center = Offset(pad + width, pad + height * (1 - last.toFloat() / top))
+                    center = Offset(pad + step * (values.size - 1), pad + height * (1 - last.toFloat() / top))
                 )
             }
         }
