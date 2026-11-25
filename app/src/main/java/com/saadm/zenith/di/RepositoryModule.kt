@@ -3,10 +3,12 @@ package com.saadm.zenith.di
 import android.content.Context
 import com.saadm.zenith.data.preferences.AppPreferencesStore
 import com.saadm.zenith.data.repository.BudgetRepoImpl
+import com.saadm.zenith.data.repository.AccountRepoImpl
 import com.saadm.zenith.data.repository.CategoryRepoImpl
 import com.saadm.zenith.data.repository.PayeeRepoImpl
 import com.saadm.zenith.data.repository.TransactionRepoImpl
 import com.saadm.zenith.domain.repository.BudgetRepo
+import com.saadm.zenith.domain.repository.AccountRepo
 import com.saadm.zenith.domain.repository.CategoryRepo
 import com.saadm.zenith.domain.repository.PayeeRepo
 import com.saadm.zenith.domain.repository.TransactionRepo
@@ -38,6 +40,10 @@ abstract class RepositoryModule {
 	@Binds
 	@Singleton
 	abstract fun bindCategoryRepo(impl: CategoryRepoImpl): CategoryRepo
+
+	@Binds
+	@Singleton
+	abstract fun bindAccountRepo(impl: AccountRepoImpl): AccountRepo
 
 	companion object {
 		@Provides

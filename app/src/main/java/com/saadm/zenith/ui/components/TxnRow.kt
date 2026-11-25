@@ -180,16 +180,19 @@ data class TxnRowColors(
     fun amountColor(type: TxnType): Color = when (type) {
         TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> incomeAmount
         TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> expenseAmount
+        TxnType.TRANSFER_IN, TxnType.TRANSFER_OUT -> neutralAmount
     }
 
     fun badgeBackground(type: TxnType): Color = when (type) {
         TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> incomeBadgeBackground
         TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> expenseBadgeBackground
+        TxnType.TRANSFER_IN, TxnType.TRANSFER_OUT -> neutralBadgeBackground
     }
 
     fun badgeContent(type: TxnType): Color = when (type) {
         TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> incomeBadgeContent
         TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> expenseBadgeContent
+        TxnType.TRANSFER_IN, TxnType.TRANSFER_OUT -> neutralBadgeContent
     }
 }
 
@@ -306,7 +309,13 @@ object TxnRowDefaults {
         // locale formatting until the currency preference (#13) lands.
         if (currency.equals("INR", ignoreCase = true)) {
             val income = type == TxnType.INCOME || type == TxnType.DUE_FROM || type == TxnType.SETTLEMENT_FROM
-            return MoneyFormatter.format(abs(amount)).copy(sign = if (income) "+" else "−").text
+            val transfer = type == TxnType.TRANSFER_IN || type == TxnType.TRANSFER_OUT
+            val sign = when {
+                income -> "+"
+                transfer -> ""
+                else -> "−"
+            }
+            return MoneyFormatter.format(abs(amount)).copy(sign = sign).text
         }
         // Amount is provided in the smallest currency unit (e.g. cents/paise).
         // Convert to major unit by dividing by 100 and format with 2 decimal places.
@@ -315,6 +324,7 @@ object TxnRowDefaults {
         val sign = when (type) {
             TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> ""
             TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> "-"
+            TxnType.TRANSFER_IN, TxnType.TRANSFER_OUT -> ""
         }
 
         val formatted = runCatching {
@@ -354,6 +364,8 @@ object TxnRowDefaults {
         TxnType.DUE_FROM -> "DF"
         TxnType.SETTLEMENT_FROM -> "SR"
         TxnType.SETTLEMENT_TO -> "SP"
+        TxnType.TRANSFER_IN -> "TI"
+        TxnType.TRANSFER_OUT -> "TO"
     }
 }
 

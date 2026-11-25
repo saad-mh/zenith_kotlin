@@ -6,7 +6,9 @@ enum class TxnType {
     DUE_TO,
     DUE_FROM,
     SETTLEMENT_FROM,
-    SETTLEMENT_TO
+    SETTLEMENT_TO,
+    TRANSFER_IN,
+    TRANSFER_OUT
 }
 
 enum class SettlementStatus {

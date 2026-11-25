@@ -17,4 +17,11 @@ object Migrations {
             db.execSQL("CREATE VIEW `payee_balances` AS ${PayeeBalancesViewSql.SELECT}")
         }
     }
+
+    /** Accounts get an opening balance. Existing accounts start at zero, which is what they had before. */
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE accounts ADD COLUMN openingBalance INTEGER NOT NULL DEFAULT 0")
+        }
+    }
 }

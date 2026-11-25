@@ -16,6 +16,9 @@ interface TransactionRepo {
     /** Inserts or replaces a transaction. Returns its id. */
     suspend fun save(transaction: TransactionEntity): Long
 
+    /** Saves several rows in one write, so they land together or not at all. */
+    suspend fun saveAll(transactions: List<TransactionEntity>): List<Long>
+
     /** Payee dues and settlements for one payee, newest first. */
     fun observeForPayee(payeeId: Long): Flow<List<TransactionEntity>>
 
