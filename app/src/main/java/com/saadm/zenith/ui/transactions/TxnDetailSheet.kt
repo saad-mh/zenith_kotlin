@@ -29,6 +29,7 @@ fun TxnDetailSheet(
     names: TxnNames,
     today: LocalDate,
     onEdit: () -> Unit,
+    onRepeat: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -53,6 +54,7 @@ fun TxnDetailSheet(
         val transfer = item.txn.type == TxnType.TRANSFER_IN || item.txn.type == TxnType.TRANSFER_OUT
         if (!transfer && item.shares.isEmpty()) {
             SecondaryButton("Edit", onEdit, Modifier.fillMaxWidth())
+            SecondaryButton("Repeat", onRepeat, Modifier.fillMaxWidth())
         }
         SecondaryButton("Delete", { confirming = true }, Modifier.fillMaxWidth())
     }

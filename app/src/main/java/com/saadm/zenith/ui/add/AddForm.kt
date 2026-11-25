@@ -64,7 +64,8 @@ data class AddForm(
 
     val kind: AddKind get() = AddKind.of(type)
 
-    val paise: Long? get() = MoneyFormatter.parse(amount)
+    /** The typed sum in paise, or null while it can't be saved. */
+    val paise: Long? get() = evaluate(amount)
 
     /** Dues and settlements are between you and one person. */
     val needsPayee: Boolean get() = kind == AddKind.Owed || kind == AddKind.Paid
@@ -80,30 +81,10 @@ data class AddForm(
     /** What still stops a save, or null when it can go ahead. */
     val problem: String?
         get() = when {
-            paise == null -> "Enter an amount"
+            paise == null -> amountProblem(amount)
             needsPayee && payeeId == null -> "Choose a person"
             else -> null
         }
-}
-
-private const val MAX_WHOLE_DIGITS = 9
-const val BACKSPACE = "⌫"
-
-/** The amount after one keypad press. Presses that would make an unreadable amount are ignored. */
-fun typeKey(current: String, key: String): String {
-    if (key == BACKSPACE) return current.dropLast(1)
-    if (key == ".") return if ('.' in current) current else current.ifEmpty { "0" } + "."
-    val next = if (current == "0") key else current + key
-    val whole = next.substringBefore('.')
-    val decimals = next.substringAfter('.', "")
-    return if (whole.length > MAX_WHOLE_DIGITS || decimals.length > 2) current else next
-}
-
-/** The typed amount with Indian grouping, keeping a trailing point or zero as typed. */
-fun displayAmount(amount: String): String {
-    val whole = amount.substringBefore('.').ifEmpty { "0" }
-    val grouped = MoneyFormatter.format(whole.toLong() * 100).whole
-    return if ('.' in amount) "$grouped.${amount.substringAfter('.')}" else grouped
 }
 
 /** The category last used for this merchant or note, if there is one. */

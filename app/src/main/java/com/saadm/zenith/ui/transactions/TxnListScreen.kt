@@ -65,6 +65,7 @@ fun TransactionsScreen(
     onBack: () -> Unit,
     onAdd: () -> Unit,
     onEdit: (Long) -> Unit,
+    onRepeat: (Long) -> Unit,
     viewModel: TxnListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -106,6 +107,10 @@ fun TransactionsScreen(
             onEdit = {
                 openId = null
                 onEdit(open.txn.id)
+            },
+            onRepeat = {
+                openId = null
+                onRepeat(open.txn.id)
             },
             onDelete = {
                 viewModel.delete(open)
