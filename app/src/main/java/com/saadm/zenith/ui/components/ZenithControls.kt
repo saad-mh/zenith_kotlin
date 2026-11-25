@@ -1,0 +1,138 @@
+package com.saadm.zenith.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.saadm.zenith.ui.theme.ZenithSpacing
+import com.saadm.zenith.ui.theme.ZenithType
+import com.saadm.zenith.ui.theme.zenithColors
+
+/** On/off chip, 44dp tall. Selection is shown by fill, a tick and the border, not colour alone. */
+@Composable
+fun FilterChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = zenithColors()
+    val shape = MaterialTheme.shapes.small
+    val content = if (selected) colors.onStrong else colors.ink
+    Row(
+        modifier = modifier
+            .defaultMinSize(minHeight = 44.dp)
+            .clip(shape)
+            .background(if (selected) colors.primaryStrong else colors.surfaceRaised, shape)
+            .border(1.dp, if (selected) colors.primaryStrong else colors.border, shape)
+            .selectable(selected = selected, role = Role.Checkbox, onClick = onClick)
+            .padding(horizontal = ZenithSpacing.space3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+    ) {
+        if (selected) {
+            Icon(Icons.Rounded.Check, contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
+        }
+        Text(
+            text = label,
+            style = ZenithType.body.copy(fontWeight = FontWeight.Medium),
+            color = content
+        )
+    }
+}
+
+/** Two to four mutually exclusive options. Each segment is at least 44dp tall. */
+@Composable
+fun SegmentedControl(
+    options: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = zenithColors()
+    val outer = MaterialTheme.shapes.medium
+    val segment = MaterialTheme.shapes.small
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(outer)
+            .background(colors.surfaceSunken, outer)
+            .padding(ZenithSpacing.space1),
+        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space1)
+    ) {
+        options.forEachIndexed { index, option ->
+            val isSelected = index == selectedIndex
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = 44.dp)
+                    .clip(segment)
+                    .background(if (isSelected) colors.surfaceRaised else Color.Transparent, segment)
+                    .then(if (isSelected) Modifier.border(1.dp, colors.border, segment) else Modifier)
+                    .selectable(selected = isSelected, role = Role.Tab) { onSelect(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = option,
+                    style = ZenithType.body.copy(
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                    ),
+                    color = if (isSelected) colors.ink else colors.inkMuted
+                )
+            }
+        }
+    }
+}
+
+/** Label and switch as one 44dp row. TalkBack reads the label and the state together. */
+@Composable
+fun ZenithSwitch(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 44.dp)
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)
+    ) {
+        Text(
+            text = label,
+            style = ZenithType.body,
+            color = zenithColors().ink,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+    }
+}

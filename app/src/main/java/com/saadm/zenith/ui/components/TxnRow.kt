@@ -26,6 +26,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.saadm.zenith.data.entity.TxnType
+import com.saadm.zenith.domain.model.MoneyFormatter
+import com.saadm.zenith.ui.theme.ZenithType
+import com.saadm.zenith.ui.theme.zenithColors
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -91,7 +94,7 @@ fun TxnRow(
             ) {
                 Text(
                     text = primaryText,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = ZenithType.bodyStrong,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -123,7 +126,7 @@ fun TxnRow(
 
             Text(
                 text = amountFormatter(amount, type, currency),
-                style = MaterialTheme.typography.titleMedium,
+                style = ZenithType.numeric,
                 color = style.colors.amountColor(type),
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1
@@ -239,7 +242,7 @@ object TxnRowDefaults {
     fun style(
         colors: TxnRowColors = colors(),
         metrics: TxnRowMetrics = metrics(),
-        shape: RoundedCornerShape = RoundedCornerShape(14.dp),
+        shape: RoundedCornerShape = RoundedCornerShape(12.dp),
         tonalElevation: Dp = 0.dp
     ): TxnRowStyle = TxnRowStyle(
         colors = colors,
@@ -250,18 +253,18 @@ object TxnRowDefaults {
 
     @Composable
     fun colors(
-        container: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-        primaryText: Color = MaterialTheme.colorScheme.onSurface,
-        secondaryText: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-        incomeAmount: Color = Color(0xFF1B8A3A),
-        expenseAmount: Color = Color(0xFFC62828),
-        neutralAmount: Color = MaterialTheme.colorScheme.onSurface,
-        incomeBadgeBackground: Color = Color(0xFFD9F6E2),
-        expenseBadgeBackground: Color = Color(0xFFFFE0E0),
-        neutralBadgeBackground: Color = MaterialTheme.colorScheme.surface,
-        incomeBadgeContent: Color = Color(0xFF116A2E),
-        expenseBadgeContent: Color = Color(0xFF8E1C1C),
-        neutralBadgeContent: Color = MaterialTheme.colorScheme.onSurface
+        container: Color = zenithColors().surfaceRaised,
+        primaryText: Color = zenithColors().ink,
+        secondaryText: Color = zenithColors().inkMuted,
+        incomeAmount: Color = zenithColors().positive,
+        expenseAmount: Color = zenithColors().negative,
+        neutralAmount: Color = zenithColors().ink,
+        incomeBadgeBackground: Color = zenithColors().avatarTints[3].bg,
+        expenseBadgeBackground: Color = zenithColors().avatarTints[1].bg,
+        neutralBadgeBackground: Color = zenithColors().surfaceSunken,
+        incomeBadgeContent: Color = zenithColors().avatarTints[3].fg,
+        expenseBadgeContent: Color = zenithColors().avatarTints[1].fg,
+        neutralBadgeContent: Color = zenithColors().ink
     ): TxnRowColors = TxnRowColors(
         container = container,
         primaryText = primaryText,
@@ -299,6 +302,12 @@ object TxnRowDefaults {
     )
 
     fun formatAmount(amount: Long, type: TxnType, currency: String): String {
+        // INR goes through MoneyFormatter (true minus, muted-cents text). Other currencies keep the
+        // locale formatting until the currency preference (#13) lands.
+        if (currency.equals("INR", ignoreCase = true)) {
+            val income = type == TxnType.INCOME || type == TxnType.DUE_FROM
+            return MoneyFormatter.format(abs(amount)).copy(sign = if (income) "+" else "−").text
+        }
         // Amount is provided in the smallest currency unit (e.g. cents/paise).
         // Convert to major unit by dividing by 100 and format with 2 decimal places.
         val magnitude = abs(amount)
