@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.settings
 
+import com.saadm.zenith.domain.transaction.preferredCategory
+import com.saadm.zenith.domain.transaction.LAST_USED_CATEGORY
+import com.saadm.zenith.data.entity.TxnType
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -67,6 +70,7 @@ enum class SettingsPage(val title: String) {
     WeekStarts("Week starts on"),
     Split("Default split"),
     Accounts("Accounts"),
+    DefaultCategory("Default category"),
     Licences("Licences")
 }
 
@@ -135,10 +139,28 @@ fun SettingsPageScreen(page: SettingsPage, onBack: () -> Unit, viewModel: Settin
                     Choices(null, SplitMode.entries, preferences.defaultSplitMode, { splitModeLabels.getValue(it) }, viewModel::setSplitMode)
                 }
                 SettingsPage.Accounts -> Accounts(loaded, viewModel)
+                SettingsPage.DefaultCategory -> {
+                    DefaultCategoryChoices("Spending", TxnType.EXPENSE, preferences.defaultExpenseCategory, loaded, viewModel)
+                    DefaultCategoryChoices("Income", TxnType.INCOME, preferences.defaultIncomeCategory, loaded, viewModel)
+                }
                 SettingsPage.Licences -> Licences()
             }
         }
     }
+}
+
+/** "Last used" or any category of [type]. Unset shows the built-in default as chosen. */
+@Composable
+private fun DefaultCategoryChoices(title: String, type: TxnType, preference: Long?, state: SettingsState, viewModel: SettingsViewModel) {
+    val categories = state.categories.filter { it.txnType == type }
+    val selected = if (preference == LAST_USED_CATEGORY) preference else preferredCategory(preference, categories, emptyList())
+    Choices(
+        title,
+        listOf(LAST_USED_CATEGORY) + categories.map { it.id },
+        selected,
+        { id -> categories.firstOrNull { it.id == id }?.name ?: "Last used" },
+        { id -> id?.let { viewModel.setDefaultCategory(type, it) } }
+    )
 }
 
 @Composable

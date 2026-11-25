@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.categories
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
+import com.saadm.zenith.ui.components.Lu
 import com.saadm.zenith.ui.common.LocalBottomBarInset
 import androidx.compose.ui.res.painterResource
 import com.saadm.zenith.ui.components.ZenithTextField
@@ -52,7 +55,11 @@ import java.time.LocalDate
 private val types = listOf(TxnType.EXPENSE, TxnType.INCOME)
 
 @Composable
-fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltViewModel()) {
+fun CategoriesScreen(
+    onBack: () -> Unit,
+    onOpenDefault: () -> Unit,
+    viewModel: CategoriesViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsState()
     var openId by remember { mutableStateOf<Long?>(null) }
     var adding by remember { mutableStateOf(false) }
@@ -75,6 +82,7 @@ fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltVi
                 onType = viewModel::show,
                 onOpen = { openId = it },
                 onAdd = { adding = true },
+                onOpenDefault = onOpenDefault,
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
                     .padding(ZenithSpacing.space4)
@@ -123,15 +131,31 @@ private fun CategoriesContent(
     onType: (TxnType) -> Unit,
     onOpen: (Long) -> Unit,
     onAdd: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenDefault: () -> Unit = {}
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        ZenithCard {
+            ListRow(
+                title = "Default category",
+                subtitle = "What new entries start with",
+                trailing = {
+                    Icon(
+                        painterResource(Lu.lucide_ic_chevron_right),
+                        contentDescription = null,
+                        tint = zenithColors().inkMuted,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                onClick = onOpenDefault
+            )
+        }
         SegmentedControl(listOf("Spending", "Income"), types.indexOf(state.type), { onType(types[it]) })
         ZenithCard {
             state.rows.forEach { row ->
                 ListRow(
                     title = row.category.name,
-                    subtitle = if (row.category.isDefault) "Default" else null,
+                    subtitle = if (row.category.isDefault) "Built-in" else null,
                     leading = { CategoryBadge(row.category.emoji, row.category.name) },
                     trailing = { AmountText(row.total) },
                     onClick = { onOpen(row.category.id) }
@@ -183,7 +207,7 @@ private fun CategorySheet(
 
         if (category == null) return@ZenithBottomSheet
         if (category.isDefault) {
-            Text("The default category can't be merged or archived.", style = ZenithType.caption, color = colors.inkMuted)
+            Text("The built-in category can't be merged or archived.", style = ZenithType.caption, color = colors.inkMuted)
             return@ZenithBottomSheet
         }
         val targets = others.filter { it.id != category.id }

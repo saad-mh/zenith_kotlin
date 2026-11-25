@@ -208,7 +208,12 @@ fun ZenithNavHost(
                 createRequests = newPayeeRequests
             )
         }
-        composable(Destination.Categories.route) { CategoriesScreen(onBack = { navController.popBackStack() }) }
+        composable(Destination.Categories.route) {
+            CategoriesScreen(
+                onBack = { navController.popBackStack() },
+                onOpenDefault = { navController.navigate(Destination.settingsRoute(SettingsPage.DefaultCategory.name)) }
+            )
+        }
         composable(
             route = Destination.PayeeDetails.route,
             arguments = listOf(navArgument(PAYEE_ID_ARG) { type = NavType.LongType })

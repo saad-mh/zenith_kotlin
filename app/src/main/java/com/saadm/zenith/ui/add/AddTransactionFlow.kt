@@ -111,6 +111,7 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
                 draftHint = draftHint,
                 form = form,
                 categories = options.categoriesFor(form),
+                defaultCategory = options.defaultFor(form),
                 payeeName = options.payees.firstOrNull { it.id == form.payeeId }?.name,
                 accountName = options.accounts.firstOrNull { it.id == form.accountId }?.name,
                 today = viewModel.today,
@@ -187,6 +188,7 @@ private fun AmountStep(
     draftHint: Boolean,
     form: AddForm,
     categories: List<CategoryEntity>,
+    defaultCategory: Long?,
     payeeName: String?,
     accountName: String?,
     today: LocalDate,
@@ -243,7 +245,7 @@ private fun AmountStep(
             horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
             verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
         ) {
-            CategoryChooser(categories, form.categoryId) { id -> onChange { it.copy(categoryId = id, categoryPicked = true) } }
+            CategoryChooser(categories, form.categoryId, defaultCategory) { id -> onChange { it.copy(categoryId = id, categoryPicked = true) } }
             FilterChip(dayLabel(form.date, today), false, onDetails, icon = Lu.lucide_ic_calendar)
             if (form.needsPayee) FilterChip(payeeName ?: "Choose person", false, onDetails, icon = Lu.lucide_ic_user)
             // A due moves no money, so it has no account.
@@ -294,7 +296,7 @@ private fun DetailsStep(
     val categories = options.categoriesFor(form)
     if (categories.isNotEmpty()) {
         Label("Category")
-        CategoryChooser(categories, form.categoryId) { id -> onChange { it.copy(categoryId = id, categoryPicked = true) } }
+        CategoryChooser(categories, form.categoryId, options.defaultFor(form)) { id -> onChange { it.copy(categoryId = id, categoryPicked = true) } }
     }
 
     // A due moves no money, so it has no account.
@@ -338,7 +340,7 @@ private fun AmountStepPreview() {
     val categories = listOf(CategoryEntity(1, "Food", "", "#000000", TxnType.EXPENSE, 0))
     PalettePreview {
         Column(verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)) {
-            AmountStep("Add transaction", {}, true, AddForm(today, amount = "2450", categoryId = 1), categories, null, "HDFC UPI", today, {}, {}, {}, {})
+            AmountStep("Add transaction", {}, true, AddForm(today, amount = "2450", categoryId = 1), categories, 1, null, "HDFC UPI", today, {}, {}, {}, {})
         }
     }
 }

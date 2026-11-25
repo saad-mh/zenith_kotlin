@@ -1,5 +1,6 @@
 package com.saadm.zenith.data.preferences
 
+import com.saadm.zenith.data.entity.TxnType
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -49,7 +50,10 @@ data class AppPreferences(
     val profileName: String = "",
     val upiId: String = "",
     /** How often the add sheet has been opened for a new entry; paces the draft reminder. */
-    val addSheetOpens: Int = 0
+    val addSheetOpens: Int = 0,
+    /** A category id, or LAST_USED_CATEGORY, that new entries start with. Null is the built-in default. */
+    val defaultExpenseCategory: Long? = null,
+    val defaultIncomeCategory: Long? = null
 )
 
 class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
@@ -98,7 +102,9 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
                 hideInRecents = preferences[PreferenceKeys.HIDE_IN_RECENTS] ?: defaults.hideInRecents,
                 profileName = preferences[PreferenceKeys.PROFILE_NAME].orEmpty(),
                 upiId = preferences[PreferenceKeys.UPI_ID].orEmpty(),
-                addSheetOpens = preferences[PreferenceKeys.ADD_SHEET_OPENS] ?: 0
+                addSheetOpens = preferences[PreferenceKeys.ADD_SHEET_OPENS] ?: 0,
+                defaultExpenseCategory = preferences[PreferenceKeys.DEFAULT_EXPENSE_CATEGORY],
+                defaultIncomeCategory = preferences[PreferenceKeys.DEFAULT_INCOME_CATEGORY]
             )
         }
 
@@ -159,6 +165,11 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
 
     suspend fun updateHideInRecents(enabled: Boolean) = set(PreferenceKeys.HIDE_IN_RECENTS, enabled)
 
+    suspend fun updateDefaultCategory(type: TxnType, categoryId: Long) = set(
+        if (type == TxnType.INCOME) PreferenceKeys.DEFAULT_INCOME_CATEGORY else PreferenceKeys.DEFAULT_EXPENSE_CATEGORY,
+        categoryId
+    )
+
     suspend fun countAddSheetOpen() {
         dataStore.edit { prefs -> prefs[PreferenceKeys.ADD_SHEET_OPENS] = (prefs[PreferenceKeys.ADD_SHEET_OPENS] ?: 0) + 1 }
     }
@@ -201,5 +212,7 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         val PROFILE_NAME = stringPreferencesKey("profile_name")
         val UPI_ID = stringPreferencesKey("upi_id")
         val ADD_SHEET_OPENS = intPreferencesKey("add_sheet_opens")
+        val DEFAULT_EXPENSE_CATEGORY = longPreferencesKey("default_expense_category")
+        val DEFAULT_INCOME_CATEGORY = longPreferencesKey("default_income_category")
     }
 }

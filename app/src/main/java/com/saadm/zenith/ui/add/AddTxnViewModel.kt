@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.add
 
+import com.saadm.zenith.domain.transaction.preferredCategory
 import com.saadm.zenith.data.preferences.AppPreferencesStore
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -40,14 +41,25 @@ data class AddOptions(
     val categories: List<CategoryEntity> = emptyList(),
     val payees: List<Payee> = emptyList(),
     val accounts: List<AccountBalance> = emptyList(),
-    val history: List<TransactionEntity> = emptyList()
+    val history: List<TransactionEntity> = emptyList(),
+    val defaultExpenseCategory: Long? = null,
+    val defaultIncomeCategory: Long? = null,
+    /** The category the edited entry already has, offered even if it has since been archived. */
+    val keptCategory: Long? = null
 ) {
+    /** What the entry starts with until a category is picked. */
+    fun defaultFor(form: AddForm): Long? = preferredCategory(
+        if (form.categoryType == TxnType.INCOME) defaultIncomeCategory else defaultExpenseCategory,
+        categoriesFor(form).filter { !it.isDeleted },
+        history
+    )
+
     /** Categories of the form's kind, the most recently used first. */
     fun categoriesFor(form: AddForm): List<CategoryEntity> {
         val type = form.categoryType ?: return emptyList()
         val lastUsed = history.groupBy { it.categoryId }.mapValues { (_, rows) -> rows.maxOf { it.transactedAt } }
         return categories
-            .filter { it.txnType == type && !it.isDeleted }
+            .filter { it.txnType == type && (!it.isDeleted || it.id == keptCategory) }
             .sortedWith(compareByDescending<CategoryEntity> { lastUsed[it.id] ?: 0L }.thenBy { it.sortOrder })
     }
 }
@@ -98,12 +110,21 @@ class AddTxnViewModel @Inject constructor(
 
     private var saving = false
 
+    private val keptCategory = MutableStateFlow<Long?>(null)
+
     val options: StateFlow<AddOptions> = combine(
         categories.observeAll(),
         payees.observeAllActive(),
         accounts.observeBalances(),
         transactions.observeAllActive()
     ) { c, p, a, t -> AddOptions(c, p, a, t) }
+        .combine(preferenceStore.preferencesFlow) { options, preferences ->
+            options.copy(
+                defaultExpenseCategory = preferences.defaultExpenseCategory,
+                defaultIncomeCategory = preferences.defaultIncomeCategory
+            )
+        }
+        .combine(keptCategory) { options, kept -> options.copy(keptCategory = kept) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AddOptions())
 
     init {
@@ -119,7 +140,10 @@ class AddTxnViewModel @Inject constructor(
     private suspend fun load(id: Long) {
         val row = transactions.observeAllActive().first().firstOrNull { it.id == id } ?: return
         // A repeat keeps no link to the old row: it is saved as a new one, dated today.
-        if (!isRepeat) original = row
+        if (!isRepeat) {
+            original = row
+            keptCategory.value = row.categoryId
+        }
         _form.value = AddForm(
             date = if (isRepeat) today else row.transactedAt.toLocalDate(),
             type = row.type,
@@ -259,7 +283,7 @@ class AddTxnViewModel @Inject constructor(
         }
     }
 
-    /** The picked category if it still fits the type, else that type's default. */
+    /** The picked category if it still fits the type, else the one the user has set as the default. */
     private suspend fun categoryFor(form: AddForm): Long {
         val type = form.categoryType
         if (type != null) {
@@ -267,6 +291,12 @@ class AddTxnViewModel @Inject constructor(
             all.firstOrNull {
                 it.id == form.categoryId && it.txnType == type && (!it.isDeleted || it.id == original?.categoryId)
             }?.let { return it.id }
+            val preferences = preferenceStore.preferencesFlow.first()
+            preferredCategory(
+                if (type == TxnType.INCOME) preferences.defaultIncomeCategory else preferences.defaultExpenseCategory,
+                all.filter { it.txnType == type && !it.isDeleted },
+                transactions.observeAllActive().first()
+            )?.let { return it }
         }
         val fallback = type ?: if (form.type == TxnType.SETTLEMENT_FROM) TxnType.INCOME else TxnType.EXPENSE
         return categories.defaultCategoryId(fallback) ?: error("No default category")
