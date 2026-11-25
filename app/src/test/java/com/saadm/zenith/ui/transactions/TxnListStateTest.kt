@@ -2,6 +2,7 @@ package com.saadm.zenith.ui.transactions
 
 import com.saadm.zenith.data.entity.TransactionEntity
 import com.saadm.zenith.data.entity.TxnType
+import com.saadm.zenith.domain.analytics.SpendAnalytics
 import com.saadm.zenith.domain.model.MonthPeriods
 import com.saadm.zenith.domain.model.TxnFilter
 import com.saadm.zenith.domain.transaction.TxnItems
@@ -41,6 +42,18 @@ class TxnListStateTest {
         assertEquals(listOf(5, 4), days.map { it.date.dayOfMonth })
         assertEquals(-100L, days[0].total)
         assertNull(days[1].total)
+    }
+
+    @Test
+    fun totalsMatchTheMonthSummaryAndLeaveOutDebts() {
+        val all = TxnTotals.of(groupByDay(items, period, TxnQuery(), null))
+        assertEquals(TxnTotals(spent = 100, income = 0), all)
+        assertEquals(
+            SpendAnalytics.summarize(items.flatMap { listOf(it.txn) + it.shares }, period).expense,
+            all.spent
+        )
+        val settlements = groupByDay(items, period, TxnQuery(filter = TxnFilter.SETTLEMENTS), null)
+        assertEquals(TxnTotals(0, 0), TxnTotals.of(settlements))
     }
 
     @Test

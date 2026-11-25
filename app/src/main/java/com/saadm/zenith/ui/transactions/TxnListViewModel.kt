@@ -39,6 +39,19 @@ data class TxnQuery(
 /** One day of the list. [total] is that day's income minus spending, or null when it has neither. */
 data class TxnDay(val date: LocalDate, val total: Long?, val items: List<TxnItem>)
 
+/** Spending and income across the rows on show. Dues, settlements and transfers count as neither. */
+data class TxnTotals(val spent: Long, val income: Long) {
+    companion object {
+        fun of(days: List<TxnDay>): TxnTotals {
+            val rows = days.flatMap { it.items }.map { it.txn }
+            return TxnTotals(
+                spent = rows.filter { it.type == TxnType.EXPENSE }.sumOf { it.amount },
+                income = rows.filter { it.type == TxnType.INCOME }.sumOf { it.amount }
+            )
+        }
+    }
+}
+
 data class TxnListState(
     val today: LocalDate,
     val period: MonthPeriod,
@@ -50,6 +63,11 @@ data class TxnListState(
 ) {
     val count: Int get() = days.sumOf { it.items.size }
     val searching: Boolean get() = query.query != null
+
+    /** True when a filter or search text is narrowing the list. */
+    val filtered: Boolean get() = query.filter != TxnFilter.ALL || !query.query.isNullOrBlank()
+
+    val totals: TxnTotals get() = TxnTotals.of(days)
 }
 
 /** A split matches a filter when the expense or any of its shares does. */
@@ -121,6 +139,9 @@ class TxnListViewModel @Inject constructor(
     fun setQuery(text: String?) = query.update {
         it.copy(query = text, allMonths = it.allMonths && text != null)
     }
+
+    /** Drops the filter and search text. The month stays. */
+    fun clearFilters() = query.update { TxnQuery(monthsBack = it.monthsBack) }
 
     fun searchAllMonths() = query.update { it.copy(allMonths = true) }
 

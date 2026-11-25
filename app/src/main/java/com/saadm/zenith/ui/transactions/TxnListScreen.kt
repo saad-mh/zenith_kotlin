@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.saadm.zenith.data.entity.TransactionEntity
 import com.saadm.zenith.data.entity.TxnType
+import com.saadm.zenith.domain.model.MoneyFormatter
 import com.saadm.zenith.domain.model.MonthPeriods
 import com.saadm.zenith.domain.model.TxnFilter
 import com.saadm.zenith.domain.transaction.TxnItems
@@ -46,6 +47,7 @@ import com.saadm.zenith.ui.components.FilterChip
 import com.saadm.zenith.ui.components.MonthSwitcher
 import com.saadm.zenith.ui.components.TxnItemRow
 import com.saadm.zenith.ui.components.ZenithCard
+import com.saadm.zenith.ui.components.ZenithTextButton
 import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
@@ -92,7 +94,8 @@ fun TransactionsScreen(
                 onQuery = viewModel::setQuery,
                 onSearchAllMonths = viewModel::searchAllMonths,
                 onOpen = { openId = it },
-                onAdd = onAdd
+                onAdd = onAdd,
+                onClearFilters = viewModel::clearFilters
             )
         }
     }
@@ -131,7 +134,8 @@ private fun TxnListContent(
     onSearchAllMonths: () -> Unit,
     onOpen: (Long) -> Unit,
     onAdd: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClearFilters: () -> Unit = {}
 ) {
     val colors = zenithColors()
     val start = state.period.startDate
@@ -178,6 +182,19 @@ private fun TxnListContent(
                         FilterChip(label, state.query.filter == filter, { onFilter(filter) })
                     }
                 }
+                val totals = state.totals
+                if (totals.spent > 0 || totals.income > 0) {
+                    val parts = listOfNotNull(
+                        totals.spent.takeIf { it > 0 }?.let { "Spent ${MoneyFormatter.format(it).text}" },
+                        totals.income.takeIf { it > 0 }?.let { "Income ${MoneyFormatter.format(it).text}" }
+                    ).joinToString(" · ")
+                    Text(
+                        if (state.filtered) "$parts in these results" else parts,
+                        style = ZenithType.bodyStrong,
+                        color = colors.ink
+                    )
+                }
+                if (state.filtered) ZenithTextButton("Clear filters", onClearFilters)
             }
         }
 
