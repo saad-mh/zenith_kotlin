@@ -79,6 +79,8 @@ import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.data.preferences.AppPreferences
 import com.saadm.zenith.data.preferences.AppPreferencesStore
+import com.saadm.zenith.ui.theme.ThemeMode
+import com.saadm.zenith.ui.theme.ZenithPalette
 import com.saadm.zenith.ui.people.PeopleManagementContent
 import kotlinx.coroutines.launch
 import androidx.core.graphics.toColorInt
@@ -159,7 +161,7 @@ fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
         ) {
             when (currentDestination) {
                 SettingsDestination.Root -> SettingsRootContent(
-                    appearanceMode = appPreferences.appearanceMode,
+                    appearanceMode = appPreferences.themeMode,
                     onAppearanceClick = { navigateTo(SettingsDestination.Appearance) },
                     notificationsEnabled = appPreferences.notificationsEnabled,
                     onNotificationsEnabledChange = { enabled ->
@@ -188,9 +190,13 @@ fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
                 )
 
                 SettingsDestination.Appearance -> AppearanceSettingsContent(
-                    selectedMode = appPreferences.appearanceMode,
+                    selectedMode = appPreferences.themeMode,
                     onModeSelected = { mode ->
-                        coroutineScope.launch { preferencesStore.updateAppearanceMode(mode) }
+                        coroutineScope.launch { preferencesStore.updateThemeMode(mode) }
+                    },
+                    selectedPalette = appPreferences.palette,
+                    onPaletteSelected = { palette ->
+                        coroutineScope.launch { preferencesStore.updatePalette(palette) }
                     }
                 )
 
@@ -337,7 +343,7 @@ fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
 
 @Composable
 private fun SettingsRootContent(
-	appearanceMode: String,
+	appearanceMode: ThemeMode,
 	onAppearanceClick: () -> Unit,
 	notificationsEnabled: Boolean,
 	onNotificationsEnabledChange: (Boolean) -> Unit,
@@ -575,8 +581,10 @@ private fun SettingsRowIcon(icon: ImageVector) {
 
 @Composable
 private fun AppearanceSettingsContent(
-    selectedMode: String,
-    onModeSelected: (String) -> Unit
+    selectedMode: ThemeMode,
+    onModeSelected: (ThemeMode) -> Unit,
+    selectedPalette: ZenithPalette,
+    onPaletteSelected: (ZenithPalette) -> Unit
 ) {
     Text(
         text = "Choose how Zenith should look.",
@@ -587,13 +595,35 @@ private fun AppearanceSettingsContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onModeSelected(option.value) }
+                .clickable { onModeSelected(option.mode) }
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
-                selected = selectedMode.equals(option.value, ignoreCase = true),
-                onClick = { onModeSelected(option.value) }
+                selected = selectedMode == option.mode,
+                onClick = { onModeSelected(option.mode) }
+            )
+            Text(text = option.label)
+        }
+    }
+
+    Text(
+        text = "Colour palette",
+        style = MaterialTheme.typography.labelLarge,
+        modifier = Modifier.padding(top = 12.dp)
+    )
+
+    PaletteOption.entries.forEach { option ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onPaletteSelected(option.palette) }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = selectedPalette == option.palette,
+                onClick = { onPaletteSelected(option.palette) }
             )
             Text(text = option.label)
         }
@@ -1119,17 +1149,19 @@ private enum class SettingsDestination(val route: String, val title: String) {
 	}
 }
 
-private enum class AppearanceModeOption(val value: String, val label: String) {
-    System("SYSTEM", "System default"),
-    Light("LIGHT", "Light"),
-    Dark("DARK", "Dark")
+private enum class AppearanceModeOption(val mode: ThemeMode, val label: String) {
+    System(ThemeMode.System, "System default"),
+    Light(ThemeMode.Light, "Light"),
+    Dark(ThemeMode.Dark, "Dark")
 }
 
-private fun appearanceModeLabel(rawMode: String): String {
-    return AppearanceModeOption.entries
-        .firstOrNull { it.value.equals(rawMode, ignoreCase = true) }
-        ?.label
-        ?: AppearanceModeOption.System.label
+private enum class PaletteOption(val palette: ZenithPalette, val label: String) {
+    Colour(ZenithPalette.Colour, "Colour"),
+    Monochrome(ZenithPalette.Monochrome, "Monochrome")
+}
+
+private fun appearanceModeLabel(mode: ThemeMode): String {
+    return AppearanceModeOption.entries.first { it.mode == mode }.label
 }
 
 private fun buildCategoryMeta(category: CategoryEntity): String {

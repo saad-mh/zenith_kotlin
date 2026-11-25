@@ -34,7 +34,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.saadm.zenith.data.preferences.AppPreferences
 import com.saadm.zenith.data.preferences.AppPreferencesStore
 import com.saadm.zenith.ui.components.NavRoute
 import com.saadm.zenith.ui.components.NavPillBar
@@ -80,11 +79,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ZenithTheme {
-                val appPreferencesStore = remember { AppPreferencesStore(applicationContext) }
-                val appPreferences by appPreferencesStore.preferencesFlow.collectAsState(
-                    initial = AppPreferences()
-                )
+            val appPreferencesStore = remember { AppPreferencesStore(applicationContext) }
+            val storedPreferences by appPreferencesStore.preferencesFlow.collectAsState(initial = null)
+            // Draw nothing until the stored theme is known, so the first frame is never in the wrong theme.
+            val appPreferences = storedPreferences ?: return@setContent
+            ZenithTheme(mode = appPreferences.themeMode, palette = appPreferences.palette) {
                 val transitionDurationMillis = normalizeTransitionDurationMillis(
                     appPreferences.transitionDurationMillis
                 )
