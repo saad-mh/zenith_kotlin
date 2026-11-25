@@ -195,8 +195,10 @@ fun SettingsScreen(
         )
         SettingsDialog.Privacy -> TextDialog(
             "Privacy",
-            "Zenith has no account, no sign-in and no bank link. Your data is stored on this device. " +
-                "It leaves only when you export, back up or share it yourself.",
+            "Zenith has no account, no sign-in, no bank link and no internet permission. Your data is stored " +
+                "on this device. It leaves when you export, back up or share it yourself. If Android's backup " +
+                "is turned on for this phone, Android may also include it in your Google account backup or in " +
+                "a transfer to a new phone.",
             close
         )
         SettingsDialog.Licences -> LicencesDialog(close)
@@ -373,8 +375,10 @@ private fun SettingsContent(
         Section("About") {
             val context = LocalContext.current
             val version = remember {
-                runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
-                    .getOrNull().orEmpty()
+                runCatching {
+                    val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                    "${info.versionName} (build ${info.longVersionCode})"
+                }.getOrNull().orEmpty()
             }
             ListRow(title = "Version", subtitle = version)
             ListRow(title = "Help", onClick = { actions.open(SettingsDialog.Help) })
@@ -512,14 +516,17 @@ private fun DeleteAllDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) 
 private fun LicencesDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val text = remember {
-        val libraries = "AndroidX, Jetpack Compose, Room, DataStore, Hilt and Kotlin are used " +
-            "under the Apache License 2.0 (apache.org/licenses/LICENSE-2.0)."
-        val fonts = runCatching {
+        val libraries = "Zenith includes these, under the Apache License 2.0 (full text below): AndroidX " +
+            "(including Jetpack Compose, Material icons, Navigation, Room and DataStore), Kotlin and " +
+            "kotlinx.coroutines, JetBrains annotations, Dagger and Hilt, Guava, Okio, JSR 305, javax.inject, " +
+            "jakarta.inject and JSpecify.\n\nThe Fraunces and Work Sans fonts are under the SIL Open Font " +
+            "License 1.1, also below."
+        val texts = runCatching {
             context.assets.list("licenses").orEmpty().joinToString("\n\n") { name ->
                 context.assets.open("licenses/$name").bufferedReader().use { it.readText() }
             }
         }.getOrDefault("")
-        "$libraries\n\n$fonts"
+        "$libraries\n\n$texts"
     }
     AlertDialog(
         onDismissRequest = onDismiss,

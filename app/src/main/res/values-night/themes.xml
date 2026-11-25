@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the surface colour in ui/theme/Color.kt, so the splash does not flash another colour. -->
+    <color name="window_background">#FF17131C</color>
+
+    <style name="Theme.Zenith" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>
