@@ -8,7 +8,6 @@ interface TransactionRepo {
 
     fun observeAllActive(): Flow<List<TransactionEntity>>
 
-    fun getRecentTransactions(): Flow<List<TransactionEntity>>
 
     /** Hard delete: the row is removed, not flagged. */
     suspend fun delete(transaction: TransactionEntity)

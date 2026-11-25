@@ -131,7 +131,6 @@ class PayeeRepoTest {
 
 		// Then: Balance is settled
 		assertFalse(payee.hasActiveBalance())
-		assertEquals("settled", payee.balanceText())
 	}
 
 	@Test

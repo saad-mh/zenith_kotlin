@@ -14,7 +14,8 @@ object Migrations {
     val MIGRATION_6_7 = object : Migration(6, 7) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("DROP VIEW IF EXISTS payee_balances")
-            db.execSQL("CREATE VIEW `payee_balances` AS ${PayeeBalancesViewSql.SELECT}")
+            // Room compares the stored SQL exactly with its own, which has no leading or trailing space.
+            db.execSQL("CREATE VIEW `payee_balances` AS ${PayeeBalancesViewSql.SELECT.trim()}")
         }
     }
 

@@ -41,9 +41,16 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 
+    // Unit tests read the exported schemas as debug assets; release builds do not carry them.
+    sourceSets.getByName("debug").assets.srcDir("$projectDir/schemas")
+
     buildFeatures {
         compose = true
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -66,7 +73,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     add("ksp", "androidx.room:room-compiler:2.8.4")
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.emoji2.emojipicker)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -76,10 +82,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(libs.composeunstyled)
-    implementation(libs.composeunstyled.theming)
-    implementation(libs.composeunstyled.primitives)
-    implementation(libs.composeunstyled.platformtheme)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
@@ -87,4 +89,5 @@ dependencies {
 
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.room.testing)
 }

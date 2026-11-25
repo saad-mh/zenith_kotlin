@@ -76,14 +76,6 @@ interface TransactionDao {
 	)
 	suspend fun getActiveByPayeeId(payeeId: Long): List<TransactionEntity>
 
-	@Query("""
-        SELECT * FROM transactions
-        WHERE isDeleted = 0
-        ORDER BY transactedAt DESC
-        LIMIT 5
-    """)
-	fun getRecentTransactions(): Flow<List<TransactionEntity>>
-
 
 	// Pages keep an export from loading the whole history at once.
 	@Query("SELECT * FROM transactions ORDER BY id ASC LIMIT :limit OFFSET :offset")

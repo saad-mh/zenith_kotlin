@@ -13,7 +13,6 @@ class TransactionRepoImpl @Inject constructor(
 
     override fun observeAllActive(): Flow<List<TransactionEntity>> = dao.observeAllActive()
 
-    override fun getRecentTransactions(): Flow<List<TransactionEntity>> = dao.getRecentTransactions()
 
     override suspend fun delete(transaction: TransactionEntity) = dao.delete(transaction)
 
