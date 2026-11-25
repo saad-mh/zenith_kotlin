@@ -1,7 +1,7 @@
 package com.saadm.zenith.data.db.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
+import androidx.room.Upsert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PayeeDao {
-	@Insert(onConflict = OnConflictStrategy.REPLACE)
+	@Upsert
 	suspend fun upsert(payee: PayeeEntity): Long
 
 	@Update
