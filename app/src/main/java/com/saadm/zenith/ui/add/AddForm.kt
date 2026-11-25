@@ -3,6 +3,10 @@ package com.saadm.zenith.ui.add
 import com.saadm.zenith.data.entity.TransactionEntity
 import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.domain.model.MoneyFormatter
+import com.saadm.zenith.domain.model.SplitMode
+import com.saadm.zenith.domain.split.Split
+import com.saadm.zenith.domain.split.SplitItem
+import com.saadm.zenith.domain.split.YOU
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,6 +23,9 @@ enum class AddKind(val label: String, val types: List<TxnType>) {
     }
 }
 
+/** One line of an itemised bill as typed. */
+data class DraftItem(val amount: String = "", val participants: Set<Long> = emptySet())
+
 /** Everything typed so far. [text] is the merchant or note; the table has one column for both. */
 data class AddForm(
     val date: LocalDate,
@@ -29,8 +36,32 @@ data class AddForm(
     val payeeId: Long? = null,
     val text: String = "",
     /** True once the user picks a category, so a suggestion never overrides the choice. */
-    val categoryPicked: Boolean = false
+    val categoryPicked: Boolean = false,
+    /** Payee ids sharing an expense with the user. */
+    val people: List<Long> = emptyList(),
+    val splitMode: SplitMode = SplitMode.EQUAL,
+    val custom: Map<Long, String> = emptyMap(),
+    val items: List<DraftItem> = emptyList(),
+    val sendRequest: Boolean = false
 ) {
+    /** What each of [people] owes, or null when the typed figures don't fit the total. */
+    fun shares(): Map<Long, Long>? {
+        val total = paise ?: return emptyMap()
+        return when (splitMode) {
+            SplitMode.EQUAL -> Split.equal(total, people)
+            SplitMode.CUSTOM -> Split.custom(total, people.associateWith { MoneyFormatter.parse(custom[it].orEmpty()) ?: 0L })
+            SplitMode.BY_ITEMS -> Split.byItems(
+                total,
+                people,
+                items.mapNotNull { item ->
+                    MoneyFormatter.parse(item.amount)?.let { amount ->
+                        SplitItem(amount, item.participants.filter { it == YOU || it in people }.toSet())
+                    }
+                }
+            )
+        }
+    }
+
     val kind: AddKind get() = AddKind.of(type)
 
     val paise: Long? get() = MoneyFormatter.parse(amount)

@@ -24,8 +24,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +36,7 @@ import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.domain.model.MoneyFormatter
 import com.saadm.zenith.domain.transaction.dayLabel
 import com.saadm.zenith.ui.common.PalettePreview
+import com.saadm.zenith.ui.common.shareText
 import com.saadm.zenith.ui.components.FilterChip
 import com.saadm.zenith.ui.components.PrimaryButton
 import com.saadm.zenith.ui.components.SecondaryButton
@@ -49,15 +50,25 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
+private enum class Step { Amount, Details, Who, Split }
+
 /** Add or edit an entry: the amount first, then the details. */
 @Composable
 fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel = hiltViewModel()) {
     val form by viewModel.form.collectAsState()
     val options by viewModel.options.collectAsState()
     val saved by viewModel.saved.collectAsState()
-    var details by rememberSaveable { mutableStateOf(false) }
+    var step by rememberSaveable { mutableStateOf(Step.Amount) }
+    val context = LocalContext.current
 
-    LaunchedEffect(saved) { if (saved) onDismissRequest() }
+    LaunchedEffect(saved) {
+        val done = saved ?: return@LaunchedEffect
+        done.request?.let(context::shareText)
+        onDismissRequest()
+    }
+    // Only a new expense can be split.
+    val canSplit = !viewModel.isEdit && form.type == TxnType.EXPENSE
+    val startSplit = { step = Step.Who }
 
     ZenithBottomSheet(onDismissRequest) {
         Text(
@@ -68,27 +79,43 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
         if (!viewModel.isEdit) {
             Text("Closing keeps this as a draft", style = ZenithType.caption, color = zenithColors().inkMuted)
         }
-        if (details) {
-            DetailsStep(
+        when (step) {
+            Step.Details -> DetailsStep(
                 form = form,
                 options = options,
                 today = viewModel.today,
                 onChange = viewModel::change,
                 onText = viewModel::setText,
-                onAddPayee = viewModel::addPayee,
-                onBack = { details = false },
-                onSave = viewModel::save
+                onAddPayee = { name -> viewModel.addPayee(name) { f, id -> f.copy(payeeId = id) } },
+                onBack = { step = Step.Amount },
+                onSave = viewModel::save,
+                onSplit = if (canSplit) startSplit else null
             )
-        } else {
-            AmountStep(
+            Step.Amount -> AmountStep(
                 form = form,
                 categories = options.categoriesFor(form),
                 payeeName = options.payees.firstOrNull { it.id == form.payeeId }?.name,
                 accountName = options.accounts.firstOrNull { it.id == form.accountId }?.name,
                 today = viewModel.today,
                 onChange = viewModel::change,
-                onDetails = { details = true },
-                onSave = viewModel::save
+                onDetails = { step = Step.Details },
+                onSave = viewModel::save,
+                onSplit = if (canSplit) startSplit else null
+            )
+            Step.Who -> WhoStep(
+                form = form,
+                payees = options.payees,
+                onChange = viewModel::change,
+                onAddPerson = { name -> viewModel.addPayee(name) { f, id -> f.copy(people = f.people + id) } },
+                onBack = { step = Step.Amount },
+                onNext = { step = Step.Split }
+            )
+            Step.Split -> SplitStep(
+                form = form,
+                payees = options.payees,
+                onChange = viewModel::change,
+                onBack = { step = Step.Who },
+                onSave = viewModel::saveSplit
             )
         }
     }
@@ -137,7 +164,8 @@ private fun AmountStep(
     today: LocalDate,
     onChange: ((AddForm) -> AddForm) -> Unit,
     onDetails: () -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    onSplit: (() -> Unit)?
 ) {
     val colors = zenithColors()
     TypeSwitch(form, onChange)
@@ -163,7 +191,12 @@ private fun AmountStep(
     }
     NumPad(onKey = { key -> onChange { it.copy(amount = typeKey(it.amount, key)) } })
     form.problem?.let { Text(it, style = ZenithType.caption, color = colors.inkMuted) }
-    PrimaryButton(saveLabel(form), onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
+    if (onSplit != null) {
+        PrimaryButton("Next · Who's in?", onSplit, Modifier.fillMaxWidth(), enabled = form.problem == null)
+        SecondaryButton("Save as personal", onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
+    } else {
+        PrimaryButton(saveLabel(form), onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
+    }
     ZenithTextButton("More details", onDetails, Modifier.fillMaxWidth())
 }
 
@@ -195,11 +228,11 @@ private fun DetailsStep(
     onText: (String) -> Unit,
     onAddPayee: (String) -> Unit,
     onBack: () -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    onSplit: (() -> Unit)?
 ) {
     val colors = zenithColors()
     var picking by remember { mutableStateOf(false) }
-    var newPayee by rememberSaveable { mutableStateOf("") }
     ZenithTextButton("Back to amount", onBack)
     OutlinedTextField(
         value = form.text,
@@ -216,23 +249,7 @@ private fun DetailsStep(
                 FilterChip(payee.name, form.payeeId == payee.id, { onChange { it.copy(payeeId = payee.id) } })
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = newPayee,
-                onValueChange = { newPayee = it },
-                modifier = Modifier.weight(1f),
-                label = { Text("New person") },
-                singleLine = true
-            )
-            ZenithTextButton(
-                "Add",
-                {
-                    onAddPayee(newPayee)
-                    newPayee = ""
-                },
-                enabled = newPayee.isNotBlank()
-            )
-        }
+        NewPersonRow(onAddPayee)
     }
 
     val categories = options.categoriesFor(form)
@@ -274,6 +291,9 @@ private fun DetailsStep(
     }
 
     form.problem?.let { Text(it, style = ZenithType.caption, color = colors.inkMuted) }
+    if (onSplit != null) {
+        SecondaryButton("Split with others", onSplit, Modifier.fillMaxWidth(), enabled = form.problem == null)
+    }
     PrimaryButton(saveLabel(form), onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
 
     if (picking) {
@@ -328,7 +348,7 @@ private fun AmountStepPreview() {
     val categories = listOf(CategoryEntity(1, "Food", "", "#000000", TxnType.EXPENSE, 0))
     PalettePreview {
         Column(verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)) {
-            AmountStep(AddForm(today, amount = "2450", categoryId = 1), categories, null, "HDFC UPI", today, {}, {}, {})
+            AmountStep(AddForm(today, amount = "2450", categoryId = 1), categories, null, "HDFC UPI", today, {}, {}, {}, {})
         }
     }
 }

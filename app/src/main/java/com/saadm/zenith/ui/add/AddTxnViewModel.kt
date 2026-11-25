@@ -15,6 +15,8 @@ import com.saadm.zenith.domain.repository.AccountRepo
 import com.saadm.zenith.domain.repository.CategoryRepo
 import com.saadm.zenith.domain.repository.PayeeRepo
 import com.saadm.zenith.domain.repository.TransactionRepo
+import com.saadm.zenith.domain.split.Owed
+import com.saadm.zenith.domain.split.paymentRequest
 import com.saadm.zenith.ui.common.toLocalDate
 import com.saadm.zenith.ui.navigation.TXN_ID_ARG
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,6 +50,9 @@ data class AddOptions(
     }
 }
 
+/** [request] is a message to share, when the user asked for one. */
+data class Saved(val request: String? = null)
+
 @HiltViewModel
 class AddTxnViewModel @Inject constructor(
     savedState: SavedStateHandle,
@@ -70,10 +75,10 @@ class AddTxnViewModel @Inject constructor(
     private val _form = MutableStateFlow(if (editId == null) draft.form ?: AddForm(today) else AddForm(today))
     val form: StateFlow<AddForm> = _form.asStateFlow()
 
-    private val _saved = MutableStateFlow(false)
+    private val _saved = MutableStateFlow<Saved?>(null)
 
-    /** Turns true once the entry is written, so the sheet can close. */
-    val saved: StateFlow<Boolean> = _saved.asStateFlow()
+    /** Set once the entry is written, so the sheet can close. */
+    val saved: StateFlow<Saved?> = _saved.asStateFlow()
 
     private var saving = false
 
@@ -107,8 +112,14 @@ class AddTxnViewModel @Inject constructor(
     }
 
     private suspend fun applyDefaultAccount() {
-        val preferred = settings.settings.first().defaultAccountId
-        _form.update { if (it.accountId == null) it.copy(accountId = preferred) else it }
+        val preferences = settings.settings.first()
+        val untouched = draft.form == null
+        _form.update {
+            it.copy(
+                accountId = it.accountId ?: preferences.defaultAccountId,
+                splitMode = if (untouched) preferences.defaultSplitMode else it.splitMode
+            )
+        }
     }
 
     fun change(transform: (AddForm) -> AddForm) {
@@ -127,14 +138,51 @@ class AddTxnViewModel @Inject constructor(
         }
     }
 
-    fun addPayee(name: String) {
+    /** Creates a person, then lets [onAdded] put them into the form. */
+    fun addPayee(name: String, onAdded: (AddForm, Long) -> AddForm) {
         val clean = name.trim()
         if (clean.isEmpty()) return
         viewModelScope.launch {
             val id = payees.upsert(
                 PayeeEntity(name = clean, avatarUri = null, phone = null, upiId = null, createdAt = System.currentTimeMillis())
             )
-            change { it.copy(payeeId = id) }
+            change { onAdded(it, id) }
+        }
+    }
+
+    /** Saves the expense with a due for each person's share, as one write. */
+    fun saveSplit() {
+        val form = _form.value
+        val total = form.paise ?: return
+        val shares = form.shares()?.filterValues { it > 0 }.orEmpty()
+        if (editId != null || saving || form.type != TxnType.EXPENSE || shares.isEmpty()) return
+        saving = true
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val at = timeOn(form.date, now)
+            val category = categoryFor(form)
+            val note = form.text.trim().ifEmpty { null }
+            // The shared createdAt and transactedAt are what mark these rows as one split.
+            fun row(amount: Long, type: TxnType, payeeId: Long?, accountId: Long?) = TransactionEntity(
+                amount = amount, type = type, transactedAt = at, createdAt = now, updatedAt = now,
+                categoryId = category, payeeId = payeeId, accountId = accountId, note = note, receiptUri = null
+            )
+            transactions.saveAll(
+                listOf(row(total, TxnType.EXPENSE, null, form.accountId)) +
+                    shares.map { (payeeId, amount) -> row(amount, TxnType.DUE_TO, payeeId, null) }
+            )
+            val request = if (form.sendRequest) {
+                val preferences = settings.settings.first()
+                val names = options.value.payees.associate { it.id to it.name }
+                paymentRequest(
+                    owed = shares.map { (id, amount) -> Owed(names[id] ?: "Someone", amount) },
+                    about = note ?: "an expense of ${MoneyFormatter.format(total).text}",
+                    upiId = preferences.upiId,
+                    payeeName = preferences.profileName
+                )
+            } else null
+            draft.form = null
+            _saved.value = Saved(request)
         }
     }
 
@@ -164,7 +212,7 @@ class AddTxnViewModel @Inject constructor(
                 )
             )
             if (editId == null) draft.form = null
-            _saved.value = true
+            _saved.value = Saved()
         }
     }
 
