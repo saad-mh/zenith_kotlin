@@ -13,6 +13,12 @@ interface TransactionRepo {
     /** Hard delete: the row is removed, not flagged. */
     suspend fun delete(transaction: TransactionEntity)
 
+    /** Inserts or replaces a transaction. Returns its id. */
+    suspend fun save(transaction: TransactionEntity): Long
+
+    /** Payee dues and settlements for one payee, newest first. */
+    fun observeForPayee(payeeId: Long): Flow<List<TransactionEntity>>
+
     /** Transactions with `transactedAt` in [startMillis, endMillis), newest first. */
     fun observeBetween(startMillis: Long, endMillis: Long): Flow<List<TransactionEntity>>
 

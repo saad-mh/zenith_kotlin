@@ -17,6 +17,10 @@ class TransactionRepoImpl @Inject constructor(
 
     override suspend fun delete(transaction: TransactionEntity) = dao.delete(transaction)
 
+    override suspend fun save(transaction: TransactionEntity): Long = dao.upsert(transaction)
+
+    override fun observeForPayee(payeeId: Long): Flow<List<TransactionEntity>> = dao.observeActiveByPayeeId(payeeId)
+
     override fun observeBetween(startMillis: Long, endMillis: Long): Flow<List<TransactionEntity>> =
         dao.observeBetween(startMillis, endMillis)
 

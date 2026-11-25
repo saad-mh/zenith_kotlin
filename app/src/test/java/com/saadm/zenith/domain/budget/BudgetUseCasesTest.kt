@@ -170,6 +170,8 @@ class BudgetUseCasesTest {
         override fun observeAllActive(): Flow<List<TransactionEntity>> = flowOf(items.toList())
         override fun getRecentTransactions(): Flow<List<TransactionEntity>> = flowOf(items.toList())
         override suspend fun delete(transaction: TransactionEntity) {}
+        override suspend fun save(transaction: TransactionEntity): Long = 0L
+        override fun observeForPayee(payeeId: Long): Flow<List<TransactionEntity>> = flowOf(emptyList())
         override fun observeBetween(startMillis: Long, endMillis: Long): Flow<List<TransactionEntity>> =
             flowOf(items.filter { it.transactedAt >= startMillis && it.transactedAt < endMillis })
         override fun observeSearch(query: String): Flow<List<TransactionEntity>> = flowOf(emptyList())

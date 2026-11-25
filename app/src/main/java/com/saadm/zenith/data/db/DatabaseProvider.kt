@@ -1,5 +1,7 @@
 package com.saadm.zenith.data.db
 
+import com.saadm.zenith.data.db.migrations.Migrations
+
 import android.content.Context
 import androidx.room.Room
 
@@ -19,7 +21,8 @@ object DatabaseProvider {
                     AppDatabase.MIGRATION_2_3,
                     AppDatabase.MIGRATION_3_4,
                     AppDatabase.MIGRATION_4_5,
-                    AppDatabase.MIGRATION_5_6
+                    AppDatabase.MIGRATION_5_6,
+                    Migrations.MIGRATION_6_7
                 )
                 .addCallback(AppDatabase.DB_CREATE_CALLBACK)
                 .build()
