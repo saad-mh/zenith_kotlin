@@ -53,7 +53,9 @@ data class AppPreferences(
     val fillCategoryFromPayee: Boolean = true,
     val appLockEnabled: Boolean = false,
     val appLockGraceSeconds: Int = 30,
-    val hideInRecents: Boolean = true
+    val hideInRecents: Boolean = true,
+    val profileName: String = "",
+    val upiId: String = ""
 )
 
 class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
@@ -103,7 +105,9 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
                 fillCategoryFromPayee = preferences[PreferenceKeys.FILL_CATEGORY_FROM_PAYEE] ?: defaults.fillCategoryFromPayee,
                 appLockEnabled = preferences[PreferenceKeys.APP_LOCK_ENABLED] ?: defaults.appLockEnabled,
                 appLockGraceSeconds = preferences[PreferenceKeys.APP_LOCK_GRACE_SECONDS] ?: defaults.appLockGraceSeconds,
-                hideInRecents = preferences[PreferenceKeys.HIDE_IN_RECENTS] ?: defaults.hideInRecents
+                hideInRecents = preferences[PreferenceKeys.HIDE_IN_RECENTS] ?: defaults.hideInRecents,
+                profileName = preferences[PreferenceKeys.PROFILE_NAME].orEmpty(),
+                upiId = preferences[PreferenceKeys.UPI_ID].orEmpty()
             )
         }
 
@@ -145,6 +149,13 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { prefs ->
             if (accountId == null) prefs.remove(PreferenceKeys.DEFAULT_ACCOUNT_ID)
             else prefs[PreferenceKeys.DEFAULT_ACCOUNT_ID] = accountId
+        }
+    }
+
+    suspend fun updateProfile(name: String, upiId: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.PROFILE_NAME] = name.trim()
+            prefs[PreferenceKeys.UPI_ID] = upiId.trim()
         }
     }
 
@@ -204,5 +215,7 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
         val APP_LOCK_GRACE_SECONDS = intPreferencesKey("app_lock_grace_seconds")
         val HIDE_IN_RECENTS = booleanPreferencesKey("hide_in_recents")
+        val PROFILE_NAME = stringPreferencesKey("profile_name")
+        val UPI_ID = stringPreferencesKey("upi_id")
     }
 }

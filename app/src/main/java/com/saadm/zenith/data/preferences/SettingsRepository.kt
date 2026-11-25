@@ -42,6 +42,8 @@ class SettingsRepository @Inject constructor(private val store: AppPreferencesSt
 
     suspend fun setDefaultAccountId(accountId: Long?) = store.updateDefaultAccountId(accountId)
 
+    suspend fun setProfile(name: String, upiId: String) = store.updateProfile(name, upiId)
+
     suspend fun setDefaultSplitMode(mode: SplitMode) = store.updateDefaultSplitMode(mode)
 
     suspend fun setFillCategoryFromPayee(enabled: Boolean) = store.updateFillCategoryFromPayee(enabled)
