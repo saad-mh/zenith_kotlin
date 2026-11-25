@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.add
 
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -172,7 +174,10 @@ private fun AmountStep(
         style = ZenithType.display,
         color = if (form.amount.isEmpty()) colors.inkMuted else colors.ink,
         textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "$shown rupees" }
+        modifier = Modifier.fillMaxWidth().semantics {
+            contentDescription = "$shown rupees"
+            liveRegion = LiveRegionMode.Polite
+        }
     )
     val sum = form.paise
     if (isSum(form.amount) && sum != null) {

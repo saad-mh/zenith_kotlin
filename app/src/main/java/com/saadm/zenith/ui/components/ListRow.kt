@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,7 +38,7 @@ fun SectionHeader(
             text = title,
             style = ZenithType.subheading,
             color = zenithColors().ink,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).semantics { heading() }
         )
         if (actionLabel != null && onAction != null) {
             ZenithTextButton(text = actionLabel, onClick = onAction)
@@ -58,22 +61,23 @@ fun ListRow(
     onClick: (() -> Unit)? = null
 ) {
     val colors = zenithColors()
+    val large = LocalDensity.current.fontScale >= 1.5f
     Row(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 56.dp)
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier.semantics(mergeDescendants = true) {})
             .padding(vertical = ZenithSpacing.space2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)
     ) {
         leading?.invoke()
-        Column(modifier = Modifier.weight(1f)) {
+        val text: @Composable () -> Unit = {
             Text(
                 text = title,
                 style = ZenithType.bodyStrong,
                 color = colors.ink,
-                maxLines = 1,
+                maxLines = if (large) Int.MAX_VALUE else 2,
                 overflow = TextOverflow.Ellipsis
             )
             if (subtitle != null) {
@@ -81,23 +85,29 @@ fun ListRow(
                     text = subtitle,
                     style = ZenithType.caption,
                     color = colors.inkMuted,
-                    maxLines = 1,
+                    maxLines = if (large) Int.MAX_VALUE else 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
-        if (trailing != null || trailingCaption != null) {
-            Column(horizontalAlignment = Alignment.End) {
-                trailing?.invoke()
-                if (trailingCaption != null) {
-                    Text(
-                        text = trailingCaption,
-                        style = ZenithType.caption,
-                        color = colors.inkMuted,
-                        textAlign = TextAlign.End
-                    )
-                }
+        val end: @Composable () -> Unit = {
+            trailing?.invoke()
+            if (trailingCaption != null) {
+                Text(
+                    text = trailingCaption,
+                    style = ZenithType.caption,
+                    color = colors.inkMuted,
+                    textAlign = if (large) TextAlign.Start else TextAlign.End
+                )
             }
+        }
+        // At large font sizes the two columns would squeeze each other, so they stack.
+        Column(modifier = Modifier.weight(1f)) {
+            text()
+            if (large) end()
+        }
+        if (!large && (trailing != null || trailingCaption != null)) {
+            Column(horizontalAlignment = Alignment.End) { end() }
         }
     }
 }

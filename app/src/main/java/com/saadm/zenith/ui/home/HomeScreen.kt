@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.home
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -156,6 +158,7 @@ private fun SpendCard(spend: MonthSpend) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FriendsCard(
     shared: SharedBalanceSummary,
@@ -166,7 +169,7 @@ private fun FriendsCard(
     val colors = zenithColors()
     ZenithCard {
         SectionHeader("Between friends", actionLabel = "Open", onAction = onOpenPayees)
-        Row(Modifier.fillMaxWidth()) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
             Column(Modifier.weight(1f)) {
                 Text("Owed to you · ${people(shared.peopleOwingYou)}", style = ZenithType.caption, color = colors.inkMuted)
                 AmountText(shared.owedToYou, signed = true, tone = AmountTone.Positive, style = ZenithType.heading)

@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -62,7 +64,10 @@ fun FilterChip(
     }
 }
 
-/** Two to four mutually exclusive options. Each segment is at least 44dp tall. */
+/**
+ * Two to four mutually exclusive options. Each segment is at least 44dp tall.
+ * At large font sizes the options stack, so no word is broken across lines.
+ */
 @Composable
 fun SegmentedControl(
     options: List<String>,
@@ -73,34 +78,39 @@ fun SegmentedControl(
     val colors = zenithColors()
     val outer = MaterialTheme.shapes.medium
     val segment = MaterialTheme.shapes.small
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(outer)
-            .background(colors.surfaceSunken, outer)
-            .padding(ZenithSpacing.space1),
-        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space1)
-    ) {
-        options.forEachIndexed { index, option ->
-            val isSelected = index == selectedIndex
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 44.dp)
-                    .clip(segment)
-                    .background(if (isSelected) colors.surfaceRaised else Color.Transparent, segment)
-                    .then(if (isSelected) Modifier.border(1.dp, colors.border, segment) else Modifier)
-                    .selectable(selected = isSelected, role = Role.Tab) { onSelect(index) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = option,
-                    style = ZenithType.body.copy(
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                    ),
-                    color = if (isSelected) colors.ink else colors.inkMuted
-                )
-            }
+    val container = modifier
+        .fillMaxWidth()
+        .clip(outer)
+        .background(colors.surfaceSunken, outer)
+        .padding(ZenithSpacing.space1)
+    val spacing = Arrangement.spacedBy(ZenithSpacing.space1)
+    val option: @Composable (Int, Modifier) -> Unit = { index, itemModifier ->
+        val isSelected = index == selectedIndex
+        Box(
+            modifier = itemModifier
+                .defaultMinSize(minHeight = 44.dp)
+                .clip(segment)
+                .background(if (isSelected) colors.surfaceRaised else Color.Transparent, segment)
+                .then(if (isSelected) Modifier.border(1.dp, colors.border, segment) else Modifier)
+                .selectable(selected = isSelected, role = Role.Tab) { onSelect(index) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = options[index],
+                style = ZenithType.body.copy(
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                ),
+                color = if (isSelected) colors.ink else colors.inkMuted
+            )
+        }
+    }
+    if (LocalDensity.current.fontScale >= 1.5f) {
+        Column(container, verticalArrangement = spacing) {
+            options.indices.forEach { option(it, Modifier.fillMaxWidth()) }
+        }
+    } else {
+        Row(container, horizontalArrangement = spacing) {
+            options.indices.forEach { option(it, Modifier.weight(1f)) }
         }
     }
 }

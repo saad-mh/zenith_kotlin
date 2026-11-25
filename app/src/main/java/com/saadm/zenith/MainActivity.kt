@@ -1,5 +1,9 @@
 package com.saadm.zenith
 
+import com.saadm.zenith.ui.theme.zenithColors
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.SystemBarStyle
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +28,12 @@ class MainActivity : ComponentActivity() {
             // Draw nothing until the stored theme is known, so the first frame is never in the wrong theme.
             val appPreferences = storedPreferences ?: return@setContent
             ZenithTheme(mode = appPreferences.themeMode, palette = appPreferences.palette) {
+                // Status and navigation bar icons follow the app theme, which can differ from the system's.
+                val dark = zenithColors().isDark
+                LaunchedEffect(dark) {
+                    val bars = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
+                    enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+                }
                 ZenithApp(
                     transitionDurationMillis = normalizeTransitionDurationMillis(
                         appPreferences.transitionDurationMillis

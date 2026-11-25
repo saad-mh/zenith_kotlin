@@ -27,7 +27,8 @@ sealed class Destination(val route: String) {
 
     companion object {
         /** Top-level tabs, in pill order. */
-        val topLevelTabs: List<Destination> = listOf(Overview, Insights, Settings)
+        // Lazy: built eagerly, it captures a null for whichever object triggered this class's initialisation.
+        val topLevelTabs: List<Destination> by lazy { listOf(Overview, Insights, Settings) }
 
         const val ADD_ROUTE = "add"
 

@@ -60,7 +60,8 @@ fun BudgetLineRow(
         }
         ProgressTrack(
             progress = ratio,
-            description = "$name, $spent, ${line.statusText()}",
+            // The name, spend and status are written beside the bar, so it only adds the tick.
+            description = "Even pace is ${(pace * 100).toInt()}%",
             paceTick = pace,
             fillColor = fill
         )

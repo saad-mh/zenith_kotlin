@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.settings
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -255,7 +256,7 @@ private fun SettingsContent(
             ListRow(
                 title = name,
                 subtitle = preferences.upiId.ifBlank { "Add a UPI ID for payment requests" },
-                leading = { Avatar(name) },
+                leading = { Avatar(name, Modifier.clearAndSetSemantics {}) },
                 onClick = { actions.open(SettingsDialog.Profile) }
             )
         }
@@ -415,7 +416,7 @@ private fun TextDialog(title: String, body: String, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = colors.surfaceRaised,
         title = { Text(title, style = ZenithType.subheading, color = colors.ink) },
-        text = { Text(body, style = ZenithType.body, color = colors.ink) },
+        text = { Text(body, style = ZenithType.body, color = colors.ink, modifier = Modifier.verticalScroll(rememberScrollState())) },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
     )
 }

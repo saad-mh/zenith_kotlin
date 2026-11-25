@@ -67,7 +67,7 @@ fun MonthlyBars(
             .height(180.dp)
             .semantics { contentDescription = description }
     ) {
-        val labelHeight = 20.dp.toPx()
+        val labelHeight = textMeasurer.measure("A", labelStyle).size.height + 4.dp.toPx()
         val plotTop = 8.dp.toPx()
         val plotBottom = size.height - labelHeight
         val plotHeight = plotBottom - plotTop
@@ -176,7 +176,7 @@ fun StackedBars(
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
         Canvas(Modifier.fillMaxWidth().height(180.dp).semantics { contentDescription = description }) {
-            val labelHeight = 20.dp.toPx()
+            val labelHeight = textMeasurer.measure("A", labelStyle).size.height + 4.dp.toPx()
             val plotBottom = size.height - labelHeight
             val plotHeight = plotBottom - 8.dp.toPx()
             val slot = size.width / columns.size.coerceAtLeast(1)
@@ -223,7 +223,7 @@ fun GroupedBars(
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
         Canvas(Modifier.fillMaxWidth().height(180.dp).semantics { contentDescription = description }) {
-            val labelHeight = 20.dp.toPx()
+            val labelHeight = textMeasurer.measure("A", labelStyle).size.height + 4.dp.toPx()
             val plotBottom = size.height - labelHeight
             val plotHeight = plotBottom - 8.dp.toPx()
             val slot = size.width / groups.size.coerceAtLeast(1)
@@ -264,7 +264,7 @@ fun NetFlowBars(bars: List<NetFlowBar>, modifier: Modifier = Modifier) {
     }
 
     Canvas(modifier.fillMaxWidth().height(200.dp).semantics { contentDescription = description }) {
-        val labelHeight = 20.dp.toPx()
+        val labelHeight = textMeasurer.measure("A", labelStyle).size.height + 4.dp.toPx()
         val plotTop = 16.dp.toPx()
         val plotBottom = size.height - labelHeight
         val zeroY = (plotTop + plotBottom) / 2
