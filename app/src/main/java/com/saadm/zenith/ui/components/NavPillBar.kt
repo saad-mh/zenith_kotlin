@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -126,7 +127,9 @@ private fun PillTabItem(
         if (selected) {
             Icon(tab.icon, contentDescription = null, tint = colors.link, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(text = tab.label, style = ZenithType.bodyStrong, color = colors.link)
+            val scale = LocalDensity.current.fontScale
+            val size = ZenithType.bodyStrong.fontSize * (minOf(scale, 1.3f) / scale)
+            Text(text = tab.label, style = ZenithType.bodyStrong.copy(fontSize = size), color = colors.link, maxLines = 1)
         } else {
             Icon(tab.icon, contentDescription = tab.label, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
         }

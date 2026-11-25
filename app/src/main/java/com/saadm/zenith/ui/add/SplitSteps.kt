@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.add
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -72,12 +75,13 @@ fun WhoStep(
         val chosen = payee.id in form.people
         ListRow(
             title = payee.name,
-            leading = { Avatar(payee.name) },
+            leading = { Avatar(payee.name, Modifier.clearAndSetSemantics {}) },
             trailing = {
                 FilterChip(
                     if (chosen) "In" else "Add",
                     chosen,
-                    { onChange { it.copy(people = if (chosen) it.people - payee.id else it.people + payee.id) } }
+                    { onChange { it.copy(people = if (chosen) it.people - payee.id else it.people + payee.id) } },
+                    Modifier.semantics { contentDescription = "Share with ${payee.name}" }
                 )
             }
         )
@@ -152,7 +156,7 @@ fun SplitStep(
             ListRow(
                 title = name,
                 subtitle = "Owes you",
-                leading = { Avatar(name) },
+                leading = { Avatar(name, Modifier.clearAndSetSemantics {}) },
                 trailing = { AmountText(shares[id] ?: 0L) }
             )
         }

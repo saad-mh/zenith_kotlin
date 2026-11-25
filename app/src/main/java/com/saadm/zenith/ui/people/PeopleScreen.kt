@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.people
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -119,7 +120,7 @@ private fun PeopleContent(
                             ListRow(
                                 title = "Dev",
                                 subtitle = "1 open item",
-                                leading = { Avatar("Dev") },
+                                leading = { Avatar("Dev", Modifier.clearAndSetSemantics {}) },
                                 trailing = { AmountText(32_000, signed = true, tone = AmountTone.Positive) },
                                 trailingCaption = "owes you"
                             )
@@ -191,7 +192,7 @@ private fun PayeeListRow(row: PayeeRow, onClick: () -> Unit) {
             open == 1 -> "1 open item"
             else -> "$open open items"
         },
-        leading = { Avatar(row.payee.name) },
+        leading = { Avatar(row.payee.name, Modifier.clearAndSetSemantics {}) },
         trailing = {
             AmountText(
                 net,

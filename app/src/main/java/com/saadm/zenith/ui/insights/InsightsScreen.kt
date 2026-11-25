@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.insights
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,17 +88,19 @@ fun InsightsScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Header(state: InsightsState?, onPrevious: () -> Unit, onNext: () -> Unit) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth().padding(horizontal = ZenithSpacing.space4, vertical = ZenithSpacing.space2),
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.SpaceBetween,
+        itemVerticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             "Insights",
             style = ZenithType.heading,
             color = zenithColors().ink,
-            modifier = Modifier.weight(1f).semantics { heading() }
+            modifier = Modifier.semantics { heading() }
         )
         if (state != null) {
             MonthSwitcher(
@@ -108,6 +113,7 @@ private fun Header(state: InsightsState?, onPrevious: () -> Unit, onNext: () -> 
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InsightsContent(
     state: InsightsState,
@@ -122,7 +128,7 @@ private fun InsightsContent(
         if (state.history.trendReady(state.today)) TrendCard(state)
         WhereItWentCard(state)
         SharedMoneyCard(state.shared, state.today, onOpenPayees)
-        Row(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
             SecondaryButton("Budgets", onOpenBudgets, Modifier.weight(1f))
             SecondaryButton("Payees", onOpenPayees, Modifier.weight(1f))
             SecondaryButton("Categories", onOpenCategories, Modifier.weight(1f))
@@ -130,6 +136,7 @@ private fun InsightsContent(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CashFlowCard(state: InsightsState) {
     val colors = zenithColors()
@@ -157,8 +164,8 @@ private fun CashFlowCard(state: InsightsState) {
                 description = words
             )
         }
-        Row {
-            Column(Modifier.weight(1f)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
                 Text("Income", style = ZenithType.caption, color = colors.inkMuted)
                 AmountText(summary.income, signed = true, tone = AmountTone.Positive)
             }
@@ -241,12 +248,13 @@ private fun WhereItWentCard(state: InsightsState) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SharedMoneyCard(shared: SharedBalanceSummary, today: LocalDate, onOpenPayees: () -> Unit) {
     val colors = zenithColors()
     ZenithCard {
         SectionHeader("Shared money", actionLabel = "Open", onAction = onOpenPayees)
-        Row {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
             Column(Modifier.weight(1f)) {
                 Text("Owed to you", style = ZenithType.caption, color = colors.inkMuted)
                 AmountText(shared.owedToYou, signed = true, tone = AmountTone.Positive, style = ZenithType.heading)
@@ -272,7 +280,7 @@ private fun OpenBalanceRow(line: PayeeBalanceLine, today: LocalDate) {
             val days = ChronoUnit.DAYS.between(it, today)
             "$days ${if (days == 1L) "day" else "days"} · since ${dayLabel(it, today)}"
         },
-        leading = { Avatar(line.name) },
+        leading = { Avatar(line.name, Modifier.clearAndSetSemantics {}) },
         trailing = {
             AmountText(
                 line.net,
