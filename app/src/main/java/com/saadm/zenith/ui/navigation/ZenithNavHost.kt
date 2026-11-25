@@ -176,7 +176,6 @@ fun ZenithNavHost(
         composable(Destination.Insights.route) {
             InsightsScreen(
                 onOpenBudgets = { navController.navigate(Destination.Budgets.route) },
-                onOpenTransactions = { navController.navigate(Destination.Transactions.route) },
                 onOpenPayees = { navController.navigate(Destination.Payees.route) },
                 onOpenCategories = { navController.navigate(Destination.Categories.route) }
             )
