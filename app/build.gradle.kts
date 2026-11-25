@@ -56,7 +56,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.ui)
@@ -81,10 +80,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.hilt.android.v2571)
-    ksp(libs.hilt.android.compiler.v2571)
 
     testImplementation(libs.mockito.kotlin)
-
-    implementation(libs.androidx.compose.material)
 }
