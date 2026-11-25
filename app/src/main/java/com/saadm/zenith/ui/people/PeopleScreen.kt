@@ -112,7 +112,19 @@ private fun PeopleContent(
                     title = "No shared balances yet",
                     body = "Split an expense, or record money you lent or borrowed. Each person's balance shows here.",
                     actionLabel = "Add a person",
-                    onAction = onAdd
+                    onAction = onAdd,
+                    example = {
+                        ZenithCard {
+                            Text("Example", style = ZenithType.caption, color = colors.inkMuted)
+                            ListRow(
+                                title = "Dev",
+                                subtitle = "1 open item",
+                                leading = { Avatar("Dev") },
+                                trailing = { AmountText(32_000, signed = true, tone = AmountTone.Positive) },
+                                trailingCaption = "owes you"
+                            )
+                        }
+                    }
                 )
             }
             return@LazyColumn

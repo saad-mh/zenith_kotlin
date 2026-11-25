@@ -2,6 +2,7 @@ package com.saadm.zenith.ui.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.data.preferences.SettingsRepository
 import com.saadm.zenith.domain.analytics.CategoryTotal
 import com.saadm.zenith.domain.analytics.MonthSummary
@@ -12,6 +13,7 @@ import com.saadm.zenith.domain.budget.MonthBudgets
 import com.saadm.zenith.domain.model.MonthPeriod
 import com.saadm.zenith.domain.model.MonthPeriods
 import com.saadm.zenith.domain.payee.SharedBalanceSummary
+import com.saadm.zenith.domain.repository.TransactionRepo
 import com.saadm.zenith.domain.transaction.TxnNames
 import com.saadm.zenith.domain.usecase.ObserveMonthBudgets
 import com.saadm.zenith.domain.usecase.ObserveMonthSummary
@@ -19,6 +21,7 @@ import com.saadm.zenith.domain.usecase.ObserveSharedBalances
 import com.saadm.zenith.domain.usecase.ObserveSixMonthTrend
 import com.saadm.zenith.domain.usecase.ObserveSpendByCategory
 import com.saadm.zenith.domain.usecase.ObserveTxnNames
+import com.saadm.zenith.ui.common.toLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +29,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
@@ -58,7 +62,8 @@ data class InsightsState(
     val trend: MonthTrend,
     val categories: List<Pair<String, Long>>,
     val shared: SharedBalanceSummary,
-    val names: TxnNames
+    val names: TxnNames,
+    val history: History = History(0, null)
 ) {
     /** Share of income not spent, or null with no income to compare against. */
     val keptPercent: Int?
@@ -74,6 +79,7 @@ class InsightsViewModel @Inject constructor(
     observeTrend: ObserveSixMonthTrend,
     observeByCategory: ObserveSpendByCategory,
     observeShared: ObserveSharedBalances,
+    transactions: TransactionRepo,
     observeNames: ObserveTxnNames
 ) : ViewModel() {
 
@@ -91,7 +97,11 @@ class InsightsViewModel @Inject constructor(
                 observeByCategory(period),
                 ::Month
             )
-            combine(month, observeShared(), observeNames()) { m, shared, names ->
+            val history = transactions.observeAllActive().map { all ->
+                val money = all.filter { it.type == TxnType.INCOME || it.type == TxnType.EXPENSE }
+                History(money.size, money.minOfOrNull { it.transactedAt }?.toLocalDate())
+            }
+            combine(month, observeShared(), observeNames(), history) { m, shared, names, recorded ->
                 InsightsState(
                     today = today,
                     period = period,
@@ -101,7 +111,8 @@ class InsightsViewModel @Inject constructor(
                     trend = m.trend,
                     categories = topCategories(m.byCategory, names.categories),
                     shared = shared,
-                    names = names
+                    names = names,
+                    history = recorded
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

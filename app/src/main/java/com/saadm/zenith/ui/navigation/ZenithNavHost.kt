@@ -158,20 +158,23 @@ fun ZenithNavHost(
             }
         }
     ) {
+        val openAdd = { navController.navigate(Destination.ADD_ROUTE) { launchSingleTop = true } }
         val openPayee: (Long) -> Unit = { id -> navController.navigate(Destination.payeeDetailsRoute(id)) }
 
         composable(Destination.Overview.route) {
             HomeScreen(
                 onOpenSettings = { navController.navigate(Destination.Settings.route) { launchSingleTop = true } },
                 onOpenTransactions = { navController.navigate(Destination.Transactions.route) },
-                onOpenPayees = { navController.navigate(Destination.Payees.route) }
+                onOpenPayees = { navController.navigate(Destination.Payees.route) },
+                onAdd = openAdd
             )
         }
         composable(Destination.Insights.route) {
             InsightsScreen(
                 onOpenBudgets = { navController.navigate(Destination.Budgets.route) },
                 onOpenPayees = { navController.navigate(Destination.Payees.route) },
-                onOpenCategories = { navController.navigate(Destination.Categories.route) }
+                onOpenCategories = { navController.navigate(Destination.Categories.route) },
+                onAdd = openAdd
             )
         }
         composable(Destination.Settings.route) {
