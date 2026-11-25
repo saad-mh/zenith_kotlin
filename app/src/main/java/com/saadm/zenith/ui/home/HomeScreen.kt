@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +44,7 @@ import com.saadm.zenith.ui.common.shareText
 import com.saadm.zenith.ui.common.shortMonthName
 import com.saadm.zenith.ui.components.AmountText
 import com.saadm.zenith.ui.components.AmountTone
+import com.saadm.zenith.ui.components.Avatar
 import com.saadm.zenith.ui.components.ListRow
 import com.saadm.zenith.ui.components.SecondaryButton
 import com.saadm.zenith.ui.components.SectionHeader
@@ -93,7 +95,12 @@ private fun OverviewContent(
                 modifier = Modifier.weight(1f).semantics { heading() }
             )
             IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Rounded.Person, contentDescription = "Profile and settings", tint = colors.ink)
+                val name = state?.profileName.orEmpty()
+                if (name.isBlank()) {
+                    Icon(Icons.Rounded.Person, contentDescription = "Profile and settings", tint = colors.ink)
+                } else {
+                    Avatar(name, Modifier.semantics { contentDescription = "Profile and settings" })
+                }
             }
         }
         if (state == null) return@Column

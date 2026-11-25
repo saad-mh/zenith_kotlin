@@ -84,6 +84,8 @@ class LocalBackupImpl(
     override suspend fun deleteAllData(confirmation: String) {
         require(confirmation == "DELETE") { "Type DELETE to confirm" }
         db.clearAllTables()
+        // Entries need a category, so the defaults come back as on a first run.
+        AppDatabase.DB_CREATE_CALLBACK.onCreate(db.openHelper.writableDatabase)
         preferences.clear()
     }
 

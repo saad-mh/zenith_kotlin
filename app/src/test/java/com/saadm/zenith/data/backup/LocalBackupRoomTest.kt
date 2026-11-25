@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -204,7 +205,10 @@ class LocalBackupRoomTest {
         assertEquals(before, exportJson())
 
         backup.deleteAllData("DELETE")
-        assertEquals(0, db.categoryDao().getAll().size)
+        // Only the seeded categories remain, with a default for each kind.
+        assertNotNull(db.categoryDao().getDefaultByType("EXPENSE"))
+        assertNotNull(db.categoryDao().getDefaultByType("INCOME"))
+        assertTrue(db.categoryDao().getAll().none { it.name == "Food & dining" })
         assertEquals(0, db.transactionDao().observeAllActive().first().size)
     }
 

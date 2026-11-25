@@ -179,7 +179,13 @@ fun ZenithNavHost(
                 onOpenCategories = { navController.navigate(Destination.Categories.route) }
             )
         }
-        composable(Destination.Settings.route) { SettingsScreen(onNavigateToPayee = openPayee) }
+        composable(Destination.Settings.route) {
+            SettingsScreen(
+                onOpenCategories = { navController.navigate(Destination.Categories.route) },
+                onOpenPayees = { navController.navigate(Destination.Payees.route) },
+                onOpenBudgets = { navController.navigate(Destination.Budgets.route) }
+            )
+        }
         composable(Destination.Budgets.route) { BudgetsScreen(onBack = { navController.popBackStack() }) }
         composable(Destination.Transactions.route) {
             TransactionsScreen(
