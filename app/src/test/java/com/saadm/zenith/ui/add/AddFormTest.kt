@@ -39,6 +39,15 @@ class AddFormTest {
     }
 
     @Test
+    fun dropsIdsThatNoLongerExist() {
+        val stale = form.copy(accountId = 1, payeeId = 2, people = listOf(2, 3))
+        val known = stale.withKnownIds(accounts = setOf(9), payees = setOf(3))
+        assertNull(known.accountId)
+        assertNull(known.payeeId)
+        assertEquals(listOf(3L), known.people)
+    }
+
+    @Test
     fun suggestsTheLatestCategoryForAMerchant() {
         fun row(note: String, category: Long, at: Long) = TransactionEntity(
             amount = 1, type = TxnType.EXPENSE, transactedAt = at, createdAt = at, updatedAt = at,

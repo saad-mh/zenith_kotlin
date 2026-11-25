@@ -59,7 +59,7 @@ class AddTxnViewModel @Inject constructor(
     private val transactions: TransactionRepo,
     private val categories: CategoryRepo,
     private val payees: PayeeRepo,
-    accounts: AccountRepo,
+    private val accounts: AccountRepo,
     private val settings: SettingsRepository,
     private val draft: AddDraft
 ) : ViewModel() {
@@ -150,14 +150,29 @@ class AddTxnViewModel @Inject constructor(
         }
     }
 
+    /** The form as it can safely be written. An edited row keeps the ids it already had. */
+    private suspend fun checked(form: AddForm): AddForm {
+        val row = original
+        return form.withKnownIds(
+            accounts = accounts.observeBalances().first().map { it.id }.toSet() + listOfNotNull(row?.accountId),
+            payees = payees.observeAllActive().first().map { it.id }.toSet() + listOfNotNull(row?.payeeId)
+        )
+    }
+
     /** Saves the expense with a due for each person's share, as one write. */
     fun saveSplit() {
-        val form = _form.value
-        val total = form.paise ?: return
-        val shares = form.shares()?.filterValues { it > 0 }.orEmpty()
-        if (editId != null || saving || form.type != TxnType.EXPENSE || shares.isEmpty()) return
+        val typed = _form.value
+        val total = typed.paise ?: return
+        if (editId != null || saving || typed.type != TxnType.EXPENSE) return
         saving = true
         viewModelScope.launch {
+            val form = checked(typed)
+            val shares = form.shares()?.filterValues { it > 0 }.orEmpty()
+            if (shares.isEmpty()) {
+                _form.value = form
+                saving = false
+                return@launch
+            }
             val now = System.currentTimeMillis()
             val at = timeOn(form.date, now)
             val category = categoryFor(form)
@@ -187,12 +202,19 @@ class AddTxnViewModel @Inject constructor(
     }
 
     fun save() {
-        val form = _form.value
-        val paise = form.paise ?: return
-        if (form.problem != null || saving) return
+        val typed = _form.value
+        val paise = typed.paise ?: return
+        if (typed.problem != null || saving) return
         if (editId != null && original == null) return
         saving = true
         viewModelScope.launch {
+            val form = checked(typed)
+            if (form.problem != null) {
+                // The chosen person is gone: show the form again so another can be picked.
+                _form.value = form
+                saving = false
+                return@launch
+            }
             val now = System.currentTimeMillis()
             val row = original
             transactions.save(
