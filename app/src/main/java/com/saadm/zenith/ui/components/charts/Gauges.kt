@@ -3,10 +3,8 @@ package com.saadm.zenith.ui.components.charts
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,11 +18,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.saadm.zenith.domain.model.MoneyFormatter
-import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
 import kotlin.math.cos
@@ -118,79 +113,3 @@ fun Gauge(
     }
 }
 
-/**
- * One ring per budget. A ring caps at full; the label carries the overspend
- * ("+₹1,200 over") so the ring alone never says it.
- */
-@Composable
-fun BudgetRings(rings: List<BudgetRing>, modifier: Modifier = Modifier) {
-    val colors = zenithColors()
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space4)
-    ) {
-        rings.forEach { ring ->
-            val over = ring.spent > ring.limit
-            val fill = if (ring.limit > 0) (ring.spent.toFloat() / ring.limit).coerceIn(0f, 1f) else 0f
-            val label = if (over) {
-                "+${MoneyFormatter.format(ring.spent - ring.limit).text} over"
-            } else {
-                MoneyFormatter.format(ring.limit - ring.spent).text + " left"
-            }
-            val description = "${ring.label}: spent ${MoneyFormatter.format(ring.spent).spoken} of " +
-                "${MoneyFormatter.format(ring.limit).spoken}. " + if (over) "Over budget." else "Within budget."
-            Column(
-                modifier = Modifier.semantics { contentDescription = description },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space1)
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
-                    Canvas(Modifier.size(64.dp)) {
-                        val stroke = 8.dp.toPx()
-                        val inset = stroke / 2
-                        val ringSize = Size(size.width - stroke, size.height - stroke)
-                        drawArc(
-                            color = colors.surfaceSunken,
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            topLeft = Offset(inset, inset),
-                            size = ringSize,
-                            style = Stroke(width = stroke)
-                        )
-                        drawArc(
-                            color = if (over) colors.negative else colors.chart(0),
-                            startAngle = -90f,
-                            sweepAngle = 360f * fill,
-                            useCenter = false,
-                            topLeft = Offset(inset, inset),
-                            size = ringSize,
-                            style = Stroke(width = stroke)
-                        )
-                    }
-                    Text(
-                        text = "${(ring.spent * 100 / ring.limit.coerceAtLeast(1)).coerceAtMost(999)}%",
-                        style = ZenithType.caption,
-                        color = colors.ink
-                    )
-                }
-                Text(
-                    text = ring.label,
-                    style = ZenithType.caption,
-                    color = colors.ink,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(80.dp)
-                )
-                Text(
-                    text = label,
-                    style = ZenithType.caption,
-                    color = if (over) colors.negative else colors.inkMuted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(80.dp)
-                )
-            }
-        }
-    }
-}

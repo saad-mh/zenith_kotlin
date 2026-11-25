@@ -20,8 +20,10 @@ enum class TransitionStyle(
     }
 }
 
-val TransitionDurationOptions = listOf(120, 180, 240)
-const val DEFAULT_TRANSITION_DURATION_MILLIS = 120
+// Long enough that the animation is still visible after the incoming screen has been composed.
+// A stored value from the older, shorter set falls back to the default.
+val TransitionDurationOptions = listOf(200, 300, 400)
+const val DEFAULT_TRANSITION_DURATION_MILLIS = 300
 val DEFAULT_TRANSITION_STYLE = TransitionStyle.SlideOnly
 
 fun normalizeTransitionDurationMillis(durationMillis: Int): Int {

@@ -3,7 +3,11 @@
     <!-- Matches the surface colour in ui/theme/Color.kt, so the splash does not flash another colour. -->
     <color name="window_background">#FFFFFFFF</color>
 
+    <color name="splash_rings">#FF575D94</color>
+
     <style name="Theme.Zenith" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_rings</item>
+        <item name="android:windowSplashScreenAnimationDuration">520</item>
     </style>
 </resources>
