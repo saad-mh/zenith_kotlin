@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.add
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.foundation.horizontalScroll
@@ -56,8 +58,10 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
     var step by rememberSaveable { mutableStateOf(Step.Amount) }
     val context = LocalContext.current
 
+    val view = LocalView.current
     LaunchedEffect(saved) {
         val done = saved ?: return@LaunchedEffect
+        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
         done.request?.let(context::shareText)
         onDismissRequest()
     }

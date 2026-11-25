@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.budgets
 
+import com.saadm.zenith.ui.components.TotalAmount
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -64,6 +67,7 @@ fun BudgetsScreen(onBack: () -> Unit, viewModel: BudgetsViewModel = hiltViewMode
     val state by viewModel.state.collectAsState()
     var editing by remember { mutableStateOf<Editing?>(null) }
     var pickingMonth by rememberSaveable { mutableStateOf(false) }
+    val view = LocalView.current
 
     Column(Modifier.fillMaxSize()) {
         ScreenHeader("Budgets", onBack) {
@@ -97,7 +101,7 @@ fun BudgetsScreen(onBack: () -> Unit, viewModel: BudgetsViewModel = hiltViewMode
             },
             names = loaded.names,
             onSave = { categoryId, limit ->
-                viewModel.save(categoryId, limit)
+                viewModel.save(categoryId, limit) { view.performHapticFeedback(HapticFeedbackConstants.CONFIRM) }
                 editing = null
             },
             onRemove = { categoryId ->
@@ -178,7 +182,7 @@ private fun SummaryCard(state: BudgetsState, summary: BudgetSummary) {
             style = ZenithType.caption,
             color = colors.inkMuted
         )
-        AmountText(summary.left, style = ZenithType.display)
+        TotalAmount(summary.left)
         Text("of ${MoneyFormatter.format(summary.limit).text}", style = ZenithType.caption, color = colors.inkMuted)
         ProgressTrack(
             progress = if (summary.limit > 0) summary.spent.toFloat() / summary.limit else 0f,
