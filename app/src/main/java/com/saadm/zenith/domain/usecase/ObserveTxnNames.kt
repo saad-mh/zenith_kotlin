@@ -18,7 +18,8 @@ class ObserveTxnNames @Inject constructor(
             TxnNames(
                 categories = c.associate { it.id to it.name },
                 payees = p.associate { it.id to it.name },
-                accounts = a.associate { it.id to it.name }
+                accounts = a.associate { it.id to it.name },
+                categoryIcons = c.associate { it.id to it.emoji }
             )
         }
 }

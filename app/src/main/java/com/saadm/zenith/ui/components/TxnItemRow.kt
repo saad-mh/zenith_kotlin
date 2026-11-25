@@ -12,8 +12,12 @@ fun TxnItemRow(item: TxnItem, modifier: Modifier = Modifier, caption: String? = 
         modifier = modifier,
         subtitle = listOfNotNull(item.tag?.word, item.detail.ifEmpty { null }).joinToString(" · "),
         leading = {
-            if (item.people.size > 1) AvatarStack(item.people, maxVisible = 2)
-            else Avatar(item.people.firstOrNull() ?: item.title)
+            // Entries with people show who; the rest show their category.
+            when {
+                item.people.size > 1 -> AvatarStack(item.people, maxVisible = 2)
+                item.people.size == 1 -> Avatar(item.people.first())
+                else -> CategoryBadge(item.categoryIcon, item.category)
+            }
         },
         trailing = {
             AmountText(
