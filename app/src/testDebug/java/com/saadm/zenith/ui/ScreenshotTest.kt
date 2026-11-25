@@ -12,6 +12,7 @@ import com.saadm.zenith.ui.transactions.TxnListPreview
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -48,4 +49,16 @@ class ScreenshotTest {
 
     @Test
     fun settings() = shot("settings") { SettingsPreview() }
+
+    @Test
+    fun largeFont() {
+        sessionQuipSalt = 0
+        RuntimeEnvironment.setFontScale(2f)
+        shot("large-overview") { OverviewPreview() }
+        shot("large-insights") { InsightsPreview() }
+        shot("large-budgets") { BudgetsPreview() }
+        shot("large-settings") { SettingsPreview() }
+        shot("large-transactions") { TxnListPreview() }
+        shot("large-people") { PeoplePreview() }
+    }
 }

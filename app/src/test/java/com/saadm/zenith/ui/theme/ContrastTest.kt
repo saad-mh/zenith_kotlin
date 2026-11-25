@@ -42,4 +42,17 @@ class ContrastTest {
         }
         assertEquals(emptyList<String>(), failures)
     }
+
+    // Bars, lines and share segments are graphics: WCAG asks 3:1 against what they sit on.
+    @Test
+    fun chartColoursStandOutFromTheirBackground() {
+        val failures = listOf(ZenithLightColors, ZenithDarkColors, ZenithMonochromeColors, ZenithMonochromeDarkColors)
+            .flatMapIndexed { palette, c ->
+                c.chartColors.flatMapIndexed { i, colour ->
+                    listOf(c.surface, c.surfaceRaised).filter { ratio(colour, it) < 3f }
+                        .map { "palette $palette c${i + 1} ${ratio(colour, it)}" }
+                }
+            }
+        assertEquals(emptyList<String>(), failures)
+    }
 }
