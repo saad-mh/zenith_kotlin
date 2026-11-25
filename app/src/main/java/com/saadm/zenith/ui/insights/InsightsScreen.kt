@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.saadm.zenith.ui.people.PeopleMiniCard
+import com.saadm.zenith.ui.theme.ThemeMode
 import com.saadm.zenith.ui.theme.ZenithTheme
 //import com.saadm.zenith.ui.transactions.TxnInsightCard
 
@@ -135,7 +136,7 @@ fun PreviewInsightsScreen() {
 @Preview(showBackground = true, name = "Dark Mode")
 @Composable
 fun PreviewInsightsScreenDark() {
-    ZenithTheme(darkTheme = true) {
+    ZenithTheme(mode = ThemeMode.Dark) {
         InsightsScreen()
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.saadm.zenith.ui.theme.ThemeMode
 import com.saadm.zenith.ui.theme.ZenithTheme
 
 @Composable
@@ -68,7 +69,7 @@ fun NumPad() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewNumPad() {
-    ZenithTheme(darkTheme = true) {
+    ZenithTheme(mode = ThemeMode.Dark) {
         NumPad()
     }
 
