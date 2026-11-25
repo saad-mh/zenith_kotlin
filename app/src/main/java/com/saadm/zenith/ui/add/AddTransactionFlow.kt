@@ -65,11 +65,15 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
 
     ZenithBottomSheet(onDismissRequest) {
         Text(
-            if (viewModel.isEdit) "Edit transaction" else "Add transaction",
+            when {
+                viewModel.isEdit -> "Edit transaction"
+                viewModel.isRepeat -> "Repeat transaction"
+                else -> "Add transaction"
+            },
             style = ZenithType.subheading,
             color = zenithColors().ink
         )
-        if (!viewModel.isEdit) {
+        if (viewModel.keepsDraft) {
             Text("Closing keeps this as a draft", style = ZenithType.caption, color = zenithColors().inkMuted)
         }
         when (step) {
@@ -170,6 +174,16 @@ private fun AmountStep(
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().semantics { contentDescription = "$shown rupees" }
     )
+    val sum = form.paise
+    if (isSum(form.amount) && sum != null) {
+        Text(
+            "= ${MoneyFormatter.format(sum).text}",
+            style = ZenithType.bodyStrong,
+            color = colors.ink,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
     if (categories.isNotEmpty()) {
         CategoryChips(form, categories, onChange, Modifier.horizontalScroll(rememberScrollState()))
     }

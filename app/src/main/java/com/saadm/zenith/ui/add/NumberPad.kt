@@ -34,7 +34,8 @@ fun NumPad(onKey: (String) -> Unit) {
         listOf("1", "2", "3"),
         listOf("4", "5", "6"),
         listOf("7", "8", "9"),
-        listOf(".", "0", BACKSPACE)
+        listOf(".", "0", BACKSPACE),
+        listOf(PLUS, MINUS_KEY)
     )
     Column(
         modifier = Modifier
@@ -56,6 +57,8 @@ private fun PadKey(key: String, onClick: () -> Unit, modifier: Modifier) {
     val description = when (key) {
         BACKSPACE -> "Backspace"
         "." -> "Decimal point"
+        PLUS -> "Plus"
+        MINUS_KEY -> "Minus"
         else -> key
     }
     Box(
@@ -71,7 +74,7 @@ private fun PadKey(key: String, onClick: () -> Unit, modifier: Modifier) {
         if (key == BACKSPACE) {
             Icon(Icons.AutoMirrored.Rounded.Backspace, contentDescription = null, tint = colors.ink)
         } else {
-            Text(text = key, style = ZenithType.heading, color = colors.ink)
+            Text(text = if (key == MINUS_KEY) "−" else key, style = ZenithType.heading, color = colors.ink)
         }
     }
 }

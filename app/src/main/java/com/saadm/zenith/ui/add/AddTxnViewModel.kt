@@ -18,6 +18,7 @@ import com.saadm.zenith.domain.repository.TransactionRepo
 import com.saadm.zenith.domain.split.Owed
 import com.saadm.zenith.domain.split.paymentRequest
 import com.saadm.zenith.ui.common.toLocalDate
+import com.saadm.zenith.ui.navigation.REPEAT_ARG
 import com.saadm.zenith.ui.navigation.TXN_ID_ARG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,13 +67,21 @@ class AddTxnViewModel @Inject constructor(
 
     val today: LocalDate = LocalDate.now()
 
-    private val editId: Long? = savedState.get<Long>(TXN_ID_ARG)?.takeIf { it > 0 }
+    private val sourceId: Long? = savedState.get<Long>(TXN_ID_ARG)?.takeIf { it > 0 }
+
+    /** A new entry prefilled from an old one. The old one is left alone. */
+    val isRepeat: Boolean = sourceId != null && savedState.get<Boolean>(REPEAT_ARG) == true
+
+    private val editId: Long? = sourceId.takeIf { !isRepeat }
     val isEdit: Boolean get() = editId != null
+
+    /** Only a blank new entry reads and writes the draft. */
+    val keepsDraft: Boolean get() = sourceId == null
 
     /** The row being edited, once loaded. */
     private var original: TransactionEntity? = null
 
-    private val _form = MutableStateFlow(if (editId == null) draft.form ?: AddForm(today) else AddForm(today))
+    private val _form = MutableStateFlow(if (sourceId == null) draft.form ?: AddForm(today) else AddForm(today))
     val form: StateFlow<AddForm> = _form.asStateFlow()
 
     private val _saved = MutableStateFlow<Saved?>(null)
@@ -92,15 +101,16 @@ class AddTxnViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            if (editId != null) load(editId) else applyDefaultAccount()
+            if (sourceId != null) load(sourceId) else applyDefaultAccount()
         }
     }
 
     private suspend fun load(id: Long) {
         val row = transactions.observeAllActive().first().firstOrNull { it.id == id } ?: return
-        original = row
+        // A repeat keeps no link to the old row: it is saved as a new one, dated today.
+        if (!isRepeat) original = row
         _form.value = AddForm(
-            date = row.transactedAt.toLocalDate(),
+            date = if (isRepeat) today else row.transactedAt.toLocalDate(),
             type = row.type,
             amount = MoneyFormatter.plain(row.amount),
             categoryId = row.categoryId,
@@ -124,7 +134,7 @@ class AddTxnViewModel @Inject constructor(
 
     fun change(transform: (AddForm) -> AddForm) {
         _form.update(transform)
-        if (editId == null) draft.form = _form.value
+        if (keepsDraft) draft.form = _form.value
     }
 
     fun setText(text: String) {
@@ -196,7 +206,7 @@ class AddTxnViewModel @Inject constructor(
                     payeeName = preferences.profileName
                 )
             } else null
-            draft.form = null
+            if (keepsDraft) draft.form = null
             _saved.value = Saved(request)
         }
     }
@@ -233,7 +243,7 @@ class AddTxnViewModel @Inject constructor(
                     currency = row?.currency ?: "INR"
                 )
             )
-            if (editId == null) draft.form = null
+            if (keepsDraft) draft.form = null
             _saved.value = Saved()
         }
     }
@@ -243,7 +253,9 @@ class AddTxnViewModel @Inject constructor(
         val type = form.categoryType
         if (type != null) {
             val all = categories.observeAll().first()
-            all.firstOrNull { it.id == form.categoryId && it.txnType == type }?.let { return it.id }
+            all.firstOrNull {
+                it.id == form.categoryId && it.txnType == type && (!it.isDeleted || it.id == original?.categoryId)
+            }?.let { return it.id }
         }
         val fallback = type ?: if (form.type == TxnType.SETTLEMENT_FROM) TxnType.INCOME else TxnType.EXPENSE
         return categories.defaultCategoryId(fallback) ?: error("No default category")
