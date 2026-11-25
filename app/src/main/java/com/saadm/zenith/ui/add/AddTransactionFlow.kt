@@ -113,6 +113,7 @@ fun AddTransactionFlow(
             TxnType.EXPENSE, TxnType.DUE_TO -> TxnType.EXPENSE
             TxnType.SETTLEMENT_FROM -> TxnType.INCOME
             TxnType.SETTLEMENT_TO -> TxnType.EXPENSE
+            TxnType.TRANSFER_IN, TxnType.TRANSFER_OUT -> null
             null -> null
         }
     }
@@ -601,6 +602,8 @@ private fun DetailsStep(
                 TxnType.DUE_FROM -> "Due From"
                 TxnType.SETTLEMENT_FROM -> "Settled, they paid"
                 TxnType.SETTLEMENT_TO -> "Settled, you paid"
+                TxnType.TRANSFER_IN -> "Transfer in"
+                TxnType.TRANSFER_OUT -> "Transfer out"
             },
             style = MaterialTheme.typography.titleMedium
         )

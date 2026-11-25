@@ -1,5 +1,6 @@
 package com.saadm.zenith.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -11,5 +12,7 @@ data class AccountEntity(
 	val colorHex: String,
 	val emoji: String,
 	val sortOrder: Int,
-	val isDeleted: Boolean = false
+	val isDeleted: Boolean = false,
+	/** Balance before the first recorded transaction, in paise. Added in version 8. */
+	@ColumnInfo(defaultValue = "0") val openingBalance: Long = 0L
 )

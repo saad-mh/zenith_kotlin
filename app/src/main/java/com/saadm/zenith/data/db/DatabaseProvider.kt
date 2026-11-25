@@ -22,7 +22,8 @@ object DatabaseProvider {
                     AppDatabase.MIGRATION_3_4,
                     AppDatabase.MIGRATION_4_5,
                     AppDatabase.MIGRATION_5_6,
-                    Migrations.MIGRATION_6_7
+                    Migrations.MIGRATION_6_7,
+                    Migrations.MIGRATION_7_8
                 )
                 .addCallback(AppDatabase.DB_CREATE_CALLBACK)
                 .build()

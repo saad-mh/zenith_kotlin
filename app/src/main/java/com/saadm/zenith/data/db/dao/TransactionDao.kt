@@ -17,6 +17,9 @@ interface TransactionDao {
 	@Update
 	suspend fun update(transaction: TransactionEntity)
 
+	@Insert(onConflict = OnConflictStrategy.REPLACE)
+	suspend fun upsertAll(transactions: List<TransactionEntity>): List<Long>
+
 	@Delete
 	suspend fun delete(transaction: TransactionEntity)
 

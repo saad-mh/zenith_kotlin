@@ -31,7 +31,7 @@ import com.saadm.zenith.data.entity.TxnType
 	views = [
 		PayeeBalanceView::class
 	],
-	version = 7,
+	version = 8,
 	exportSchema = false
 )
 @TypeConverters(DbTypeConverters::class)

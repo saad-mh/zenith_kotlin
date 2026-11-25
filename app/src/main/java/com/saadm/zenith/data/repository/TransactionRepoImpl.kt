@@ -19,6 +19,8 @@ class TransactionRepoImpl @Inject constructor(
 
     override suspend fun save(transaction: TransactionEntity): Long = dao.upsert(transaction)
 
+    override suspend fun saveAll(transactions: List<TransactionEntity>): List<Long> = dao.upsertAll(transactions)
+
     override fun observeForPayee(payeeId: Long): Flow<List<TransactionEntity>> = dao.observeActiveByPayeeId(payeeId)
 
     override fun observeBetween(startMillis: Long, endMillis: Long): Flow<List<TransactionEntity>> =
