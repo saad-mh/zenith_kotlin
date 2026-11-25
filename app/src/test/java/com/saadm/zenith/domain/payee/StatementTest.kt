@@ -42,4 +42,17 @@ class StatementTest {
         assertEquals(10, text.lines().count { " · You owe " in it })
         assertTrue(text.endsWith("(2 earlier not shown)"))
     }
+
+    @Test
+    fun boldMarksOnlyTheBalanceAndTheHeading() {
+        fun bold(vararg rows: TransactionEntity, notes: Map<Long, String?> = emptyMap()) =
+            balanceStatement("Dev", PayeeLedger.of(rows.toList()), notes, ZoneOffset.UTC, bold = true)
+        // Owed to me, with a note: the name and the note stay as typed.
+        assertEquals(
+            "Hi Dev,\n*You owe me ₹320.*\n\n*Recent:*\n2 Jan 1970 · You owe ₹320 · Cab",
+            bold(row(1, TxnType.DUE_TO, 32_000), notes = mapOf(1L to "Cab"))
+        )
+        assertTrue(bold(row(1, TxnType.DUE_FROM, 500)).startsWith("Hi Dev,\n*I owe you ₹5.*\n"))
+        assertEquals("Hi Dev,\n*We're all settled.*", bold())
+    }
 }
