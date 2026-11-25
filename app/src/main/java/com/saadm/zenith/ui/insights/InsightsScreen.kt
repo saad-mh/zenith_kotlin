@@ -332,7 +332,7 @@ private fun OpenBalanceRow(line: PayeeBalanceLine, today: LocalDate) {
 
 @Preview
 @Composable
-private fun InsightsPreview() {
+internal fun InsightsPreview() {
     val today = LocalDate.of(2026, 10, 20)
     val period = MonthPeriods.containing(today)
     val months = generateSequence(period) { MonthPeriods.previous(it) }.take(6).toList().reversed()

@@ -78,7 +78,8 @@ private val overBy = listOf(
 )
 
 /** Picked once per launch, so the lines change between launches but not while scrolling. */
-val sessionQuipSalt: Int = Random.nextInt(0, 10_000)
+// Writable only so the screenshot test can pin it.
+var sessionQuipSalt: Int = Random.nextInt(0, 10_000)
 
 fun quipsFor(status: BudgetStatus): List<String> = when (status) {
     BudgetStatus.ON_TRACK -> onTrack

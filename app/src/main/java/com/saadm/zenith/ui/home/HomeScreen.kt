@@ -240,7 +240,7 @@ private fun people(count: Int): String = if (count == 1) "1 person" else "$count
 
 @Preview
 @Composable
-private fun OverviewPreview() {
+internal fun OverviewPreview() {
     val today = LocalDate.of(2026, 10, 20)
     val coffee = TransactionEntity(
         id = 1, amount = 42_000, type = TxnType.EXPENSE, transactedAt = 0, createdAt = 0, updatedAt = 0,
