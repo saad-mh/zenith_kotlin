@@ -77,6 +77,9 @@ fun TransactionsScreen(
 
     Column(Modifier.fillMaxSize()) {
         ScreenHeader("Transactions", onBack) {
+            IconButton(onClick = onAdd) {
+                Icon(painterResource(Lu.lucide_ic_plus), contentDescription = "Add transaction", tint = zenithColors().ink)
+            }
             val searching = loaded?.searching == true
             IconButton(onClick = { viewModel.setQuery(if (searching) null else "") }) {
                 Icon(

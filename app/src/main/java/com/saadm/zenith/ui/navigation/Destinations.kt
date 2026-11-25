@@ -17,6 +17,8 @@ const val REPEAT_ARG = "repeat"
  * The route strings are the ones already in use, so saved back stacks keep working.
  */
 sealed class Destination(val route: String) {
+    /** The page holding the three tabs; the bottom of the stack. */
+    data object Tabs : Destination("tabs")
     data object Overview : Destination("home")
     data object Insights : Destination("insights")
     data object Settings : Destination("settings")
@@ -42,17 +44,5 @@ sealed class Destination(val route: String) {
         fun settingsRoute(page: String): String = "settings_page/$page"
 
         fun payeeDetailsRoute(payeeId: Long): String = "payee_details/$payeeId"
-
-        /** Full-screen flows: no bottom bar. */
-        fun isFullScreen(route: String?): Boolean =
-            route == AddTransaction.route || route?.startsWith("payee_details") == true
-
-        /** The tab a screen belongs to, so the pill highlights it. Insights sub-pages report Insights. */
-        fun tabFor(route: String?): String? = when (route) {
-            Overview.route, Insights.route, Settings.route -> route
-            SettingsDetail.route -> Settings.route
-            Budgets.route, Transactions.route, Payees.route, Categories.route -> Insights.route
-            else -> null
-        }
     }
 }
