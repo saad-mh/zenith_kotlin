@@ -28,6 +28,8 @@ interface CategoryDao {
 
 	@Query("SELECT * FROM categories WHERE isDeleted = 0 AND txnType = :txnType ORDER BY sortOrder ASC, id ASC LIMIT 1")
 	suspend fun getFirstByType(txnType: String): CategoryEntity?
+
+
+	@Query("SELECT * FROM categories ORDER BY id ASC")
+	suspend fun getAll(): List<CategoryEntity>
 }
-
-

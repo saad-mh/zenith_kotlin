@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.saadm.zenith.data.entity.AccountBalance
 import com.saadm.zenith.data.entity.AccountEntity
 import kotlinx.coroutines.flow.Flow
@@ -49,4 +50,11 @@ interface AccountDao {
 
 	@Query("UPDATE accounts SET isDeleted = 1 WHERE id = :id")
 	suspend fun archive(id: Long)
+
+	@Query("SELECT * FROM accounts ORDER BY id ASC")
+	suspend fun getAll(): List<AccountEntity>
+
+	// Import keeps ids, so an upsert by id is needed; plain insert would fail on an existing id.
+	@Upsert
+	suspend fun upsert(account: AccountEntity): Long
 }

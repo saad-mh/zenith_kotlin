@@ -1,6 +1,9 @@
 package com.saadm.zenith.ui.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.saadm.zenith.data.export.DataTransferImpl
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -103,6 +106,45 @@ fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
     val appPreferences by preferencesStore.preferencesFlow.collectAsState(initial = AppPreferences())
     val coroutineScope = rememberCoroutineScope()
 
+    // Export: the system file picker picks the destination, so no storage permission is needed.
+    val dataTransfer = remember(context.applicationContext) {
+        DataTransferImpl(DatabaseProvider.getInstance(context.applicationContext))
+    }
+    var showExportChooser by rememberSaveable { mutableStateOf(false) }
+    val csvPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                context.contentResolver.openOutputStream(uri)?.use { dataTransfer.writeCsv(it) }
+            }
+        }
+    }
+    val jsonPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                context.contentResolver.openOutputStream(uri)?.use { dataTransfer.writeJson(it) }
+            }
+        }
+    }
+    if (showExportChooser) {
+        AlertDialog(
+            onDismissRequest = { showExportChooser = false },
+            title = { Text("Export") },
+            text = { Text("Transactions as a spreadsheet, or everything as a file Zenith can read back in.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExportChooser = false
+                    csvPicker.launch("zenith-transactions.csv")
+                }) { Text("Transactions (CSV)") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showExportChooser = false
+                    jsonPicker.launch("zenith-export.json")
+                }) { Text("Everything (JSON)") }
+            }
+        )
+    }
+
     var destinationStack by rememberSaveable {
         mutableStateOf(listOf(SettingsDestination.Root.route))
     }
@@ -186,7 +228,7 @@ fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
                     onCategoriesClick = { navigateTo(SettingsDestination.Categories) },
                     onPeopleClick = { navigateTo(SettingsDestination.People) },
                     onImportClick = { println("[settings] import requested") },
-                    onExportClick = { println("[settings] export requested") }
+                    onExportClick = { showExportChooser = true }
                 )
 
                 SettingsDestination.Appearance -> AppearanceSettingsContent(
