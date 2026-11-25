@@ -10,11 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.saadm.zenith.data.preferences.AppPreferencesStore.Companion.DEFAULT_CURRENCY
 import com.saadm.zenith.data.preferences.AppPreferencesStore.Companion.DEFAULT_HAPTICS_ENABLED
-import com.saadm.zenith.data.preferences.AppPreferencesStore.Companion.DEFAULT_LABS_ENABLED
-import com.saadm.zenith.data.preferences.AppPreferencesStore.Companion.DEFAULT_NOTIFICATIONS_ENABLED
-import com.saadm.zenith.data.preferences.AppPreferencesStore.Companion.DEFAULT_REPORTS_ENABLED
 import com.saadm.zenith.domain.model.MonthStartDay
 import com.saadm.zenith.domain.model.NumberFormat
 import com.saadm.zenith.domain.model.SplitMode
@@ -36,11 +32,7 @@ data class AppPreferences(
     val transitionStyle: TransitionStyle = DEFAULT_TRANSITION_STYLE,
     val themeMode: ThemeMode = ThemeMode.System,
     val palette: ZenithPalette = ZenithPalette.Colour,
-    val notificationsEnabled: Boolean = DEFAULT_NOTIFICATIONS_ENABLED,
-    val defaultCurrency: String = DEFAULT_CURRENCY,
     val hapticsEnabled: Boolean = DEFAULT_HAPTICS_ENABLED,
-    val reportsEnabled: Boolean = DEFAULT_REPORTS_ENABLED,
-    val labsEnabled: Boolean = DEFAULT_LABS_ENABLED,
     val numberFormat: NumberFormat = NumberFormat.INDIAN,
     val weekStart: WeekStart = WeekStart.MONDAY,
     val monthStartDay: Int = 1,
@@ -88,11 +80,7 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
                 transitionStyle = transitionStyle,
                 themeMode = themeMode,
                 palette = palette,
-                notificationsEnabled = preferences[PreferenceKeys.NOTIFICATIONS_ENABLED] ?: DEFAULT_NOTIFICATIONS_ENABLED,
-                defaultCurrency = preferences[PreferenceKeys.DEFAULT_CURRENCY] ?: DEFAULT_CURRENCY,
                 hapticsEnabled = preferences[PreferenceKeys.HAPTICS_ENABLED] ?: DEFAULT_HAPTICS_ENABLED,
-                reportsEnabled = preferences[PreferenceKeys.REPORTS_ENABLED] ?: DEFAULT_REPORTS_ENABLED,
-                labsEnabled = preferences[PreferenceKeys.LABS_ENABLED] ?: DEFAULT_LABS_ENABLED,
                 numberFormat = enumOr(preferences[PreferenceKeys.NUMBER_FORMAT], defaults.numberFormat),
                 weekStart = enumOr(preferences[PreferenceKeys.WEEK_START], defaults.weekStart),
                 monthStartDay = MonthStartDay.coerce(preferences[PreferenceKeys.MONTH_START_DAY] ?: defaults.monthStartDay),
@@ -119,15 +107,11 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
 
     suspend fun updatePalette(palette: ZenithPalette) = set(PreferenceKeys.PALETTE, palette.name.uppercase())
 
-    suspend fun updateNotificationsEnabled(enabled: Boolean) = set(PreferenceKeys.NOTIFICATIONS_ENABLED, enabled)
 
-    suspend fun updateDefaultCurrency(currency: String) = set(PreferenceKeys.DEFAULT_CURRENCY, currency.uppercase())
 
     suspend fun updateHapticsEnabled(enabled: Boolean) = set(PreferenceKeys.HAPTICS_ENABLED, enabled)
 
-    suspend fun updateReportsEnabled(enabled: Boolean) = set(PreferenceKeys.REPORTS_ENABLED, enabled)
 
-    suspend fun updateLabsEnabled(enabled: Boolean) = set(PreferenceKeys.LABS_ENABLED, enabled)
 
     suspend fun updateNumberFormat(format: NumberFormat) = set(PreferenceKeys.NUMBER_FORMAT, format.name)
 
@@ -185,11 +169,7 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         enumValues<E>().firstOrNull { it.name == raw } ?: default
 
     companion object {
-        const val DEFAULT_NOTIFICATIONS_ENABLED = true
-        const val DEFAULT_CURRENCY = "INR"
         const val DEFAULT_HAPTICS_ENABLED = true
-        const val DEFAULT_REPORTS_ENABLED = true
-        const val DEFAULT_LABS_ENABLED = false
     }
 
     private object PreferenceKeys {
@@ -198,11 +178,7 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         // Key kept from the earlier string setting, so existing installs keep their choice.
         val APPEARANCE_MODE = stringPreferencesKey("appearance_mode")
         val PALETTE = stringPreferencesKey("palette")
-        val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
-        val DEFAULT_CURRENCY = stringPreferencesKey("default_currency")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
-        val REPORTS_ENABLED = booleanPreferencesKey("reports_enabled")
-        val LABS_ENABLED = booleanPreferencesKey("labs_enabled")
         val NUMBER_FORMAT = stringPreferencesKey("number_format")
         val WEEK_START = stringPreferencesKey("week_start")
         val MONTH_START_DAY = intPreferencesKey("month_start_day")

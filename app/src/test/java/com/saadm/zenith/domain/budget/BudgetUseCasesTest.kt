@@ -172,7 +172,6 @@ class BudgetUseCasesTest {
             items.removeAll(transactions.toSet())
         }
 
-        override fun getRecentTransactions(): Flow<List<TransactionEntity>> = flowOf(items.toList())
         override suspend fun delete(transaction: TransactionEntity) {}
         override suspend fun save(transaction: TransactionEntity): Long = 0L
         override suspend fun saveAll(transactions: List<TransactionEntity>): List<Long> = emptyList()

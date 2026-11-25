@@ -511,8 +511,8 @@ private fun DeleteAllDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) 
 private fun LicencesDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val text = remember {
-        val libraries = "AndroidX, Jetpack Compose, Room, DataStore, Hilt, Kotlin and Compose Unstyled are used " +
-            "under the Apache License 2.0 (apache.org/licenses/LICENSE-2.0). Compose Unstyled is MIT licensed."
+        val libraries = "AndroidX, Jetpack Compose, Room, DataStore, Hilt and Kotlin are used " +
+            "under the Apache License 2.0 (apache.org/licenses/LICENSE-2.0)."
         val fonts = runCatching {
             context.assets.list("licenses").orEmpty().joinToString("\n\n") { name ->
                 context.assets.open("licenses/$name").bufferedReader().use { it.readText() }

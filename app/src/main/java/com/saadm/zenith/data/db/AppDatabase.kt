@@ -32,7 +32,7 @@ import com.saadm.zenith.data.entity.TxnType
 		PayeeBalanceView::class
 	],
 	version = 8,
-	exportSchema = false
+	exportSchema = true
 )
 @TypeConverters(DbTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
