@@ -7,9 +7,10 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
-// The minor version goes up by one every time an APK or bundle is built; commit the file with the change.
+// The minor version goes up by one every time an APK or bundle is built; commit version.properties with the change.
 val versionFile = rootProject.file("version.properties")
-val buildsApp = gradle.startParameter.taskNames.any { task ->
+// -PkeepVersion builds the number already in the file, e.g. to sign a release as exactly 2.0.
+val buildsApp = !project.hasProperty("keepVersion") && gradle.startParameter.taskNames.any { task ->
     listOf("assemble", "bundle", "install", "build").any { task.substringAfterLast(':').startsWith(it) }
 }
 val versions = versionFile.readLines().filter { "=" in it }.associate { it.substringBefore('=') to it.substringAfter('=').trim().toInt() }
