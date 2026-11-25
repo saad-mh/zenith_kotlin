@@ -116,6 +116,16 @@ fun suggestCategory(text: String, history: List<TransactionEntity>, allowed: Set
         ?.categoryId
 }
 
+/**
+ * Drops ids that no longer exist, so a draft or a saved default that outlived a restore, delete-all or
+ * archive can't break a save. [accounts] and [payees] are the ids that may still be used.
+ */
+fun AddForm.withKnownIds(accounts: Set<Long>, payees: Set<Long>): AddForm = copy(
+    accountId = accountId?.takeIf { it in accounts },
+    payeeId = payeeId?.takeIf { it in payees },
+    people = people.filter { it in payees }
+)
+
 /** Holds the unsaved entry while the sheet is closed. */
 // shortcut: memory only, so a draft is lost if the process dies; move to DataStore if that matters.
 @Singleton
