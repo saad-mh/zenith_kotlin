@@ -6,6 +6,8 @@ import android.util.JsonWriter
 import androidx.room.withTransaction
 import com.saadm.zenith.data.db.AppDatabase
 import com.saadm.zenith.data.entity.AccountEntity
+import com.saadm.zenith.data.entity.BudgetEntity
+import com.saadm.zenith.data.entity.BudgetPeriod
 import com.saadm.zenith.data.entity.AccountType
 import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.entity.PayeeEntity
@@ -108,6 +110,21 @@ class DataTransferImpl @Inject constructor(
             }
             w.endArray()
 
+            w.name("budgets").beginArray()
+            db.budgetDao().getAll().forEach { b ->
+                w.beginObject()
+                w.name("id").value(b.id)
+                w.nullableLong("categoryId", b.categoryId)
+                w.name("limitAmount").value(b.limitAmount)
+                w.name("periodType").value(b.periodType.name)
+                w.nullableLong("startDate", b.startDate)
+                w.nullableLong("endDate", b.endDate)
+                w.name("currency").value(b.currency)
+                w.name("isActive").value(b.isActive)
+                w.endObject()
+            }
+            w.endArray()
+
             w.name("transactions").beginArray()
             forEachTransactionPage { page ->
                 page.forEach { txn ->
@@ -188,6 +205,20 @@ class DataTransferImpl @Inject constructor(
                                     upiId = fields.stringOrNull("upiId"),
                                     createdAt = fields.long("createdAt"),
                                     isDeleted = fields.bool("isDeleted")
+                                )
+                            )
+                        }
+                        "budgets" -> readArray(reader) { fields ->
+                            db.budgetDao().upsert(
+                                BudgetEntity(
+                                    id = fields.long("id"),
+                                    categoryId = fields.longOrNull("categoryId"),
+                                    limitAmount = fields.long("limitAmount"),
+                                    periodType = BudgetPeriod.valueOf(fields.string("periodType")),
+                                    startDate = fields.longOrNull("startDate"),
+                                    endDate = fields.longOrNull("endDate"),
+                                    currency = fields.string("currency"),
+                                    isActive = fields.bool("isActive")
                                 )
                             )
                         }

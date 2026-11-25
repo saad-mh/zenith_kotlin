@@ -161,6 +161,11 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
 
     suspend fun updateHideInRecents(enabled: Boolean) = set(PreferenceKeys.HIDE_IN_RECENTS, enabled)
 
+    /** Back to defaults. Used by delete-all. */
+    suspend fun clear() {
+        dataStore.edit { preferences -> preferences.clear() }
+    }
+
     private suspend fun <T> set(key: Preferences.Key<T>, value: T) {
         dataStore.edit { preferences -> preferences[key] = value }
     }

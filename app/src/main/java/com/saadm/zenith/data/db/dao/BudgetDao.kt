@@ -40,4 +40,8 @@ interface BudgetDao {
 
 	@Query("UPDATE budgets SET isActive = 0 WHERE id = :id")
 	suspend fun deactivate(id: Long)
+
+	@Query("SELECT * FROM budgets ORDER BY id ASC")
+	suspend fun getAll(): List<BudgetEntity>
+
 }
