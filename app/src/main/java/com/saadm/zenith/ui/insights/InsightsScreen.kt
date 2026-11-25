@@ -16,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.saadm.zenith.ui.components.ListRow
 import com.saadm.zenith.ui.people.PeopleMiniCard
 import com.saadm.zenith.ui.theme.ThemeMode
 import com.saadm.zenith.ui.theme.ZenithTheme
@@ -31,7 +31,12 @@ import com.saadm.zenith.ui.theme.ZenithTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InsightsScreen() {
+fun InsightsScreen(
+    onOpenBudgets: () -> Unit = {},
+    onOpenTransactions: () -> Unit = {},
+    onOpenPayees: () -> Unit = {},
+    onOpenCategories: () -> Unit = {}
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -47,6 +52,14 @@ fun InsightsScreen() {
              verticalArrangement = Arrangement.spacedBy(16.dp),
              horizontalAlignment = Alignment.CenterHorizontally
          ) {
+             item {
+                 InsightCard(title = "Explore") {
+                     ListRow(title = "Budgets", subtitle = "Monthly limits", onClick = onOpenBudgets)
+                     ListRow(title = "Transactions", subtitle = "Every entry, filterable", onClick = onOpenTransactions)
+                     ListRow(title = "Payees", subtitle = "Shared balances", onClick = onOpenPayees)
+                     ListRow(title = "Categories", subtitle = "Spend by category", onClick = onOpenCategories)
+                 }
+             }
              item {
                  InsightCard(
                      title = "Spending Overview"

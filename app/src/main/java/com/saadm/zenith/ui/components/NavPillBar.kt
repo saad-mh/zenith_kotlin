@@ -1,64 +1,44 @@
 package com.saadm.zenith.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.PieChart
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.PieChart
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import com.saadm.zenith.ui.theme.ZenithTheme
+import com.saadm.zenith.ui.theme.ZenithType
+import com.saadm.zenith.ui.theme.zenithColors
 
-
-sealed class NavRoute(val route: String) {
-    object Home : NavRoute("home")
-    object Transactions : NavRoute("transactions")
-    object Settings : NavRoute("settings")
-    object People: NavRoute("people")
-    object Insights: NavRoute("insights")
-    // Dedicated route for payee details screen that accepts a payeeId path argument.
-    object PayeeDetails : NavRoute("payee_details/{payeeId}")
-}
-
-/** Helper to build a concrete payee details route with an id. */
-fun payeeDetailsRoute(payeeId: Long): String = "payee_details/$payeeId"
-
-data class NavItem(
-    val route: NavRoute,
-    val label: String,
-    val icon: ImageVector,
-    val iconUnselected: ImageVector,
-    val iconSelected: ImageVector
-)
+data class PillTab(val route: String, val label: String, val icon: ImageVector)
 
 data class PrimaryActionSpec(
     val icon: ImageVector,
@@ -66,146 +46,106 @@ data class PrimaryActionSpec(
     val onClick: () -> Unit
 )
 
-val navItems = listOf(
-    NavItem(
-        NavRoute.Home, "Home",
-        Icons.Rounded.Home,
-        iconUnselected = Icons.Outlined.Home,
-        iconSelected = Icons.Rounded.Home
-    ),
-    NavItem(
-        NavRoute.Insights, "Insights",
-        Icons.Rounded.Analytics,
-        iconUnselected = Icons.Outlined.PieChart,
-        iconSelected = Icons.Rounded.PieChart
-    ),
-    NavItem(
-        NavRoute.Settings, "Settings",
-        Icons.Rounded.Settings,
-        iconUnselected = Icons.Outlined.Settings,
-        iconSelected = Icons.Rounded.Settings
-    )
-)
-
+/**
+ * Floating pill: 64dp tall with three tabs and a 48dp circular action.
+ * The selected tab expands to icon and label on a tinted pill. The others show an icon, with a
+ * content description, and are at least 48dp tall.
+ */
 @Composable
 fun NavPillBar(
-    navController: NavHostController,
-    currentRoute: String,
+    tabs: List<PillTab>,
+    selectedRoute: String?,
+    onTabSelected: (String) -> Unit,
     primaryAction: PrimaryActionSpec,
-    modifier: Modifier = Modifier) {
-
+    modifier: Modifier = Modifier
+) {
+    val colors = zenithColors()
+    val pill = RoundedCornerShape(percent = 50)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(64.dp)
+            .shadow(elevation = 8.dp, shape = pill)
+            .clip(pill)
+            .background(colors.surfaceRaised, pill)
+            .border(1.dp, colors.border, pill)
+            .padding(horizontal = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-
-        Surface(
-            shape = RoundedCornerShape(50.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-            tonalElevation = 2.dp,
-            shadowElevation = 8.dp
-        ) {
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(25.dp))
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                navItems.forEach { item ->
-                    NavPill(
-                        label = item.label,
-                        icon = if (currentRoute == item.route.route) item.iconSelected else item.iconUnselected,
-                        isSelected = currentRoute == item.route.route,
-                        onClick = {
-                            navController.navigate(item.route.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    )
-                }
-            }
+        tabs.forEach { tab ->
+            val selected = tab.route == selectedRoute
+            PillTabItem(
+                tab = tab,
+                selected = selected,
+                onClick = { onTabSelected(tab.route) },
+                modifier = if (selected) Modifier else Modifier.weight(1f)
+            )
         }
-
-        PrimaryActionButton(
-            icon = primaryAction.icon,
-            contentDescription = primaryAction.contentDescription,
-            onClick = primaryAction.onClick,
-            modifier = Modifier.padding(start = 12.dp)
-        )
+        Spacer(Modifier.width(2.dp))
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(colors.primaryStrong, CircleShape)
+                .clickable(role = Role.Button, onClick = primaryAction.onClick)
+                .semantics { contentDescription = primaryAction.contentDescription },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = primaryAction.icon,
+                contentDescription = null,
+                tint = colors.onStrong,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
 @Composable
-private fun NavPill(
-    label: String,
-    icon: ImageVector,
-    isSelected: Boolean,
+private fun PillTabItem(
+    tab: PillTab,
+    selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier
 ) {
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        Color.Transparent
-    }
-
-    val contentColor = if (isSelected) {
-        Color.White
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Column(
+    val colors = zenithColors()
+    val pill = RoundedCornerShape(percent = 50)
+    Row(
         modifier = modifier
-            .background(
-                color = backgroundColor,
-                shape = RoundedCornerShape(50.dp)
-            )
-            .clip(RoundedCornerShape(50.dp))
-            .clickable(
-                indication = ripple(),
-                interactionSource = remember { MutableInteractionSource() }
-            ) { onClick() }
-            .padding(horizontal = 18.dp, vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .height(48.dp)
+            .clip(pill)
+            .then(if (selected) Modifier.background(colors.avatarTints[0].bg, pill) else Modifier)
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
+            .padding(horizontal = if (selected) 16.dp else 0.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = contentColor,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = label,
-            color = contentColor,
-            fontSize = 10.sp,
-            style = MaterialTheme.typography.labelSmall
-        )
+        if (selected) {
+            Icon(tab.icon, contentDescription = null, tint = colors.link, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(text = tab.label, style = ZenithType.bodyStrong, color = colors.link)
+        } else {
+            Icon(tab.icon, contentDescription = tab.label, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewNavPillBar() {
-    MaterialTheme {
+private fun NavPillBarPreview() {
+    ZenithTheme {
         NavPillBar(
-            navController = rememberNavController(),
-            currentRoute = NavRoute.Home.route,
-            primaryAction = PrimaryActionSpec(
-                icon = Icons.Rounded.Add,
-                contentDescription = "Add",
-                onClick = {}
-            )
+            tabs = listOf(
+                PillTab("home", "Overview", Icons.Rounded.Home),
+                PillTab("insights", "Insights", Icons.Rounded.PieChart),
+                PillTab("settings", "Settings", Icons.Rounded.Settings),
+            ),
+            selectedRoute = "home",
+            onTabSelected = {},
+            primaryAction = PrimaryActionSpec(Icons.Rounded.Add, "Add transaction", {})
         )
     }
 }
