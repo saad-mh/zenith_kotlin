@@ -8,14 +8,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,6 +31,7 @@ import com.saadm.zenith.domain.model.MoneyFormatter
 import com.saadm.zenith.domain.transaction.dayLabel
 import com.saadm.zenith.ui.common.PalettePreview
 import com.saadm.zenith.ui.common.shareText
+import com.saadm.zenith.ui.components.DateChips
 import com.saadm.zenith.ui.components.FilterChip
 import com.saadm.zenith.ui.components.PrimaryButton
 import com.saadm.zenith.ui.components.SecondaryButton
@@ -46,9 +41,7 @@ import com.saadm.zenith.ui.components.ZenithTextButton
 import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 
 private enum class Step { Amount, Details, Who, Split }
 
@@ -232,7 +225,6 @@ private fun DetailsStep(
     onSplit: (() -> Unit)?
 ) {
     val colors = zenithColors()
-    var picking by remember { mutableStateOf(false) }
     ZenithTextButton("Back to amount", onBack)
     OutlinedTextField(
         value = form.text,
@@ -282,13 +274,7 @@ private fun DetailsStep(
     }
 
     Label("Date")
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
-        val yesterday = today.minusDays(1)
-        FilterChip("Today", form.date == today, { onChange { it.copy(date = today) } })
-        FilterChip("Yesterday", form.date == yesterday, { onChange { it.copy(date = yesterday) } })
-        val other = form.date != today && form.date != yesterday
-        FilterChip(if (other) dayLabel(form.date, today) else "Pick date", other, { picking = true })
-    }
+    DateChips(form.date, today) { date -> onChange { it.copy(date = date) } }
 
     form.problem?.let { Text(it, style = ZenithType.caption, color = colors.inkMuted) }
     if (onSplit != null) {
@@ -296,49 +282,11 @@ private fun DetailsStep(
     }
     PrimaryButton(saveLabel(form), onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
 
-    if (picking) {
-        PastDatePicker(
-            initial = form.date,
-            today = today,
-            onPick = { date ->
-                onChange { it.copy(date = date) }
-                picking = false
-            },
-            onDismiss = { picking = false }
-        )
-    }
 }
 
 @Composable
 private fun Label(text: String) {
     Text(text, style = ZenithType.bodyStrong, color = zenithColors().ink)
-}
-
-private fun LocalDate.utcMillis(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PastDatePicker(initial: LocalDate, today: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> Unit) {
-    // The picker works in UTC days.
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = initial.utcMillis(),
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis <= today.utcMillis()
-        }
-    )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                val millis = state.selectedDateMillis
-                if (millis == null) onDismiss()
-                else onPick(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
-            }) { Text("Use date") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    ) {
-        DatePicker(state = state)
-    }
 }
 
 @Preview

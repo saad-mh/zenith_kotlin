@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,9 +26,8 @@ import com.saadm.zenith.ui.budgets.BudgetsScreen
 import com.saadm.zenith.ui.components.EmptyState
 import com.saadm.zenith.ui.home.HomeScreen
 import com.saadm.zenith.ui.insights.InsightsScreen
-import com.saadm.zenith.ui.people.PayeeDetailsRoute
+import com.saadm.zenith.ui.people.PayeeDetailsScreen
 import com.saadm.zenith.ui.people.PeopleScreen
-import com.saadm.zenith.ui.people.PeopleViewModel
 import com.saadm.zenith.ui.settings.SettingsScreen
 import com.saadm.zenith.ui.settings.TransitionStyle
 import com.saadm.zenith.ui.transactions.TransactionsScreen
@@ -191,19 +189,18 @@ fun ZenithNavHost(
             )
         }
         composable(Destination.Payees.route) {
-            PeopleScreen(onNavigateToPayee = openPayee, createRequests = newPayeeRequests)
+            PeopleScreen(
+                onNavigateToPayee = openPayee,
+                onBack = { navController.popBackStack() },
+                createRequests = newPayeeRequests
+            )
         }
         composable(Destination.Categories.route) { PlaceholderScreen("Categories") }
         composable(
             route = Destination.PayeeDetails.route,
             arguments = listOf(navArgument(PAYEE_ID_ARG) { type = NavType.LongType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getLong(PAYEE_ID_ARG) ?: return@composable
-            PayeeDetailsRoute(
-                payeeId = id,
-                peopleViewModel = hiltViewModel<PeopleViewModel>(),
-                onBack = { navController.popBackStack() }
-            )
+        ) {
+            PayeeDetailsScreen(onBack = { navController.popBackStack() })
         }
         dialog(
             route = Destination.AddTransaction.route,
