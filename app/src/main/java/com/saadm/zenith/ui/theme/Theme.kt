@@ -50,6 +50,7 @@ fun ZenithTheme(
         MaterialTheme(
             colorScheme = scheme,
             typography = Typography,
+            shapes = ZenithShapes,
             content = content
         )
     }
