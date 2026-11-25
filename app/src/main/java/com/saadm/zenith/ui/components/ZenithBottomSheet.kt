@@ -1,6 +1,9 @@
 package com.saadm.zenith.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,12 +33,15 @@ fun ZenithBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
         containerColor = zenithColors().surfaceRaised,
         dragHandle = { ZenithGrabHandle() }
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = ZenithSpacing.space4, vertical = ZenithSpacing.space4),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ZenithSpacing.space4, vertical = ZenithSpacing.space4),
             verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space3),
             content = content
         )

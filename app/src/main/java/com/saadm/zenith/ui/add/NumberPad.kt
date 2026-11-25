@@ -28,10 +28,8 @@ import com.saadm.zenith.ui.theme.ZenithTheme
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
 
-private const val BACKSPACE = "⌫"
-
 @Composable
-fun NumPad() {
+fun NumPad(onKey: (String) -> Unit) {
     val rows = listOf(
         listOf("1", "2", "3"),
         listOf("4", "5", "6"),
@@ -45,15 +43,14 @@ fun NumPad() {
     ) {
         rows.forEach { rowKeys ->
             Row(modifier = Modifier.fillMaxWidth()) {
-                rowKeys.forEach { key -> PadKey(key = key, modifier = Modifier.weight(1f)) }
+                rowKeys.forEach { key -> PadKey(key = key, onClick = { onKey(key) }, modifier = Modifier.weight(1f)) }
             }
         }
     }
 }
 
-// Key input is not wired yet; the keys only lay out and label the pad.
 @Composable
-private fun PadKey(key: String, modifier: Modifier) {
+private fun PadKey(key: String, onClick: () -> Unit, modifier: Modifier) {
     val colors = zenithColors()
     val shape = MaterialTheme.shapes.medium
     val description = when (key) {
@@ -67,7 +64,7 @@ private fun PadKey(key: String, modifier: Modifier) {
             .defaultMinSize(minHeight = 56.dp)
             .clip(shape)
             .background(colors.surfaceSunken, shape)
-            .clickable(role = Role.Button, onClick = {})
+            .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center
     ) {
@@ -83,6 +80,6 @@ private fun PadKey(key: String, modifier: Modifier) {
 @Composable
 fun PreviewNumPad() {
     ZenithTheme(mode = ThemeMode.Dark) {
-        NumPad()
+        NumPad(onKey = {})
     }
 }

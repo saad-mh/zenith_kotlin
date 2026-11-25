@@ -64,6 +64,7 @@ private val filterLabels = listOf(
 fun TransactionsScreen(
     onBack: () -> Unit,
     onAdd: () -> Unit,
+    onEdit: (Long) -> Unit,
     viewModel: TxnListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -102,6 +103,10 @@ fun TransactionsScreen(
             item = open,
             names = loaded.names,
             today = loaded.today,
+            onEdit = {
+                openId = null
+                onEdit(open.txn.id)
+            },
             onDelete = {
                 viewModel.delete(open)
                 openId = null
