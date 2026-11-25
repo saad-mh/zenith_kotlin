@@ -11,7 +11,9 @@ import java.util.Locale
 data class TxnNames(
     val categories: Map<Long, String> = emptyMap(),
     val payees: Map<Long, String> = emptyMap(),
-    val accounts: Map<Long, String> = emptyMap()
+    val accounts: Map<Long, String> = emptyMap(),
+    /** Category id to its stored icon key. */
+    val categoryIcons: Map<Long, String> = emptyMap()
 )
 
 /** The word that says what kind of row this is, so colour is never the only signal. */
@@ -31,7 +33,9 @@ data class TxnItem(
     val detail: String,
     /** Paise, negative for money out or owed by you. */
     val signedAmount: Long,
-    val people: List<String>
+    val people: List<String>,
+    val category: String = "",
+    val categoryIcon: String? = null
 ) {
     val yourShare: Long get() = txn.amount - shares.sumOf { it.amount }
 }
@@ -123,7 +127,9 @@ object TxnItems {
             tag = tag,
             detail = detail.filterNotNull().joinToString(" · "),
             signedAmount = sign * txn.amount,
-            people = people
+            people = people,
+            category = category,
+            categoryIcon = names.categoryIcons[txn.categoryId]
         )
     }
 }

@@ -84,23 +84,23 @@ class CategoriesViewModel @Inject constructor(
 
     fun show(type: TxnType) = view.update { (back, _) -> back to type }
 
-    fun add(name: String) {
+    fun add(name: String, icon: String) {
         val loaded = state.value ?: return
         if (nameProblem(name, loaded.rows.map { it.category }, null) != null) return
         val order = (loaded.rows.maxOfOrNull { it.category.sortOrder } ?: 0) + 1
         viewModelScope.launch {
             categories.save(
                 CategoryEntity(
-                    name = name.trim(), emoji = "", colorHex = "#777FCF", txnType = loaded.type, sortOrder = order
+                    name = name.trim(), emoji = icon, colorHex = "#777FCF", txnType = loaded.type, sortOrder = order
                 )
             )
         }
     }
 
-    fun rename(category: CategoryEntity, name: String) {
+    fun edit(category: CategoryEntity, name: String, icon: String) {
         val others = state.value?.rows?.map { it.category }.orEmpty()
         if (nameProblem(name, others, category.id) != null) return
-        viewModelScope.launch { categories.save(category.copy(name = name.trim())) }
+        viewModelScope.launch { categories.save(category.copy(name = name.trim(), emoji = icon)) }
     }
 
     /** The default category stays, since entries without a choice are filed under it. */

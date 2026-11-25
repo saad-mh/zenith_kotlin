@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.categories
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -8,8 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,7 +33,8 @@ import com.saadm.zenith.ui.common.PalettePreview
 import com.saadm.zenith.ui.common.ScreenHeader
 import com.saadm.zenith.ui.common.shortMonthName
 import com.saadm.zenith.ui.components.AmountText
-import com.saadm.zenith.ui.components.Avatar
+import com.saadm.zenith.ui.components.CategoryBadge
+import com.saadm.zenith.ui.components.categoryIcons
 import com.saadm.zenith.ui.components.FilterChip
 import com.saadm.zenith.ui.components.ListRow
 import com.saadm.zenith.ui.components.MonthSwitcher
@@ -80,8 +85,8 @@ fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltVi
         CategorySheet(
             category = null,
             others = all,
-            onSave = {
-                viewModel.add(it)
+            onSave = { name, icon ->
+                viewModel.add(name, icon)
                 adding = false
             },
             onDismiss = { adding = false }
@@ -91,8 +96,8 @@ fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltVi
         CategorySheet(
             category = category,
             others = all,
-            onSave = {
-                viewModel.rename(category, it)
+            onSave = { name, icon ->
+                viewModel.edit(category, name, icon)
                 openId = null
             },
             onDismiss = { openId = null },
@@ -123,7 +128,7 @@ private fun CategoriesContent(
                 ListRow(
                     title = row.category.name,
                     subtitle = if (row.category.isDefault) "Default" else null,
-                    leading = { Avatar(row.category.name) },
+                    leading = { CategoryBadge(row.category.emoji, row.category.name) },
                     trailing = { AmountText(row.total) },
                     onClick = { onOpen(row.category.id) }
                 )
@@ -139,13 +144,15 @@ private fun CategoriesContent(
 private fun CategorySheet(
     category: CategoryEntity?,
     others: List<CategoryEntity>,
-    onSave: (String) -> Unit,
+    onSave: (name: String, icon: String) -> Unit,
     onDismiss: () -> Unit,
     onArchive: () -> Unit = {},
     onMerge: (CategoryEntity) -> Unit = {}
 ) {
     val colors = zenithColors()
     var name by remember(category?.id) { mutableStateOf(category?.name.orEmpty()) }
+    // Starts as whatever is stored, so saving without picking never loses an unknown key.
+    var icon by remember(category?.id) { mutableStateOf(category?.emoji.orEmpty()) }
     var mergeInto by remember(category?.id) { mutableStateOf<CategoryEntity?>(null) }
     var confirming by remember(category?.id) { mutableStateOf(false) }
     val problem = nameProblem(name, others, category?.id)
@@ -163,7 +170,22 @@ private fun CategorySheet(
                 { Text(problem) }
             } else null
         )
-        PrimaryButton("Save", { onSave(name) }, Modifier.fillMaxWidth(), enabled = problem == null)
+        Text("Icon", style = ZenithType.bodyStrong, color = colors.ink)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space1)) {
+            categoryIcons.forEach { choice ->
+                IconToggleButton(checked = icon == choice.key, onCheckedChange = { icon = choice.key }) {
+                    Icon(
+                        choice.image,
+                        contentDescription = choice.label,
+                        tint = if (icon == choice.key) colors.onStrong else colors.ink,
+                        modifier = Modifier
+                            .background(if (icon == choice.key) colors.primaryStrong else colors.surfaceSunken, CircleShape)
+                            .padding(ZenithSpacing.space2)
+                    )
+                }
+            }
+        }
+        PrimaryButton("Save", { onSave(name, icon) }, Modifier.fillMaxWidth(), enabled = problem == null)
 
         if (category == null) return@ZenithBottomSheet
         if (category.isDefault) {
