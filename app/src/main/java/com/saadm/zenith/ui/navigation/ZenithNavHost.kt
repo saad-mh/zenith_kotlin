@@ -8,13 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -23,7 +18,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.saadm.zenith.ui.add.AddTransactionFlow
 import com.saadm.zenith.ui.budgets.BudgetsScreen
-import com.saadm.zenith.ui.components.EmptyState
+import com.saadm.zenith.ui.categories.CategoriesScreen
 import com.saadm.zenith.ui.home.HomeScreen
 import com.saadm.zenith.ui.insights.InsightsScreen
 import com.saadm.zenith.ui.people.PayeeDetailsScreen
@@ -201,7 +196,7 @@ fun ZenithNavHost(
                 createRequests = newPayeeRequests
             )
         }
-        composable(Destination.Categories.route) { PlaceholderScreen("Categories") }
+        composable(Destination.Categories.route) { CategoriesScreen(onBack = { navController.popBackStack() }) }
         composable(
             route = Destination.PayeeDetails.route,
             arguments = listOf(navArgument(PAYEE_ID_ARG) { type = NavType.LongType })
@@ -217,13 +212,3 @@ fun ZenithNavHost(
     }
 }
 
-// Shown for routes whose screens land in later work. The route is reachable; the content is not built yet.
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        EmptyState(title = title, body = "This screen is not built yet.")
-    }
-}
