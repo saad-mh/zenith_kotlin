@@ -27,4 +27,7 @@ interface PayeeDao {
 
 	@Query("UPDATE payees SET isDeleted = 1 WHERE id = :id")
 	suspend fun softDelete(id: Long)
+
+	@Query("SELECT * FROM payees ORDER BY id ASC")
+	suspend fun getAll(): List<PayeeEntity>
 }

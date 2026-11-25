@@ -81,4 +81,8 @@ interface TransactionDao {
     """)
 	fun getRecentTransactions(): Flow<List<TransactionEntity>>
 
+
+	// Pages keep an export from loading the whole history at once.
+	@Query("SELECT * FROM transactions ORDER BY id ASC LIMIT :limit OFFSET :offset")
+	suspend fun page(limit: Int, offset: Int): List<TransactionEntity>
 }
