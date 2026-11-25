@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.components
 
+import com.saadm.zenith.ui.theme.ZenithColors
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -21,16 +23,22 @@ import com.saadm.zenith.ui.theme.zenithColors
 
 enum class StatusTone { Positive, Negative, Caution, Neutral }
 
-/** Status as an icon and a word. Colour is never the only signal. */
+/** Chip fill and text for a tone: green, yellow and red. Monochrome stays grey. */
+fun statusChipColors(tone: StatusTone, colors: ZenithColors): Pair<Color, Color> = when {
+    colors.isMono || tone == StatusTone.Neutral -> colors.surfaceSunken to colors.ink
+    tone == StatusTone.Positive ->
+        if (colors.isDark) Color(0xFF1E4632) to Color(0xFFA8E8C6) else Color(0xFFD7F0E2) to Color(0xFF145C39)
+    tone == StatusTone.Caution ->
+        if (colors.isDark) Color(0xFF4D4012) to Color(0xFFFFE38A) else Color(0xFFFFE99A) to Color(0xFF594300)
+    else ->
+        if (colors.isDark) Color(0xFF57231F) to Color(0xFFFFC2BC) else Color(0xFFFBDAD7) to Color(0xFF8F241C)
+}
+
+/** Status as an icon and words. Colour is never the only signal. */
 @Composable
 fun StatusTag(text: String, tone: StatusTone, modifier: Modifier = Modifier) {
     val colors = zenithColors()
-    val tint = when (tone) {
-        StatusTone.Positive -> colors.positive
-        StatusTone.Negative -> colors.negative
-        StatusTone.Caution -> colors.caution
-        StatusTone.Neutral -> colors.inkMuted
-    }
+    val (fill, tint) = statusChipColors(tone, colors)
     val icon: Int? = when (tone) {
         StatusTone.Positive -> Lu.lucide_ic_circle_check
         StatusTone.Negative -> Lu.lucide_ic_circle_alert
@@ -41,8 +49,8 @@ fun StatusTag(text: String, tone: StatusTone, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .clip(shape)
-            .background(colors.surfaceSunken, shape)
-            .padding(horizontal = ZenithSpacing.space2, vertical = 2.dp),
+            .background(fill, shape)
+            .padding(horizontal = ZenithSpacing.space2, vertical = ZenithSpacing.space1),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {

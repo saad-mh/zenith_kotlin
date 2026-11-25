@@ -232,11 +232,6 @@ private fun BudgetHealthCard(state: InsightsState, onOpenBudgets: () -> Unit) {
         if (budgets.categories.isEmpty()) {
             Text("No budgets for this month.", style = ZenithType.body, color = colors.inkMuted)
         } else {
-            Text(
-                "The tick marks where an even pace would be (${(budgets.pace * 100).toInt()}%).",
-                style = ZenithType.caption,
-                color = colors.inkMuted
-            )
             worst.forEach { line ->
                 BudgetLineRow(state.names.categories[line.categoryId] ?: "Uncategorized", line, budgets.pace)
             }
@@ -267,7 +262,7 @@ private fun TrendCard(state: InsightsState) {
         )
         Text(
             "${MoneyFormatter.format(abs(difference)).text} ${if (difference >= 0) "above" else "below"} " +
-                "your 5-month average (dashed line)",
+                "your 5-month average",
             style = ZenithType.caption,
             color = colors.inkMuted
         )

@@ -27,7 +27,7 @@ import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
 import kotlin.math.abs
 
-/** One budget in the grid. The words under the amount carry the status; the bar only repeats it. */
+/** One budget in the grid. "left" or "over", the chip's icon and its line carry the status; colour only repeats it. */
 @Composable
 fun BudgetTile(
     name: String,
@@ -35,6 +35,7 @@ fun BudgetTile(
     line: BudgetLine,
     pace: Float?,
     daysLeft: Long?,
+    quip: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
@@ -62,12 +63,9 @@ fun BudgetTile(
         Spacer(Modifier.size(ZenithSpacing.space2))
         Text("${(ratio * 100).toInt()}% spent", style = ZenithType.caption, color = colors.inkMuted)
         AmountText(abs(line.left), style = ZenithType.heading)
+        Text(if (line.status == BudgetStatus.OVER) "over" else "left", style = ZenithType.caption, color = colors.inkMuted)
         StatusTag(
-            when (line.status) {
-                BudgetStatus.OVER -> "over budget"
-                BudgetStatus.NEARING -> "left · nearly there"
-                BudgetStatus.ON_TRACK -> "left"
-            },
+            quip,
             when (line.status) {
                 BudgetStatus.OVER -> StatusTone.Negative
                 BudgetStatus.NEARING -> StatusTone.Caution

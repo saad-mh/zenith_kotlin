@@ -173,11 +173,6 @@ private fun PayeeContent(
         SecondaryButton("Share a statement", onStatement, Modifier.fillMaxWidth())
 
         Text("Shared history", style = ZenithType.subheading, color = colors.ink)
-        Text(
-            "+ adds to what $name owes you. − adds to what you owe, or pays them back.",
-            style = ZenithType.caption,
-            color = colors.inkMuted
-        )
         if (state.ledger.history.isEmpty()) {
             Text("Nothing shared yet.", style = ZenithType.body, color = colors.inkMuted)
         } else {
@@ -236,7 +231,6 @@ private fun SettlementSheet(
 
     ZenithBottomSheet(onDismiss) {
         Text("Record settlement", style = ZenithType.subheading, color = colors.ink)
-        Text("Saved on this device. Nothing is sent to $name.", style = ZenithType.caption, color = colors.inkMuted)
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
             verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)

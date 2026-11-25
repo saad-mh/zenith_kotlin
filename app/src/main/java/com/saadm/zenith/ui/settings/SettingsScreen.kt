@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.settings
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.style.TextAlign
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -261,7 +263,14 @@ private fun SettingsContent(state: SettingsState, actions: SettingsActions, modi
             SettingsRow(Lu.lucide_ic_scale, Tile.Teal, "Open-source licences", onClick = { actions.page(SettingsPage.Licences) })
             SettingsRow(Lu.lucide_ic_info, Tile.Indigo, "Version", value = version)
         }
-        Text("Stored on this device · works offline", style = ZenithType.caption, color = colors.inkMuted)
+        DebugTools()
+        Text(
+            "Created with love by Saad",
+            style = ZenithType.caption,
+            color = colors.inkMuted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(vertical = ZenithSpacing.space4)
+        )
     }
 }
 

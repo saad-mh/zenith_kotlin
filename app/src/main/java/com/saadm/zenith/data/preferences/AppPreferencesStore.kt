@@ -47,7 +47,9 @@ data class AppPreferences(
     val appLockGraceSeconds: Int = 30,
     val hideInRecents: Boolean = true,
     val profileName: String = "",
-    val upiId: String = ""
+    val upiId: String = "",
+    /** How often the add sheet has been opened for a new entry; paces the draft reminder. */
+    val addSheetOpens: Int = 0
 )
 
 class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
@@ -95,7 +97,8 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
                 appLockGraceSeconds = preferences[PreferenceKeys.APP_LOCK_GRACE_SECONDS] ?: defaults.appLockGraceSeconds,
                 hideInRecents = preferences[PreferenceKeys.HIDE_IN_RECENTS] ?: defaults.hideInRecents,
                 profileName = preferences[PreferenceKeys.PROFILE_NAME].orEmpty(),
-                upiId = preferences[PreferenceKeys.UPI_ID].orEmpty()
+                upiId = preferences[PreferenceKeys.UPI_ID].orEmpty(),
+                addSheetOpens = preferences[PreferenceKeys.ADD_SHEET_OPENS] ?: 0
             )
         }
 
@@ -156,6 +159,10 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
 
     suspend fun updateHideInRecents(enabled: Boolean) = set(PreferenceKeys.HIDE_IN_RECENTS, enabled)
 
+    suspend fun countAddSheetOpen() {
+        dataStore.edit { prefs -> prefs[PreferenceKeys.ADD_SHEET_OPENS] = (prefs[PreferenceKeys.ADD_SHEET_OPENS] ?: 0) + 1 }
+    }
+
     /** Back to defaults. Used by delete-all. */
     suspend fun clear() {
         dataStore.edit { preferences -> preferences.clear() }
@@ -193,5 +200,6 @@ class AppPreferencesStore(private val dataStore: DataStore<Preferences>) {
         val HIDE_IN_RECENTS = booleanPreferencesKey("hide_in_recents")
         val PROFILE_NAME = stringPreferencesKey("profile_name")
         val UPI_ID = stringPreferencesKey("upi_id")
+        val ADD_SHEET_OPENS = intPreferencesKey("add_sheet_opens")
     }
 }

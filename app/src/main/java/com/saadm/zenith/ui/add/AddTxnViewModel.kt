@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.add
 
+import com.saadm.zenith.data.preferences.AppPreferencesStore
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,7 +63,8 @@ class AddTxnViewModel @Inject constructor(
     private val payees: PayeeRepo,
     private val accounts: AccountRepo,
     private val settings: SettingsRepository,
-    private val draft: AddDraft
+    private val draft: AddDraft,
+    private val preferenceStore: AppPreferencesStore
 ) : ViewModel() {
 
     val today: LocalDate = LocalDate.now()
@@ -77,6 +79,11 @@ class AddTxnViewModel @Inject constructor(
 
     /** Only a blank new entry reads and writes the draft. */
     val keepsDraft: Boolean get() = sourceId == null
+
+    private val _draftHint = MutableStateFlow(false)
+
+    /** Whether to remind that closing keeps a draft, this time round. */
+    val draftHint: StateFlow<Boolean> = _draftHint.asStateFlow()
 
     /** The row being edited, once loaded. */
     private var original: TransactionEntity? = null
@@ -102,6 +109,10 @@ class AddTxnViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             if (sourceId != null) load(sourceId) else applyDefaultAccount()
+        }
+        if (keepsDraft) viewModelScope.launch {
+            _draftHint.value = showDraftHint(preferenceStore.preferencesFlow.first().addSheetOpens)
+            preferenceStore.countAddSheetOpen()
         }
     }
 
