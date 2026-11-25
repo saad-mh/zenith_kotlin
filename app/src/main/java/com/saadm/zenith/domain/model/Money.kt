@@ -37,6 +37,18 @@ object MoneyFormatter {
         return FormattedMoney(sign, groupIndian(whole), cents)
     }
 
+    /** Typed rupees to paise, ignoring grouping commas. Null unless it is above zero with at most two decimals. */
+    fun parse(input: String): Long? {
+        val text = input.trim().replace(",", "")
+        // Twelve whole digits keeps the paise well inside a Long.
+        if (!Regex("\\d{0,12}(\\.\\d{0,2})?").matches(text) || text.none { it.isDigit() }) return null
+        return BigDecimal(text).movePointRight(2).longValueExact().takeIf { it > 0 }
+    }
+
+    /** Paise as the plain text a field is prefilled with: no symbol, no grouping. */
+    fun plain(paise: Long): String =
+        BigDecimal.valueOf(paise, 2).let { if (paise % 100 == 0L) it.setScale(0) else it }.toPlainString()
+
     /** Short form for axes and tight labels, e.g. 24.3k. Rounds half-up. */
     fun compact(paise: Long): String {
         val sign = if (paise < 0) MINUS else ""
