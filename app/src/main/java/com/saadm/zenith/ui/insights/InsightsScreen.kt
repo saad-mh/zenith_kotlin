@@ -62,19 +62,24 @@ fun InsightsScreen(
     onOpenBudgets: () -> Unit = {},
     onOpenPayees: () -> Unit = {},
     onOpenCategories: () -> Unit = {},
+    onAdd: () -> Unit = {},
     viewModel: InsightsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     Column(Modifier.fillMaxSize()) {
         // Outside the scroll, so the title and month switcher stay put.
         Header(state, viewModel::previousMonth, viewModel::nextMonth)
-        state?.let {
+        val scroll = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+        state?.takeIf { !it.history.enough }?.let {
+            NotEnoughHistory(it.history, it.summary.expense, onAdd, scroll)
+        }
+        state?.takeIf { it.history.enough }?.let {
             InsightsContent(
                 state = it,
                 onOpenBudgets = onOpenBudgets,
                 onOpenPayees = onOpenPayees,
                 onOpenCategories = onOpenCategories,
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+                modifier = scroll
             )
         }
     }
@@ -114,7 +119,7 @@ private fun InsightsContent(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
         CashFlowCard(state)
         BudgetHealthCard(state, onOpenBudgets)
-        TrendCard(state)
+        if (state.history.trendReady(state.today)) TrendCard(state)
         WhereItWentCard(state)
         SharedMoneyCard(state.shared, state.today, onOpenPayees)
         Row(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
@@ -299,7 +304,8 @@ private fun InsightsPreview() {
         shared = SharedBalanceSummary(
             685_000, 212_000, 473_000, 4, 2, listOf(PayeeBalanceLine(1, "Kabir", 320_000, 0))
         ),
-        names = TxnNames(categories = mapOf(1L to "Food"))
+        names = TxnNames(categories = mapOf(1L to "Food")),
+        history = History(40, today.minusMonths(6))
     )
     PalettePreview { InsightsContent(state, {}, {}, {}) }
 }

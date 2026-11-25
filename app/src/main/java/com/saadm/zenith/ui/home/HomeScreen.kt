@@ -62,6 +62,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit = {},
     onOpenTransactions: () -> Unit = {},
     onOpenPayees: () -> Unit = {},
+    onAdd: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -71,6 +72,7 @@ fun HomeScreen(
         onOpenSettings = onOpenSettings,
         onOpenTransactions = onOpenTransactions,
         onOpenPayees = onOpenPayees,
+        onAdd = onAdd,
         onRemind = { line -> PayeeReminder.textFor(line.name, line.net)?.let(context::shareText) },
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
     )
@@ -83,7 +85,8 @@ private fun OverviewContent(
     onOpenTransactions: () -> Unit,
     onOpenPayees: () -> Unit,
     onRemind: (PayeeBalanceLine) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAdd: () -> Unit = {}
 ) {
     val colors = zenithColors()
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
@@ -110,14 +113,16 @@ private fun OverviewContent(
             AmountText(state.netPosition.net, style = ZenithType.display)
             Text(state.netPosition.subtitle(), style = ZenithType.caption, color = colors.inkMuted)
         }
+        if (state.recent.isEmpty()) {
+            // Nothing recorded yet. Accounts live in Settings.
+            FirstRun(onAdd = onAdd, onAddAccount = onOpenSettings)
+            return@Column
+        }
         SpendCard(state.spend)
         FriendsCard(state.shared, state.nudge, onOpenPayees, onRemind)
 
         SectionHeader("Recent", actionLabel = "See all", onAction = onOpenTransactions)
         ZenithCard {
-            if (state.recent.isEmpty()) {
-                Text("No entries yet. Tap + to add your first one.", style = ZenithType.body, color = colors.inkMuted)
-            }
             state.recent.forEach { recent ->
                 TxnItemRow(recent.item, caption = dayLabel(recent.date, state.today))
             }
@@ -130,7 +135,9 @@ private fun SpendCard(spend: MonthSpend) {
     val colors = zenithColors()
     val thisMonth = spend.period.startDate
     val lastMonth = thisMonth.minusMonths(1).shortMonthName()
-    val comparison = if (spend.difference == 0L) {
+    val comparison = if (spend.lastMonth.lastOrNull().let { it == null || it == 0L }) {
+        "Nothing spent in $lastMonth to compare with"
+    } else if (spend.difference == 0L) {
         "Same as $lastMonth at this point"
     } else {
         val word = if (spend.difference < 0) "less" else "more"
