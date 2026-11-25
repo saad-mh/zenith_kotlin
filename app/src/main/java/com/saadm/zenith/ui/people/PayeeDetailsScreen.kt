@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,9 +31,11 @@ import com.saadm.zenith.domain.model.Payee
 import com.saadm.zenith.domain.payee.LedgerEntry
 import com.saadm.zenith.domain.payee.PayeeLedger
 import com.saadm.zenith.domain.payee.PayeeReminder
+import com.saadm.zenith.domain.payee.balanceStatement
 import com.saadm.zenith.domain.transaction.dayLabel
 import com.saadm.zenith.ui.common.PalettePreview
 import com.saadm.zenith.ui.common.ScreenHeader
+import com.saadm.zenith.ui.common.copyText
 import com.saadm.zenith.ui.common.shareText
 import com.saadm.zenith.ui.common.toLocalDate
 import com.saadm.zenith.ui.components.AmountField
@@ -55,6 +59,7 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
     val state by viewModel.state.collectAsState()
     var settling by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
+    var previewing by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val loaded = state
 
@@ -70,6 +75,7 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
                     PayeeReminder.textFor(loaded.payee.name, loaded.ledger.net)?.let(context::shareText)
                 },
                 onRemove = { viewModel.remove(onBack) },
+                onStatement = { previewing = true },
                 modifier = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
             )
         }
@@ -84,6 +90,32 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
                 settling = false
             },
             onDismiss = { settling = false }
+        )
+    }
+    if (previewing) {
+        val text = balanceStatement(
+            loaded.payee.name,
+            loaded.ledger,
+            loaded.transactions.mapValues { it.value.note }
+        )
+        // Shown in full first, so notes are never sent unseen.
+        AlertDialog(
+            onDismissRequest = { previewing = false },
+            containerColor = zenithColors().surfaceRaised,
+            title = { Text("Statement", style = ZenithType.subheading) },
+            text = { Text(text, style = ZenithType.body, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            confirmButton = {
+                TextButton(onClick = {
+                    previewing = false
+                    context.shareText(text)
+                }) { Text("Share") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    previewing = false
+                    context.copyText(text)
+                }) { Text("Copy") }
+            }
         )
     }
     if (editing) {
@@ -113,7 +145,8 @@ private fun PayeeContent(
     onSettle: () -> Unit,
     onRemind: () -> Unit,
     onRemove: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onStatement: () -> Unit = {}
 ) {
     val colors = zenithColors()
     val name = state.payee.name
@@ -126,6 +159,7 @@ private fun PayeeContent(
         }
         PrimaryButton("Record settlement", onSettle, Modifier.fillMaxWidth())
         if (net > 0) SecondaryButton("Send a gentle reminder", onRemind, Modifier.fillMaxWidth())
+        SecondaryButton("Share a statement", onStatement, Modifier.fillMaxWidth())
 
         Text("Shared history", style = ZenithType.subheading, color = colors.ink)
         Text(
