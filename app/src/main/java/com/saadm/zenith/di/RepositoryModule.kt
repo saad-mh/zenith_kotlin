@@ -1,5 +1,8 @@
 package com.saadm.zenith.di
 
+import android.content.Context
+import com.saadm.zenith.data.preferences.AppPreferencesStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.saadm.zenith.data.db.dao.PayeeBalanceDao
 import com.saadm.zenith.data.db.dao.PayeeDao
 import com.saadm.zenith.data.db.dao.TransactionDao
@@ -17,6 +20,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
+
+	@Provides
+	@Singleton
+	fun provideAppPreferencesStore(@ApplicationContext context: Context): AppPreferencesStore =
+		AppPreferencesStore(context)
 
 	@Provides
 	@Singleton
