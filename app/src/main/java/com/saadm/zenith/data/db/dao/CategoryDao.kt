@@ -30,6 +30,9 @@ interface CategoryDao {
 	suspend fun getFirstByType(txnType: String): CategoryEntity?
 
 
+	@Query("SELECT * FROM categories ORDER BY sortOrder ASC, id ASC")
+	fun observeEvery(): Flow<List<CategoryEntity>>
+
 	@Query("SELECT * FROM categories ORDER BY id ASC")
 	suspend fun getAll(): List<CategoryEntity>
 }

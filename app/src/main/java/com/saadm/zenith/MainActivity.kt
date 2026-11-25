@@ -4,13 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
 import com.saadm.zenith.data.preferences.AppPreferencesStore
-import com.saadm.zenith.ui.home.HomeScreen
 import com.saadm.zenith.ui.navigation.ZenithApp
 import com.saadm.zenith.ui.settings.normalizeTransitionDurationMillis
 import com.saadm.zenith.ui.theme.ZenithTheme
@@ -35,13 +32,5 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainActivityPreview() {
-    ZenithTheme {
-        HomeScreen()
     }
 }
