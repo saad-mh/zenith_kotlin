@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.transactions
 
+import androidx.compose.runtime.key
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -224,7 +225,8 @@ private fun TxnListContent(
         }
 
         items(state.days, key = { it.date.toEpochDay() }) { day ->
-            Column {
+            // Placement only. Compose applies the system animator scale, so at 0 it is instant.
+            Column(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
                 Row(Modifier.padding(horizontal = ZenithSpacing.space1)) {
                     Text(
                         dayLabel(day.date, state.today),
@@ -235,7 +237,9 @@ private fun TxnListContent(
                     day.total?.let { AmountText(it, signed = true, style = ZenithType.caption) }
                 }
                 ZenithCard {
-                    day.items.forEach { item -> TxnItemRow(item, onClick = { onOpen(item.txn.id) }) }
+                    day.items.forEach { item ->
+                        key(item.txn.id) { TxnItemRow(item, onClick = { onOpen(item.txn.id) }) }
+                    }
                 }
             }
         }

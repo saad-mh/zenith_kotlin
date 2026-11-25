@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.insights
 
+import com.saadm.zenith.ui.components.TotalAmount
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -146,15 +147,14 @@ private fun CashFlowCard(state: InsightsState) {
     val range = "${start.dayOfMonth} ${start.shortMonthName()} to ${end.dayOfMonth} ${end.shortMonthName()}"
     ZenithCard {
         Text("Net cash flow · $range", style = ZenithType.caption, color = colors.inkMuted)
-        AmountText(
+        TotalAmount(
             summary.net,
             signed = true,
             tone = when {
                 summary.net > 0 -> AmountTone.Positive
                 summary.net < 0 -> AmountTone.Negative
                 else -> AmountTone.Neutral
-            },
-            style = ZenithType.display
+            }
         )
         state.keptPercent?.let { kept ->
             val words = if (kept >= 0) "Kept $kept% of income" else "Spent ${-kept}% more than income"

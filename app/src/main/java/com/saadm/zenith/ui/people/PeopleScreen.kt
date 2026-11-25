@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.people
 
+import com.saadm.zenith.ui.components.TotalAmount
+import androidx.compose.runtime.key
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -135,7 +137,7 @@ private fun PeopleContent(
                 ZenithCard {
                     Text("Net balance", style = ZenithType.caption, color = colors.inkMuted)
                     val net = rows.sumOf { it.ledger.net }
-                    AmountText(net, signed = true, style = ZenithType.display)
+                    TotalAmount(net, signed = true)
                     Text(
                         when {
                             net > 0 -> "Owed to you, all together"
@@ -165,7 +167,7 @@ private fun PeopleContent(
             item { EmptyState(title = "No results", body = "No one matches this search and filter.") }
         }
         items(sections, key = { it.title }) { section ->
-            Column {
+            Column(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
                 Row(
                     modifier = Modifier.padding(horizontal = ZenithSpacing.space1),
                     verticalAlignment = Alignment.CenterVertically
@@ -174,7 +176,9 @@ private fun PeopleContent(
                     if (section.subtotal != 0L) AmountText(section.subtotal, signed = true, style = ZenithType.caption)
                 }
                 ZenithCard {
-                    section.rows.forEach { row -> PayeeListRow(row, onClick = { onOpen(row.payee.id) }) }
+                    section.rows.forEach { row ->
+                        key(row.payee.id) { PayeeListRow(row, onClick = { onOpen(row.payee.id) }) }
+                    }
                 }
             }
         }

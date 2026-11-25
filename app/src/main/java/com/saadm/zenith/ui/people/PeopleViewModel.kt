@@ -129,11 +129,12 @@ class PayeeDetailViewModel @Inject constructor(
         }
     }
 
-    fun settle(theyPaidYou: Boolean, amount: Long, date: LocalDate, accountId: Long?, note: String) {
+    fun settle(theyPaidYou: Boolean, amount: Long, date: LocalDate, accountId: Long?, note: String, onSaved: () -> Unit = {}) {
         if (amount <= 0) return
         viewModelScope.launch {
             val at = date.atTime(LocalTime.now()).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             recordSettlement(payeeId, theyPaidYou, amount, at, accountId, note)
+            onSaved()
         }
     }
 }

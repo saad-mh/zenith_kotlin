@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.people
 
+import com.saadm.zenith.ui.components.TotalAmount
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -61,6 +64,7 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
     var editing by remember { mutableStateOf(false) }
     var previewing by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val view = LocalView.current
     val loaded = state
 
     Column(Modifier.fillMaxSize()) {
@@ -86,7 +90,9 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
         SettlementSheet(
             state = loaded,
             onSave = { theyPaid, amount, date, accountId, note ->
-                viewModel.settle(theyPaid, amount, date, accountId, note)
+                viewModel.settle(theyPaid, amount, date, accountId, note) {
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                }
                 settling = false
             },
             onDismiss = { settling = false }
@@ -154,7 +160,7 @@ private fun PayeeContent(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
         ZenithCard {
             Text("Net balance", style = ZenithType.caption, color = colors.inkMuted)
-            AmountText(net, signed = true, style = ZenithType.display)
+            TotalAmount(net, signed = true)
             Text(balanceWords(name, net), style = ZenithType.bodyStrong, color = colors.ink)
         }
         PrimaryButton("Record settlement", onSettle, Modifier.fillMaxWidth())

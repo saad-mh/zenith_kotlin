@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.components
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.background
@@ -42,13 +44,18 @@ fun FilterChip(
     val colors = zenithColors()
     val shape = MaterialTheme.shapes.small
     val content = if (selected) colors.onStrong else colors.ink
+    // performHapticFeedback stays silent when the system's touch feedback is off.
+    val view = LocalView.current
     Row(
         modifier = modifier
             .defaultMinSize(minHeight = 44.dp)
             .clip(shape)
             .background(if (selected) colors.primaryStrong else colors.surfaceRaised, shape)
             .border(1.dp, if (selected) colors.primaryStrong else colors.border, shape)
-            .selectable(selected = selected, role = Role.Checkbox, onClick = onClick)
+            .selectable(selected = selected, role = Role.Checkbox) {
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                onClick()
+            }
             .padding(horizontal = ZenithSpacing.space3),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
@@ -78,6 +85,7 @@ fun SegmentedControl(
     val colors = zenithColors()
     val outer = MaterialTheme.shapes.medium
     val segment = MaterialTheme.shapes.small
+    val view = LocalView.current
     val container = modifier
         .fillMaxWidth()
         .clip(outer)
@@ -92,7 +100,10 @@ fun SegmentedControl(
                 .clip(segment)
                 .background(if (isSelected) colors.surfaceRaised else Color.Transparent, segment)
                 .then(if (isSelected) Modifier.border(1.dp, colors.border, segment) else Modifier)
-                .selectable(selected = isSelected, role = Role.Tab) { onSelect(index) },
+                .selectable(selected = isSelected, role = Role.Tab) {
+                    if (!isSelected) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    onSelect(index)
+                },
             contentAlignment = Alignment.Center
         ) {
             Text(

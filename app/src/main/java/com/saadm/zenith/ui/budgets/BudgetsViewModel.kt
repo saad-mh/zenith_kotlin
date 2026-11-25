@@ -119,10 +119,13 @@ class BudgetsViewModel @Inject constructor(
 
     fun nextMonth() = showMonth(monthsBack.value - 1)
 
-    fun save(categoryId: Long, limit: Long) {
+    fun save(categoryId: Long, limit: Long, onSaved: () -> Unit = {}) {
         val state = state.value ?: return
         if (!BudgetRules.isEditable(state.period, today) || limit <= 0) return
-        viewModelScope.launch { saveBudget(state.period, today, categoryId, limit) }
+        viewModelScope.launch {
+            saveBudget(state.period, today, categoryId, limit)
+            onSaved()
+        }
     }
 
     fun remove(categoryId: Long) {

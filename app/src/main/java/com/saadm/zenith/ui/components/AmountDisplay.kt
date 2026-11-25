@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -48,4 +49,14 @@ fun AmountText(
         maxLines = 1,
         modifier = modifier.semantics { contentDescription = money.spoken }
     )
+}
+
+/** [AmountText] for a headline total: a new figure cross-fades in. */
+@Composable
+fun TotalAmount(
+    amount: Long,
+    signed: Boolean = false,
+    tone: AmountTone = AmountTone.Neutral
+) {
+    Crossfade(amount, label = "total") { AmountText(it, signed = signed, tone = tone, style = ZenithType.display) }
 }

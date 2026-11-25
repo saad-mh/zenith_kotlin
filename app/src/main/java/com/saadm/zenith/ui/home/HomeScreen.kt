@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.home
 
+import com.saadm.zenith.ui.components.TotalAmount
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
@@ -112,7 +113,7 @@ private fun OverviewContent(
 
         ZenithCard {
             Text("Net position", style = ZenithType.caption, color = colors.inkMuted)
-            AmountText(state.netPosition.net, style = ZenithType.display)
+            TotalAmount(state.netPosition.net)
             Text(state.netPosition.subtitle(), style = ZenithType.caption, color = colors.inkMuted)
         }
         if (state.recent.isEmpty()) {
