@@ -1,6 +1,7 @@
 package com.saadm.zenith.data.db.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -16,8 +17,36 @@ interface TransactionDao {
 	@Update
 	suspend fun update(transaction: TransactionEntity)
 
+	@Delete
+	suspend fun delete(transaction: TransactionEntity)
+
 	@Query("SELECT * FROM transactions WHERE isDeleted = 0 ORDER BY transactedAt DESC, id DESC")
 	fun observeAllActive(): Flow<List<TransactionEntity>>
+
+	// Start is inclusive, end is exclusive, so a transaction on a boundary falls in exactly one period.
+	@Query(
+		"""
+		SELECT * FROM transactions
+		WHERE isDeleted = 0
+		  AND transactedAt >= :startMillis
+		  AND transactedAt < :endMillis
+		ORDER BY transactedAt DESC, id DESC
+		"""
+	)
+	fun observeBetween(startMillis: Long, endMillis: Long): Flow<List<TransactionEntity>>
+
+	// :pattern is a LIKE pattern, already escaped by the caller.
+	@Query(
+		"""
+		SELECT t.* FROM transactions t
+		LEFT JOIN categories c ON c.id = t.categoryId
+		LEFT JOIN payees p ON p.id = t.payeeId
+		WHERE t.isDeleted = 0
+		  AND (t.note LIKE :pattern ESCAPE '\' OR c.name LIKE :pattern ESCAPE '\' OR p.name LIKE :pattern ESCAPE '\')
+		ORDER BY t.transactedAt DESC, t.id DESC
+		"""
+	)
+	fun observeSearch(pattern: String): Flow<List<TransactionEntity>>
 
 	@Query(
 		"""

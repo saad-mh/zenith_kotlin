@@ -37,6 +37,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     buildFeatures {
         compose = true
     }
@@ -82,4 +86,5 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.robolectric)
 }
