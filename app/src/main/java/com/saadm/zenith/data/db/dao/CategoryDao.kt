@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Upsert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.saadm.zenith.data.entity.CategoryEntity
 import com.saadm.zenith.data.entity.TxnType
@@ -32,6 +33,32 @@ interface CategoryDao {
 
 	@Query("SELECT * FROM categories ORDER BY sortOrder ASC, id ASC")
 	fun observeEvery(): Flow<List<CategoryEntity>>
+
+	@Query("UPDATE categories SET isDeleted = 1 WHERE id = :id")
+	suspend fun archive(id: Long)
+
+	@Query("UPDATE transactions SET categoryId = :into WHERE categoryId = :from")
+	suspend fun moveTransactions(from: Long, into: Long)
+
+	// A month keeps one budget per category, so the source's gives way where the target has one.
+	@Query(
+		"""
+		UPDATE budgets SET isActive = 0 WHERE categoryId = :from AND startDate IN
+			(SELECT startDate FROM budgets WHERE categoryId = :into AND isActive = 1)
+		"""
+	)
+	suspend fun dropClashingBudgets(from: Long, into: Long)
+
+	@Query("UPDATE budgets SET categoryId = :into WHERE categoryId = :from")
+	suspend fun moveBudgets(from: Long, into: Long)
+
+	@Transaction
+	suspend fun merge(from: Long, into: Long) {
+		moveTransactions(from, into)
+		dropClashingBudgets(from, into)
+		moveBudgets(from, into)
+		archive(from)
+	}
 
 	@Query("SELECT * FROM categories ORDER BY id ASC")
 	suspend fun getAll(): List<CategoryEntity>
