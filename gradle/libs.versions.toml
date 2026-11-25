@@ -9,8 +9,6 @@ datastorePreferences = "1.2.1"
 emoji2Emojipicker = "1.6.0"
 hiltAndroid = "2.59.2"
 hiltAndroidCompiler = "2.59.2"
-hiltAndroidCompilerVersion = "2.57.1"
-hiltAndroidVersion = "2.57.1"
 hiltNavigationCompose = "1.3.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -19,10 +17,8 @@ lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
-material = "1.11.0"
-mockitoKotlin = "x.x.x"
+mockitoKotlin = "5.4.0"
 navigationRuntimeKtx = "2.9.8"
-material3 = "1.4.0"
 foundationLayout = "1.11.0"
 roomRuntime = "2.8.4"
 ui = "1.11.0"
@@ -32,7 +28,6 @@ datastoreCore = "1.2.1"
 foundation = "1.11.0"
 
 [libraries]
-androidx-compose-material = { module = "androidx.compose.material:material", version.ref = "material" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -46,8 +41,6 @@ composeunstyled-primitives = { module = "com.composables:composeunstyled-primiti
 composeunstyled-theming = { module = "com.composables:composeunstyled-theming", version.ref = "composeunstyledTheming" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
-hilt-android-compiler-v2571 = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompilerVersion" }
-hilt-android-v2571 = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroidVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -62,7 +55,6 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }

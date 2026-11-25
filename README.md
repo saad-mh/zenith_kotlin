@@ -29,10 +29,9 @@ A native Android finance management app built with Kotlin and Jetpack Compose. T
 | Reactive state | Kotlin Coroutines + StateFlow + Flow |
 | Dependency injection | Hilt |
 | Navigation | Compose Navigation |
-| Charts | Vico (bar/line) + MPAndroidChart wrapped in `AndroidView` (donut) |
-| Swipe actions | `compose-swipetoreveal` (Saket Narayan) |
-| Animations | Lottie (settle-up confetti), `Animatable`, `animateFloatAsState` |
-| Reminders | WorkManager |
+| Charts | Planned for v2: custom Compose Canvas charts (no chart library) |
+| Animations | `Animatable`, `animateFloatAsState` |
+| Reminders | Planned (WorkManager, not yet added) |
 
 ---
 
@@ -45,7 +44,6 @@ ui/          → Compose screens + ViewModels (MVVM)
 domain/      → Models, repository interfaces, use cases
 data/        → Room entities, DAOs, repository implementations
 di/          → Hilt modules wiring everything together
-navigation/  → NavGraph, Screen sealed class, BottomNavBar
 ```
 
 **Single source of truth:** Transactions are the only stored data. All derived values - payee net balances, budget consumption, monthly totals, settlement status - are computed via Room `@Query` and `@DatabaseView`, never stored as redundant fields. The `payee_balances` view recomputes automatically whenever the transactions table changes.
@@ -147,14 +145,8 @@ app/src/main/
 │       ├── Theme.kt
 │       └── Type.kt
 ├── di/
-│   ├── AppModule.kt
 │   ├── DatabaseModule.kt
-│   ├── RepositoryModule.kt
-│   └── UseCaseModule.kt
-├── navigation/
-│   ├── NavGraph.kt
-│   ├── Screen.kt
-│   └── BottomNavBar.kt
+│   └── RepositoryModule.kt
 └── MainActivity.kt
 ```
 
@@ -193,19 +185,19 @@ Navigation: bottom bar with 3 tabs. Add is in the PrimaryActionButton, on all sc
 
 ### Prerequisites
 
-- Android Studio Hedgehog or later
-- Kotlin 1.9+
-- Minimum SDK 26 (Android 8.0)
-- Target SDK 34
+- Android Studio (recent stable release)
+- Kotlin 2.2
+- Minimum SDK 31 (Android 12)
+- Compile SDK 36 (target SDK is not set yet)
 
 ### Setup
 
 ```bash
-git clone https://github.com/saad-mh/zenith-kotlin.git
-cd zenith-kotlin
+git clone https://github.com/saad-mh/zenith_kotlin.git
+cd zenith_kotlin
 ```
 
-Open the `zenith-kotlin` project in Android Studio, let Gradle sync, and run on a device or emulator (API 26+).
+Open the `zenith_kotlin` project in Android Studio, let Gradle sync, and run on a device or emulator (Android 12+).
 
 No API keys, no network configuration required - the app is fully offline.
 
