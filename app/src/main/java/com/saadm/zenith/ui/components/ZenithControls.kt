@@ -1,11 +1,12 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.shape.RoundedCornerShape
 import android.view.HapticFeedbackConstants
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -15,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -39,10 +38,11 @@ fun FilterChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: Int? = null
 ) {
     val colors = zenithColors()
-    val shape = MaterialTheme.shapes.small
+    val shape = RoundedCornerShape(percent = 50)
     val content = if (selected) colors.onStrong else colors.ink
     // performHapticFeedback stays silent when the system's touch feedback is off.
     val view = LocalView.current
@@ -50,8 +50,7 @@ fun FilterChip(
         modifier = modifier
             .defaultMinSize(minHeight = 44.dp)
             .clip(shape)
-            .background(if (selected) colors.primaryStrong else colors.surfaceRaised, shape)
-            .border(1.dp, if (selected) colors.primaryStrong else colors.border, shape)
+            .background(if (selected) colors.primaryStrong else colors.surfaceSunken, shape)
             .selectable(selected = selected, role = Role.Checkbox) {
                 view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 onClick()
@@ -61,7 +60,9 @@ fun FilterChip(
         horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
     ) {
         if (selected) {
-            Icon(Icons.Rounded.Check, contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
+            Icon(painterResource(Lu.lucide_ic_check), contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
+        } else if (icon != null) {
+            Icon(painterResource(icon), contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
         }
         Text(
             text = label,
@@ -83,8 +84,9 @@ fun SegmentedControl(
     modifier: Modifier = Modifier
 ) {
     val colors = zenithColors()
-    val outer = MaterialTheme.shapes.medium
-    val segment = MaterialTheme.shapes.small
+    val stacked = LocalDensity.current.fontScale >= 1.5f
+    val outer = if (stacked) MaterialTheme.shapes.large else RoundedCornerShape(percent = 50)
+    val segment = outer
     val view = LocalView.current
     val container = modifier
         .fillMaxWidth()
@@ -98,9 +100,8 @@ fun SegmentedControl(
             modifier = itemModifier
                 .defaultMinSize(minHeight = 44.dp)
                 .clip(segment)
-                .background(if (isSelected) colors.surfaceRaised else Color.Transparent, segment)
-                .then(if (isSelected) Modifier.border(1.dp, colors.border, segment) else Modifier)
-                .selectable(selected = isSelected, role = Role.Tab) {
+                .background(if (!isSelected) Color.Transparent else if (colors.isDark) colors.border else colors.surface, segment)
+                                .selectable(selected = isSelected, role = Role.Tab) {
                     if (!isSelected) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     onSelect(index)
                 },
@@ -115,7 +116,7 @@ fun SegmentedControl(
             )
         }
     }
-    if (LocalDensity.current.fontScale >= 1.5f) {
+    if (stacked) {
         Column(container, verticalArrangement = spacing) {
             options.indices.forEach { option(it, Modifier.fillMaxWidth()) }
         }

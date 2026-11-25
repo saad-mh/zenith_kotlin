@@ -1,5 +1,16 @@
 package com.saadm.zenith.ui.insights
 
+import com.saadm.zenith.ui.components.Lu
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import com.saadm.zenith.ui.components.TotalAmount
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -45,7 +56,6 @@ import com.saadm.zenith.ui.components.BudgetLineRow
 import com.saadm.zenith.ui.components.ListRow
 import com.saadm.zenith.ui.components.MonthSwitcher
 import com.saadm.zenith.ui.components.ProgressTrack
-import com.saadm.zenith.ui.components.SecondaryButton
 import com.saadm.zenith.ui.components.SectionHeader
 import com.saadm.zenith.ui.components.ZenithCard
 import com.saadm.zenith.ui.components.charts.MonthBar
@@ -73,7 +83,10 @@ fun InsightsScreen(
     Column(Modifier.fillMaxSize()) {
         // Outside the scroll, so the title and month switcher stay put.
         Header(state, viewModel::previousMonth, viewModel::nextMonth)
-        val scroll = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+        val scroll = Modifier
+            .verticalScroll(rememberScrollState())
+            .padding(ZenithSpacing.space4)
+            .padding(bottom = LocalBottomBarInset.current)
         state?.takeIf { !it.history.enough }?.let {
             NotEnoughHistory(it.history, it.summary.expense, onAdd, scroll)
         }
@@ -124,55 +137,86 @@ private fun InsightsContent(
     modifier: Modifier = Modifier
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
-        CashFlowCard(state)
-        BudgetHealthCard(state, onOpenBudgets)
+        CashFlow(state)
         if (state.history.trendReady(state.today)) TrendCard(state)
         WhereItWentCard(state)
+        BudgetHealthCard(state, onOpenBudgets)
         SharedMoneyCard(state.shared, state.today, onOpenPayees)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
-            SecondaryButton("Budgets", onOpenBudgets, Modifier.weight(1f))
-            SecondaryButton("Payees", onOpenPayees, Modifier.weight(1f))
-            SecondaryButton("Categories", onOpenCategories, Modifier.weight(1f))
+        ZenithCard {
+            LinkRow("Budgets", Lu.lucide_ic_target, onOpenBudgets)
+            LinkRow("People", Lu.lucide_ic_users, onOpenPayees)
+            LinkRow("Categories", Lu.lucide_ic_tag, onOpenCategories)
         }
     }
 }
 
+@Composable
+private fun LinkRow(title: String, icon: Int, onClick: () -> Unit) {
+    val muted = zenithColors().inkMuted
+    ListRow(
+        title = title,
+        leading = { Icon(painterResource(icon), contentDescription = null, tint = muted, modifier = Modifier.size(20.dp)) },
+        trailing = { Icon(painterResource(Lu.lucide_ic_chevron_right), contentDescription = null, tint = muted, modifier = Modifier.size(18.dp)) },
+        onClick = onClick
+    )
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CashFlowCard(state: InsightsState) {
+private fun CashFlow(state: InsightsState) {
     val colors = zenithColors()
     val summary = state.summary
     val start = state.period.startDate
     val end = if (state.isCurrentMonth) state.today else state.period.endDate.minusDays(1)
     val range = "${start.dayOfMonth} ${start.shortMonthName()} to ${end.dayOfMonth} ${end.shortMonthName()}"
-    ZenithCard {
-        Text("Net cash flow · $range", style = ZenithType.caption, color = colors.inkMuted)
-        TotalAmount(
-            summary.net,
-            signed = true,
-            tone = when {
-                summary.net > 0 -> AmountTone.Positive
-                summary.net < 0 -> AmountTone.Negative
-                else -> AmountTone.Neutral
-            }
-        )
-        state.keptPercent?.let { kept ->
-            val words = if (kept >= 0) "Kept $kept% of income" else "Spent ${-kept}% more than income"
-            Text(words, style = ZenithType.caption, color = colors.inkMuted)
-            ProgressTrack(
-                progress = summary.expense.toFloat() / summary.income,
-                description = words
-            )
+    val days = (ChronoUnit.DAYS.between(start, end) + 1).coerceAtLeast(1)
+    // Net on the left, spend per day on the right; they wrap at large font sizes.
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Column {
+            Text(range.uppercase(), style = ZenithType.caption, color = colors.inkMuted)
+            TotalAmount(summary.net, signed = true)
         }
-        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text("Income", style = ZenithType.caption, color = colors.inkMuted)
-                AmountText(summary.income, signed = true, tone = AmountTone.Positive)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("Personal expenses", style = ZenithType.caption, color = colors.inkMuted)
-                AmountText(-summary.expense)
-            }
+        Column(horizontalAlignment = Alignment.End) {
+            Text("SPENT/DAY", style = ZenithType.caption, color = colors.inkMuted)
+            AmountText(summary.expense / days / 100 * 100, style = ZenithType.display)
+        }
+    }
+    state.keptPercent?.let { kept ->
+        val words = if (kept >= 0) "Kept $kept% of income" else "Spent ${-kept}% more than income"
+        Text(words, style = ZenithType.caption, color = colors.inkMuted)
+    }
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space3),
+        verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)
+    ) {
+        FlowTile("Income", summary.income, Lu.lucide_ic_arrow_up_right, colors.positive, Modifier.weight(1f))
+        FlowTile("Expenses", summary.expense, Lu.lucide_ic_arrow_down_right, colors.negative, Modifier.weight(1f))
+    }
+}
+
+/** An income or expense total with an arrow for its direction. */
+@Composable
+private fun FlowTile(label: String, amount: Long, icon: Int, tint: Color, modifier: Modifier = Modifier) {
+    val colors = zenithColors()
+    Row(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(colors.surfaceRaised)
+            .padding(ZenithSpacing.space3)
+            .semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+    ) {
+        Box(
+            Modifier.size(36.dp).background(colors.surfaceSunken, MaterialTheme.shapes.small),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(painterResource(icon), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        }
+        Column {
+            Text(label, style = ZenithType.caption, color = colors.inkMuted)
+            AmountText(amount)
         }
     }
 }

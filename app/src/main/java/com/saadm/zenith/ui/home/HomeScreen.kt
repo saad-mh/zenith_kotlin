@@ -1,5 +1,9 @@
 package com.saadm.zenith.ui.home
 
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import com.saadm.zenith.ui.components.DayHeader
+import com.saadm.zenith.ui.components.Lu
+import androidx.compose.ui.res.painterResource
 import com.saadm.zenith.ui.components.TotalAmount
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,8 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,7 +79,11 @@ fun HomeScreen(
         onOpenPayees = onOpenPayees,
         onAdd = onAdd,
         onRemind = { line -> PayeeReminder.textFor(line.name, line.net)?.let(context::shareText) },
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(ZenithSpacing.space4)
+            .padding(bottom = LocalBottomBarInset.current)
     )
 }
 
@@ -103,7 +109,7 @@ private fun OverviewContent(
             IconButton(onClick = onOpenSettings) {
                 val name = state?.profileName.orEmpty()
                 if (name.isBlank()) {
-                    Icon(Icons.Rounded.Person, contentDescription = "Profile and settings", tint = colors.ink)
+                    Icon(painterResource(Lu.lucide_ic_user), contentDescription = "Profile and settings", tint = colors.ink)
                 } else {
                     Avatar(name, Modifier.semantics { contentDescription = "Profile and settings" })
                 }
@@ -125,10 +131,9 @@ private fun OverviewContent(
         FriendsCard(state.shared, state.nudge, onOpenPayees, onRemind)
 
         SectionHeader("Recent", actionLabel = "See all", onAction = onOpenTransactions)
-        ZenithCard {
-            state.recent.forEach { recent ->
-                TxnItemRow(recent.item, caption = dayLabel(recent.date, state.today))
-            }
+        state.recent.groupBy { it.date }.forEach { (date, entries) ->
+            DayHeader(dayLabel(date, state.today), null)
+            entries.forEach { TxnItemRow(it.item) }
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.people
 
+import com.saadm.zenith.ui.components.ActionSheet
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import com.saadm.zenith.ui.components.ZenithTextField
 import com.saadm.zenith.ui.components.TotalAmount
 import android.view.HapticFeedbackConstants
 import androidx.compose.ui.platform.LocalView
@@ -12,10 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -80,7 +80,10 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
                 },
                 onRemove = { viewModel.remove(onBack) },
                 onStatement = { previewing = true },
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(ZenithSpacing.space4)
+                    .padding(bottom = LocalBottomBarInset.current)
             )
         }
     }
@@ -105,24 +108,26 @@ fun PayeeDetailsScreen(onBack: () -> Unit, viewModel: PayeeDetailViewModel = hil
             loaded.transactions.mapValues { it.value.note }
         )
         // Shown in full first, so notes are never sent unseen.
-        AlertDialog(
-            onDismissRequest = { previewing = false },
-            containerColor = zenithColors().surfaceRaised,
-            title = { Text("Statement", style = ZenithType.subheading) },
-            text = { Text(text, style = ZenithType.body, modifier = Modifier.verticalScroll(rememberScrollState())) },
-            confirmButton = {
-                TextButton(onClick = {
-                    previewing = false
-                    context.shareText(text)
-                }) { Text("Share") }
+        ActionSheet(
+            title = "Statement",
+            confirmLabel = "Share",
+            dismissLabel = "Close",
+            onConfirm = {
+                previewing = false
+                context.shareText(text)
             },
-            dismissButton = {
-                TextButton(onClick = {
+            onDismiss = { previewing = false }
+        ) {
+            ZenithCard { Text(text, style = ZenithType.body, color = zenithColors().ink) }
+            SecondaryButton(
+                "Copy",
+                {
                     previewing = false
                     context.copyText(text)
-                }) { Text("Copy") }
-            }
-        )
+                },
+                Modifier.fillMaxWidth()
+            )
+        }
     }
     if (editing) {
         PayeeEditorDialog(
@@ -232,7 +237,10 @@ private fun SettlementSheet(
     ZenithBottomSheet(onDismiss) {
         Text("Record settlement", style = ZenithType.subheading, color = colors.ink)
         Text("Saved on this device. Nothing is sent to $name.", style = ZenithType.caption, color = colors.inkMuted)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        ) {
             FilterChip("$name paid you", theyPaid, { theyPaid = true })
             FilterChip("You paid $name", !theyPaid, { theyPaid = false })
         }
@@ -246,7 +254,10 @@ private fun SettlementSheet(
         AmountField(amount, { amount = it })
         if (state.accounts.isNotEmpty()) {
             Text("Method", style = ZenithType.bodyStrong, color = colors.ink)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+            FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        ) {
                 state.accounts.forEach { account ->
                     val selected = accountId == account.id
                     FilterChip(account.name, selected, { accountId = if (selected) null else account.id })
@@ -254,13 +265,7 @@ private fun SettlementSheet(
             }
         }
         DateChips(date, state.today) { date = it }
-        OutlinedTextField(
-            value = note,
-            onValueChange = { note = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Note (optional)") },
-            singleLine = true
-        )
+        ZenithTextField(note, { note = it }, "Note (optional)")
         if (paise != null) {
             Text(
                 "After saving: ${balanceWords(name, balanceAfter(net, theyPaid, paise))}",

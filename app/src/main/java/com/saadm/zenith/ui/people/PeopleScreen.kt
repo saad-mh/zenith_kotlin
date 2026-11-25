@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.people
 
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import com.saadm.zenith.ui.components.ZenithTextField
 import com.saadm.zenith.ui.components.TotalAmount
 import androidx.compose.runtime.key
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -15,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -106,7 +107,12 @@ private fun PeopleContent(
     val sections = payeeSections(rows, filter, query)
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(ZenithSpacing.space4),
+        contentPadding = PaddingValues(
+            start = ZenithSpacing.space4,
+            top = ZenithSpacing.space4,
+            end = ZenithSpacing.space4,
+            bottom = ZenithSpacing.space4 + LocalBottomBarInset.current
+        ),
         verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
     ) {
         if (rows.isEmpty()) {
@@ -148,13 +154,7 @@ private fun PeopleContent(
                         color = colors.inkMuted
                     )
                 }
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = onQuery,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Search people") },
-                    singleLine = true
-                )
+                ZenithTextField(query, onQuery, "Search people")
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)

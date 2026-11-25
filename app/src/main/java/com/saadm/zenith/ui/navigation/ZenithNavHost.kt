@@ -24,6 +24,8 @@ import com.saadm.zenith.ui.insights.InsightsScreen
 import com.saadm.zenith.ui.people.PayeeDetailsScreen
 import com.saadm.zenith.ui.people.PeopleScreen
 import com.saadm.zenith.ui.settings.SettingsScreen
+import com.saadm.zenith.ui.settings.SettingsPage
+import com.saadm.zenith.ui.settings.SettingsPageScreen
 import com.saadm.zenith.ui.settings.TransitionStyle
 import com.saadm.zenith.ui.transactions.TransactionsScreen
 
@@ -179,10 +181,16 @@ fun ZenithNavHost(
         }
         composable(Destination.Settings.route) {
             SettingsScreen(
+                onOpenPage = { page -> navController.navigate(Destination.settingsRoute(page.name)) },
                 onOpenCategories = { navController.navigate(Destination.Categories.route) },
                 onOpenPayees = { navController.navigate(Destination.Payees.route) },
                 onOpenBudgets = { navController.navigate(Destination.Budgets.route) }
             )
+        }
+        composable(Destination.SettingsDetail.route) { entry ->
+            val name = entry.arguments?.getString(SETTINGS_PAGE_ARG)
+            val page = SettingsPage.entries.firstOrNull { it.name == name } ?: SettingsPage.Appearance
+            SettingsPageScreen(page, onBack = { navController.popBackStack() })
         }
         composable(Destination.Budgets.route) { BudgetsScreen(onBack = { navController.popBackStack() }) }
         composable(Destination.Transactions.route) {

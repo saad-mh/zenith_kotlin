@@ -1,10 +1,10 @@
 package com.saadm.zenith.ui.insights
 
+import com.saadm.zenith.ui.components.Lu
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,7 +65,7 @@ fun NotEnoughHistory(history: History, spent: Long, onAdd: () -> Unit, modifier:
                 ListRow(
                     title = title,
                     subtitle = needs,
-                    leading = { Icon(Icons.Rounded.Lock, contentDescription = "Locked", tint = colors.inkMuted) }
+                    leading = { Icon(painterResource(Lu.lucide_ic_lock), contentDescription = "Locked", tint = colors.inkMuted) }
                 )
             }
         }

@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,11 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.PieChart
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -39,10 +34,10 @@ import com.saadm.zenith.ui.theme.ZenithTheme
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
 
-data class PillTab(val route: String, val label: String, val icon: ImageVector)
+data class PillTab(val route: String, val label: String, val icon: Int)
 
 data class PrimaryActionSpec(
-    val icon: ImageVector,
+    val icon: Int,
     val contentDescription: String,
     val onClick: () -> Unit
 )
@@ -96,7 +91,7 @@ fun NavPillBar(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = primaryAction.icon,
+                painter = painterResource(primaryAction.icon),
                 contentDescription = null,
                 tint = colors.onStrong,
                 modifier = Modifier.size(24.dp)
@@ -125,13 +120,13 @@ private fun PillTabItem(
         horizontalArrangement = Arrangement.Center
     ) {
         if (selected) {
-            Icon(tab.icon, contentDescription = null, tint = colors.link, modifier = Modifier.size(20.dp))
+            Icon(painterResource(tab.icon), contentDescription = null, tint = colors.link, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
             val scale = LocalDensity.current.fontScale
             val size = ZenithType.bodyStrong.fontSize * (minOf(scale, 1.3f) / scale)
             Text(text = tab.label, style = ZenithType.bodyStrong.copy(fontSize = size), color = colors.link, maxLines = 1)
         } else {
-            Icon(tab.icon, contentDescription = tab.label, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
+            Icon(painterResource(tab.icon), contentDescription = tab.label, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -142,13 +137,13 @@ private fun NavPillBarPreview() {
     ZenithTheme {
         NavPillBar(
             tabs = listOf(
-                PillTab("home", "Overview", Icons.Rounded.Home),
-                PillTab("insights", "Insights", Icons.Rounded.PieChart),
-                PillTab("settings", "Settings", Icons.Rounded.Settings),
+                PillTab("home", "Overview", Lu.lucide_ic_house),
+                PillTab("insights", "Insights", Lu.lucide_ic_chart_pie),
+                PillTab("settings", "Settings", Lu.lucide_ic_settings),
             ),
             selectedRoute = "home",
             onTabSelected = {},
-            primaryAction = PrimaryActionSpec(Icons.Rounded.Add, "Add transaction", {})
+            primaryAction = PrimaryActionSpec(Lu.lucide_ic_plus, "Add transaction", {})
         )
     }
 }

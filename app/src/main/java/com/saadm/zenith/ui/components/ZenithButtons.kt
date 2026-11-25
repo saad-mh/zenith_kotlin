@@ -26,7 +26,8 @@ fun PrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    destructive: Boolean = false
 ) {
     val colors = zenithColors()
     ZenithButton(
@@ -34,10 +35,18 @@ fun PrimaryButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        minHeight = 48.dp,
-        container = if (enabled) colors.primaryStrong else colors.surfaceSunken,
+        minHeight = 52.dp,
+        container = when {
+            !enabled -> colors.surfaceSunken
+            destructive -> colors.negative
+            else -> colors.primaryStrong
+        },
         border = null,
-        textColor = if (enabled) colors.onStrong else colors.inkMuted
+        textColor = when {
+            !enabled -> colors.inkMuted
+            destructive -> colors.surface
+            else -> colors.onStrong
+        }
     )
 }
 
@@ -55,9 +64,9 @@ fun SecondaryButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        minHeight = 44.dp,
-        container = colors.surfaceRaised,
-        border = colors.border,
+        minHeight = 48.dp,
+        container = colors.surfaceSunken,
+        border = null,
         textColor = if (enabled) colors.ink else colors.inkMuted
     )
 }

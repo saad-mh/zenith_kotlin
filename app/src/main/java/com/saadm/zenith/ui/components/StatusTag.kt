@@ -1,15 +1,12 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
@@ -35,13 +31,13 @@ fun StatusTag(text: String, tone: StatusTone, modifier: Modifier = Modifier) {
         StatusTone.Caution -> colors.caution
         StatusTone.Neutral -> colors.inkMuted
     }
-    val icon: ImageVector? = when (tone) {
-        StatusTone.Positive -> Icons.Rounded.CheckCircle
-        StatusTone.Negative -> Icons.Rounded.ErrorOutline
-        StatusTone.Caution -> Icons.Rounded.Schedule
+    val icon: Int? = when (tone) {
+        StatusTone.Positive -> Lu.lucide_ic_circle_check
+        StatusTone.Negative -> Lu.lucide_ic_circle_alert
+        StatusTone.Caution -> Lu.lucide_ic_clock
         StatusTone.Neutral -> null
     }
-    val shape = MaterialTheme.shapes.small
+    val shape = MaterialTheme.shapes.extraSmall
     Row(
         modifier = modifier
             .clip(shape)
@@ -50,7 +46,7 @@ fun StatusTag(text: String, tone: StatusTone, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
+            Icon(painterResource(icon), contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(ZenithSpacing.space1))
         }
         Text(text = text, style = ZenithType.caption, color = tint)

@@ -1,5 +1,10 @@
 package com.saadm.zenith.ui.transactions
 
+import androidx.compose.ui.res.painterResource
+import com.saadm.zenith.ui.components.Lu
+import com.saadm.zenith.ui.components.DayHeader
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import com.saadm.zenith.ui.components.ZenithTextField
 import androidx.compose.runtime.key
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -13,12 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,7 +48,6 @@ import com.saadm.zenith.ui.components.EmptyState
 import com.saadm.zenith.ui.components.FilterChip
 import com.saadm.zenith.ui.components.MonthSwitcher
 import com.saadm.zenith.ui.components.TxnItemRow
-import com.saadm.zenith.ui.components.ZenithCard
 import com.saadm.zenith.ui.components.ZenithTextButton
 import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
@@ -80,7 +80,7 @@ fun TransactionsScreen(
             val searching = loaded?.searching == true
             IconButton(onClick = { viewModel.setQuery(if (searching) null else "") }) {
                 Icon(
-                    if (searching) Icons.Rounded.Close else Icons.Rounded.Search,
+                    painterResource(if (searching) Lu.lucide_ic_x else Lu.lucide_ic_search),
                     contentDescription = if (searching) "Close search" else "Search transactions",
                     tint = zenithColors().ink
                 )
@@ -142,19 +142,18 @@ private fun TxnListContent(
     val start = state.period.startDate
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(ZenithSpacing.space4),
+        contentPadding = PaddingValues(
+            start = ZenithSpacing.space4,
+            top = ZenithSpacing.space4,
+            end = ZenithSpacing.space4,
+            bottom = ZenithSpacing.space4 + LocalBottomBarInset.current
+        ),
         verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
                 state.query.query?.let { text ->
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = onQuery,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Search note, category or person") },
-                        singleLine = true
-                    )
+                    ZenithTextField(text, onQuery, "Search note, category or person")
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -227,19 +226,9 @@ private fun TxnListContent(
         items(state.days, key = { it.date.toEpochDay() }) { day ->
             // Placement only. Compose applies the system animator scale, so at 0 it is instant.
             Column(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
-                Row(Modifier.padding(horizontal = ZenithSpacing.space1)) {
-                    Text(
-                        dayLabel(day.date, state.today),
-                        style = ZenithType.bodyStrong,
-                        color = colors.ink,
-                        modifier = Modifier.weight(1f)
-                    )
-                    day.total?.let { AmountText(it, signed = true, style = ZenithType.caption) }
-                }
-                ZenithCard {
-                    day.items.forEach { item ->
-                        key(item.txn.id) { TxnItemRow(item, onClick = { onOpen(item.txn.id) }) }
-                    }
+                DayHeader(dayLabel(day.date, state.today), day.total)
+                day.items.forEach { item ->
+                    key(item.txn.id) { TxnItemRow(item, onClick = { onOpen(item.txn.id) }) }
                 }
             }
         }

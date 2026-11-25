@@ -31,13 +31,14 @@ data class ZenithColors(
     val scrim: Color,
     val avatarTints: List<AvatarTint>,
     val chartColors: List<Color>,
+    val isMono: Boolean = false,
 )
 
 val ZenithLightColors = ZenithColors(
     isDark = false,
-    surface = Color(0xFFFAF9F7),
-    surfaceRaised = Color(0xFFFFFFFF),
-    surfaceSunken = Color(0xFFF1EEE9),
+    surface = Color(0xFFFFFFFF),
+    surfaceRaised = Color(0xFFF7F6F4),
+    surfaceSunken = Color(0xFFEFEDEA),
     border = Color(0xFFE1DCE6),
     ink = Color(0xFF241F2B),
     inkMuted = Color(0xFF6D6877),
@@ -67,7 +68,7 @@ val ZenithDarkColors = ZenithColors(
     isDark = true,
     surface = Color(0xFF17131C),
     surfaceRaised = Color(0xFF211C28),
-    surfaceSunken = Color(0xFF110E15),
+    surfaceSunken = Color(0xFF2D2735),
     border = Color(0xFF38303F),
     ink = Color(0xFFF4F1EC),
     inkMuted = Color(0xFFA9A3B4),
@@ -94,9 +95,10 @@ val ZenithDarkColors = ZenithColors(
 )
 
 val ZenithMonochromeColors = ZenithColors(
+    isMono = true,
     isDark = false,
-    surface = Color(0xFFF6F6F5),
-    surfaceRaised = Color(0xFFFFFFFF),
+    surface = Color(0xFFFFFFFF),
+    surfaceRaised = Color(0xFFF5F5F4),
     surfaceSunken = Color(0xFFEBEBEA),
     border = Color(0xFFDADAD9),
     ink = Color(0xFF1B1B1B),
@@ -126,10 +128,11 @@ val ZenithMonochromeColors = ZenithColors(
 // Not in the canvas: the design has no dark monochrome. These are neutral greys
 // mirroring ZenithMonochromeColors so a monochrome user in dark mode is not left on a light screen.
 val ZenithMonochromeDarkColors = ZenithColors(
+    isMono = true,
     isDark = true,
     surface = Color(0xFF151515),
     surfaceRaised = Color(0xFF1E1E1E),
-    surfaceSunken = Color(0xFF0E0E0E),
+    surfaceSunken = Color(0xFF2C2C2C),
     border = Color(0xFF3A3A3A),
     ink = Color(0xFFF2F2F2),
     inkMuted = Color(0xFFA8A8A8),

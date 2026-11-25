@@ -1,10 +1,16 @@
 package com.saadm.zenith.ui.transactions
 
+import com.saadm.zenith.ui.theme.ZenithSpacing
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import com.saadm.zenith.ui.components.ZenithCard
+import com.saadm.zenith.ui.components.ActionSheet
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,40 +42,46 @@ fun TxnDetailSheet(
     val colors = zenithColors()
     var confirming by remember { mutableStateOf(false) }
     ZenithBottomSheet(onDismiss) {
-        Text(item.title, style = ZenithType.subheading, color = colors.ink)
-        AmountText(item.signedAmount, signed = true, style = ZenithType.display)
-        item.tag?.let { Text(it.word, style = ZenithType.bodyStrong, color = colors.ink) }
-        Detail("Date", dayLabel(item.txn.transactedAt.toLocalDate(), today))
-        Detail("Category", names.categories[item.txn.categoryId] ?: "Uncategorized")
-        names.accounts[item.txn.accountId]?.let { Detail("Paid with", it) }
-        item.txn.note?.takeIf { it.isNotBlank() }?.let { Detail("Note", it) }
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(item.title, style = ZenithType.subheading, color = colors.ink, textAlign = TextAlign.Center)
+            AmountText(item.signedAmount, signed = true, style = ZenithType.display)
+            item.tag?.let { Text(it.word, style = ZenithType.bodyStrong, color = colors.inkMuted) }
+        }
+        ZenithCard {
+            Detail("Date", dayLabel(item.txn.transactedAt.toLocalDate(), today))
+            Detail("Category", names.categories[item.txn.categoryId] ?: "Uncategorized")
+            names.accounts[item.txn.accountId]?.let { Detail("Paid with", it) }
+            item.txn.note?.takeIf { it.isNotBlank() }?.let { Detail("Note", it) }
+        }
         if (item.shares.isNotEmpty()) {
-            Text("Split", style = ZenithType.bodyStrong, color = colors.ink)
-            Share("Your share", item.yourShare)
-            item.shares.forEach { share ->
-                Share("${names.payees[share.payeeId] ?: "Someone"} owes you", share.amount)
+            ZenithCard {
+                Text("Split", style = ZenithType.bodyStrong, color = colors.ink)
+                Share("Your share", item.yourShare)
+                item.shares.forEach { share ->
+                    Share("${names.payees[share.payeeId] ?: "Someone"} owes you", share.amount)
+                }
             }
         }
         // Transfers are two linked rows and splits carry shares, so neither is edited here.
         val transfer = item.txn.type == TxnType.TRANSFER_IN || item.txn.type == TxnType.TRANSFER_OUT
         if (!transfer && item.shares.isEmpty()) {
-            SecondaryButton("Edit", onEdit, Modifier.fillMaxWidth())
-            SecondaryButton("Repeat", onRepeat, Modifier.fillMaxWidth())
+            Row(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+                SecondaryButton("Edit", onEdit, Modifier.weight(1f))
+                SecondaryButton("Repeat", onRepeat, Modifier.weight(1f))
+            }
         }
         SecondaryButton("Delete", { confirming = true }, Modifier.fillMaxWidth())
     }
     if (confirming) {
-        AlertDialog(
-            onDismissRequest = { confirming = false },
-            title = { Text("Delete this entry?") },
-            text = {
-                Text(
-                    if (item.shares.isEmpty()) "It is removed for good."
-                    else "The expense and what others owe for it are removed for good."
-                )
-            },
-            confirmButton = { TextButton(onClick = onDelete) { Text("Delete", color = colors.negative) } },
-            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Keep it") } }
+        ActionSheet(
+            title = "Delete this entry?",
+            message = if (item.shares.isEmpty()) "It is removed for good."
+            else "The expense and what others owe for it are removed for good.",
+            confirmLabel = "Delete",
+            destructive = true,
+            dismissLabel = "Keep it",
+            onConfirm = onDelete,
+            onDismiss = { confirming = false }
         )
     }
 }
@@ -77,7 +89,7 @@ fun TxnDetailSheet(
 @Composable
 private fun Detail(label: String, value: String) {
     val colors = zenithColors()
-    Row {
+    Row(Modifier.padding(vertical = ZenithSpacing.space1)) {
         Text(label, style = ZenithType.body, color = colors.inkMuted, modifier = Modifier.weight(1f))
         Text(value, style = ZenithType.bodyStrong, color = colors.ink, modifier = Modifier.weight(2f))
     }

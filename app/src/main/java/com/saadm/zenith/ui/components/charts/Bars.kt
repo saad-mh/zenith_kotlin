@@ -82,6 +82,12 @@ fun MonthlyBars(
             val color = if (isCurrent) colors.chart(0) else colors.chart(2)
             val barTop = yFor(bar.amount)
             drawRoundRect(
+                color = colors.surfaceSunken,
+                topLeft = Offset(x, plotTop),
+                size = Size(barWidth, plotHeight),
+                cornerRadius = CornerRadius(6.dp.toPx())
+            )
+            drawRoundRect(
                 color = color,
                 topLeft = Offset(x, barTop),
                 size = Size(barWidth, plotBottom - barTop),

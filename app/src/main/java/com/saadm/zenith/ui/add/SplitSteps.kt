@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.add
 
+import com.saadm.zenith.ui.components.ZenithTextField
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,13 +40,7 @@ import com.saadm.zenith.ui.theme.zenithColors
 fun NewPersonRow(onAdd: (String) -> Unit) {
     var name by rememberSaveable { mutableStateOf("") }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            modifier = Modifier.weight(1f),
-            label = { Text("New person") },
-            singleLine = true
-        )
+        ZenithTextField(name, { name = it }, "New person", Modifier.weight(1f))
         ZenithTextButton(
             "Add",
             {
@@ -128,7 +122,10 @@ fun SplitStep(
         form.items.forEachIndexed { index, item ->
             fun replace(next: DraftItem) = onChange { it.copy(items = it.items.toMutableList().also { list -> list[index] = next }) }
             AmountField(item.amount, { replace(item.copy(amount = it)) }, label = "Item ${index + 1}")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+                verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+            ) {
                 (listOf(YOU) + people).forEach { id ->
                     val on = id in item.participants
                     FilterChip(
