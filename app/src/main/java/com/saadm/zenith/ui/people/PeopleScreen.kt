@@ -1,5 +1,6 @@
 package com.saadm.zenith.ui.people
 
+import com.saadm.zenith.ui.components.Lu
 import com.saadm.zenith.ui.common.LocalBottomBarInset
 import com.saadm.zenith.ui.components.ZenithTextField
 import com.saadm.zenith.ui.components.TotalAmount
@@ -19,10 +20,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -46,27 +45,22 @@ import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
 
-/** Shared balances. [createRequests] is bumped by the bottom bar's action, which opens the new-person dialog. */
+/** Shared balances. */
 @Composable
 fun PeopleScreen(
     onNavigateToPayee: (Long) -> Unit,
     onBack: () -> Unit,
-    createRequests: Int = 0,
     viewModel: PeopleViewModel = hiltViewModel()
 ) {
     val rows by viewModel.rows.collectAsState()
     var filter by rememberSaveable { mutableStateOf(PayeeFilter.All) }
     var query by rememberSaveable { mutableStateOf("") }
     var creating by rememberSaveable { mutableStateOf(false) }
-    var handledRequests by rememberSaveable { mutableIntStateOf(createRequests) }
-
-    LaunchedEffect(createRequests) {
-        if (createRequests > handledRequests) creating = true
-        handledRequests = createRequests
-    }
 
     Column(Modifier.fillMaxSize()) {
-        ScreenHeader("Shared balances", onBack)
+        ScreenHeader("Shared balances", onBack) {
+            FilterChip("Add", false, { creating = true }, icon = Lu.lucide_ic_user_plus)
+        }
         rows?.let {
             PeopleContent(
                 rows = it,
