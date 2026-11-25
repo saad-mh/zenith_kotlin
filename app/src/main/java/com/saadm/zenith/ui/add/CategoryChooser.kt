@@ -22,14 +22,14 @@ import com.saadm.zenith.ui.components.categoryIcon
 import com.saadm.zenith.ui.theme.zenithColors
 
 /** The category an entry will be saved under: the picked one if it fits the type, else the default. */
-fun effectiveCategory(categories: List<CategoryEntity>, pickedId: Long?): CategoryEntity? =
-    categories.firstOrNull { it.id == pickedId } ?: categories.firstOrNull { it.isDefault }
+fun effectiveCategory(categories: List<CategoryEntity>, pickedId: Long?, defaultId: Long?): CategoryEntity? =
+    categories.firstOrNull { it.id == pickedId } ?: categories.firstOrNull { it.id == defaultId }
 
 /** One chip showing the category; tapping it lists every category that fits the entry. */
 @Composable
-fun CategoryChooser(categories: List<CategoryEntity>, pickedId: Long?, onPick: (Long) -> Unit) {
+fun CategoryChooser(categories: List<CategoryEntity>, pickedId: Long?, defaultId: Long?, onPick: (Long) -> Unit) {
     var choosing by rememberSaveable { mutableStateOf(false) }
-    val current = effectiveCategory(categories, pickedId) ?: return
+    val current = effectiveCategory(categories, pickedId, defaultId) ?: return
     FilterChip(
         current.name,
         false,

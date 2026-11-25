@@ -1,5 +1,8 @@
 package com.saadm.zenith.ui.settings
 
+import com.saadm.zenith.domain.repository.CategoryRepo
+import com.saadm.zenith.data.entity.TxnType
+import com.saadm.zenith.data.entity.CategoryEntity
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -35,7 +38,11 @@ import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 
-data class SettingsState(val preferences: AppPreferences, val accounts: List<AccountBalance>)
+data class SettingsState(
+    val preferences: AppPreferences,
+    val accounts: List<AccountBalance>,
+    val categories: List<CategoryEntity> = emptyList()
+)
 
 /** A typed opening balance in paise. Blank is zero and a leading minus is money owed. Null is not a number. */
 fun parseBalance(input: String): Long? {
@@ -52,6 +59,7 @@ fun parseBalance(input: String): Long? {
 class SettingsViewModel @Inject constructor(
     private val store: AppPreferencesStore,
     accounts: AccountRepo,
+    categories: CategoryRepo,
     private val saveAccount: SaveAccount,
     private val archiveAccount: ArchiveAccount,
     private val transfer: DataTransfer,
@@ -59,8 +67,12 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    val state: StateFlow<SettingsState?> = combine(store.preferencesFlow, accounts.observeBalances()) { p, a ->
-        SettingsState(p, a)
+    val state: StateFlow<SettingsState?> = combine(
+        store.preferencesFlow,
+        accounts.observeBalances(),
+        categories.observeAll()
+    ) { p, a, c ->
+        SettingsState(p, a, c.filter { !it.isDeleted })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _message = MutableStateFlow<String?>(null)
@@ -85,6 +97,7 @@ class SettingsViewModel @Inject constructor(
     fun setMonthStartDay(day: Int) = update { updateMonthStartDay(day) }
     fun setFillCategory(enabled: Boolean) = update { updateFillCategoryFromPayee(enabled) }
     fun setSplitMode(mode: SplitMode) = update { updateDefaultSplitMode(mode) }
+    fun setDefaultCategory(type: TxnType, id: Long) = update { updateDefaultCategory(type, id) }
     fun setDefaultAccount(id: Long?) = update { updateDefaultAccountId(id) }
 
     /** [existing] is null for a new account. */
