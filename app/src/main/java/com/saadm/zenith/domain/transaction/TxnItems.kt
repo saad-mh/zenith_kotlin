@@ -76,7 +76,13 @@ object TxnItems {
                 title = note ?: category
                 tag = TxnTag.SHARED
                 val share = txn.amount - shares.sumOf { it.amount }
-                detail = listOf(account, "your share ${MoneyFormatter.format(share).text}")
+                // Who owes what, in words. Past two people the row only counts them.
+                val owed = if (shares.size <= 2) {
+                    shares.map { "${names.payees[it.payeeId] ?: "Someone"} owes ${MoneyFormatter.format(it.amount).text}" }
+                } else {
+                    listOf("${shares.size} people owe ${MoneyFormatter.format(shares.sumOf { it.amount }).text}")
+                }
+                detail = listOf(account, "your share ${MoneyFormatter.format(share).text}") + owed
             }
             TxnType.INCOME -> {
                 detail = listOf("Income", account)

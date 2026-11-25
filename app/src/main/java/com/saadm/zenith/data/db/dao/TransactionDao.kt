@@ -23,6 +23,9 @@ interface TransactionDao {
 	@Delete
 	suspend fun delete(transaction: TransactionEntity)
 
+	@Delete
+	suspend fun deleteAll(transactions: List<TransactionEntity>)
+
 	@Query("SELECT * FROM transactions WHERE isDeleted = 0 ORDER BY transactedAt DESC, id DESC")
 	fun observeAllActive(): Flow<List<TransactionEntity>>
 

@@ -13,6 +13,9 @@ interface TransactionRepo {
     /** Hard delete: the row is removed, not flagged. */
     suspend fun delete(transaction: TransactionEntity)
 
+    /** Hard delete of several rows in one write, so they go together or not at all. */
+    suspend fun deleteAll(transactions: List<TransactionEntity>)
+
     /** Inserts or replaces a transaction. Returns its id. */
     suspend fun save(transaction: TransactionEntity): Long
 

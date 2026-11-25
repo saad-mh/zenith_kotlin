@@ -168,6 +168,10 @@ class BudgetUseCasesTest {
         }
 
         override fun observeAllActive(): Flow<List<TransactionEntity>> = flowOf(items.toList())
+        override suspend fun deleteAll(transactions: List<TransactionEntity>) {
+            items.removeAll(transactions.toSet())
+        }
+
         override fun getRecentTransactions(): Flow<List<TransactionEntity>> = flowOf(items.toList())
         override suspend fun delete(transaction: TransactionEntity) {}
         override suspend fun save(transaction: TransactionEntity): Long = 0L

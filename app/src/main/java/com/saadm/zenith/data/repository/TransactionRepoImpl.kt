@@ -17,6 +17,8 @@ class TransactionRepoImpl @Inject constructor(
 
     override suspend fun delete(transaction: TransactionEntity) = dao.delete(transaction)
 
+    override suspend fun deleteAll(transactions: List<TransactionEntity>) = dao.deleteAll(transactions)
+
     override suspend fun save(transaction: TransactionEntity): Long = dao.upsert(transaction)
 
     override suspend fun saveAll(transactions: List<TransactionEntity>): List<Long> = dao.upsertAll(transactions)
