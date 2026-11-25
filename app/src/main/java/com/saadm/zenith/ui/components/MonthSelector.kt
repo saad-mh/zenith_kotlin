@@ -37,7 +37,8 @@ fun MonthSwitcher(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     modifier: Modifier = Modifier,
-    nextEnabled: Boolean = true
+    nextEnabled: Boolean = true,
+    onLabelClick: (() -> Unit)? = null
 ) {
     val colors = zenithColors()
     val pill = RoundedCornerShape(percent = 50)
@@ -54,7 +55,12 @@ fun MonthSwitcher(
             text = label,
             style = ZenithType.bodyStrong,
             color = colors.ink,
-            modifier = Modifier.padding(horizontal = ZenithSpacing.space2)
+            modifier = Modifier
+                .then(
+                    if (onLabelClick == null) Modifier
+                    else Modifier.clickable(onClickLabel = "Choose month", role = Role.Button, onClick = onLabelClick)
+                )
+                .padding(horizontal = ZenithSpacing.space2, vertical = ZenithSpacing.space3)
         )
         StepButton(
             icon = Icons.Rounded.ChevronRight,

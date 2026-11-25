@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.saadm.zenith.ui.add.AddTransactionFlow
+import com.saadm.zenith.ui.budgets.BudgetsScreen
 import com.saadm.zenith.ui.components.EmptyState
 import com.saadm.zenith.ui.home.HomeScreen
 import com.saadm.zenith.ui.insights.InsightsScreen
@@ -181,7 +182,7 @@ fun ZenithNavHost(
             )
         }
         composable(Destination.Settings.route) { SettingsScreen(onNavigateToPayee = openPayee) }
-        composable(Destination.Budgets.route) { PlaceholderScreen("Budgets") }
+        composable(Destination.Budgets.route) { BudgetsScreen(onBack = { navController.popBackStack() }) }
         composable(Destination.Transactions.route) { TransactionsScreen() }
         composable(Destination.Payees.route) {
             PeopleScreen(onNavigateToPayee = openPayee, createRequests = newPayeeRequests)
