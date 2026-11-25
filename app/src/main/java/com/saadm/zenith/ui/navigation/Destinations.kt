@@ -4,6 +4,8 @@ package com.saadm.zenith.ui.navigation
 // so back stacks saved by earlier builds still resolve.
 const val PAYEE_ID_ARG = "payeeId"
 
+const val SETTINGS_PAGE_ARG = "page"
+
 // Optional on the add route: set to edit that transaction.
 const val TXN_ID_ARG = "txnId"
 
@@ -24,6 +26,7 @@ sealed class Destination(val route: String) {
     data object Categories : Destination("categories")
     data object AddTransaction : Destination("add?$TXN_ID_ARG={$TXN_ID_ARG}&$REPEAT_ARG={$REPEAT_ARG}")
     data object PayeeDetails : Destination("payee_details/{$PAYEE_ID_ARG}")
+    data object SettingsDetail : Destination("settings_page/{$SETTINGS_PAGE_ARG}")
 
     companion object {
         /** Top-level tabs, in pill order. */
@@ -36,6 +39,8 @@ sealed class Destination(val route: String) {
 
         fun repeatRoute(txnId: Long): String = "${editRoute(txnId)}&$REPEAT_ARG=true"
 
+        fun settingsRoute(page: String): String = "settings_page/$page"
+
         fun payeeDetailsRoute(payeeId: Long): String = "payee_details/$payeeId"
 
         /** Full-screen flows: no bottom bar. */
@@ -45,6 +50,7 @@ sealed class Destination(val route: String) {
         /** The tab a screen belongs to, so the pill highlights it. Insights sub-pages report Insights. */
         fun tabFor(route: String?): String? = when (route) {
             Overview.route, Insights.route, Settings.route -> route
+            SettingsDetail.route -> Settings.route
             Budgets.route, Transactions.route, Payees.route, Categories.route -> Insights.route
             else -> null
         }

@@ -1,22 +1,15 @@
 package com.saadm.zenith.ui.settings
 
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,62 +19,51 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.saadm.zenith.data.entity.AccountBalance
-import com.saadm.zenith.data.entity.AccountType
 import com.saadm.zenith.data.preferences.AppPreferences
-import com.saadm.zenith.domain.model.MonthStartDay
-import com.saadm.zenith.domain.model.MoneyFormatter
 import com.saadm.zenith.domain.model.SplitMode
 import com.saadm.zenith.domain.model.WeekStart
+import com.saadm.zenith.ui.common.LocalBottomBarInset
 import com.saadm.zenith.ui.common.PalettePreview
-import com.saadm.zenith.ui.components.AmountText
+import com.saadm.zenith.ui.components.ActionSheet
 import com.saadm.zenith.ui.components.Avatar
-import com.saadm.zenith.ui.components.FilterChip
 import com.saadm.zenith.ui.components.ListRow
-import com.saadm.zenith.ui.components.SecondaryButton
-import com.saadm.zenith.ui.components.SegmentedControl
+import com.saadm.zenith.ui.components.Lu
 import com.saadm.zenith.ui.components.ZenithCard
-import com.saadm.zenith.ui.components.ZenithSwitch
-import com.saadm.zenith.ui.components.ZenithTextButton
-import com.saadm.zenith.ui.theme.ThemeMode
-import com.saadm.zenith.ui.theme.ZenithPalette
+import com.saadm.zenith.ui.components.ZenithTextField
 import com.saadm.zenith.ui.theme.ZenithSpacing
 import com.saadm.zenith.ui.theme.ZenithType
 import com.saadm.zenith.ui.theme.zenithColors
 
-private enum class SettingsDialog {
-    Profile, NewAccount, EditAccount, BackupPassphrase, RestorePassphrase, DeleteAll, Help, Privacy, Licences
-}
+private enum class SettingsDialog { Profile, BackupPassphrase, RestorePassphrase, DeleteAll, Help, Privacy }
 
 private const val MIN_PASSPHRASE = 8
 
-private val accountTypeLabels = mapOf(
-    AccountType.CASH to "Cash",
-    AccountType.UPI to "UPI",
-    AccountType.DEBIT_CARD to "Debit card",
-    AccountType.CREDIT_CARD to "Credit card",
-    AccountType.BANK_TRANSFER to "Bank"
-)
+val splitModeLabels = mapOf(SplitMode.EQUAL to "Equally", SplitMode.BY_ITEMS to "By items", SplitMode.CUSTOM to "Custom")
+val weekStartLabels = mapOf(WeekStart.MONDAY to "Monday", WeekStart.SUNDAY to "Sunday")
 
 private class SettingsActions(
     val open: (SettingsDialog) -> Unit,
-    val editAccount: (AccountBalance) -> Unit,
+    val page: (SettingsPage) -> Unit,
     val exportCsv: () -> Unit,
     val exportJson: () -> Unit,
     val restore: () -> Unit,
     val clearCache: () -> Unit,
     val categories: () -> Unit,
     val payees: () -> Unit,
-    val budgets: () -> Unit
+    val budgets: () -> Unit,
+    val fillCategory: (Boolean) -> Unit
 )
 
 @Composable
 fun SettingsScreen(
+    onOpenPage: (SettingsPage) -> Unit,
     onOpenCategories: () -> Unit,
     onOpenPayees: () -> Unit,
     onOpenBudgets: () -> Unit,
@@ -90,7 +72,6 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsState()
     val message by viewModel.message.collectAsState()
     var dialog by rememberSaveable { mutableStateOf<SettingsDialog?>(null) }
-    var account by remember { mutableStateOf<AccountBalance?>(null) }
     // Held in memory only, so a passphrase is never written into saved state.
     var passphrase by remember { mutableStateOf("") }
     var restoreFile by remember { mutableStateOf<android.net.Uri?>(null) }
@@ -117,50 +98,33 @@ fun SettingsScreen(
     val loaded = state ?: return
     val actions = SettingsActions(
         open = { dialog = it },
-        editAccount = {
-            account = it
-            dialog = SettingsDialog.EditAccount
-        },
+        page = onOpenPage,
         exportCsv = { csvPicker.launch("zenith-transactions.csv") },
         exportJson = { jsonPicker.launch("zenith-export.json") },
         restore = { restorePicker.launch(arrayOf("*/*")) },
         clearCache = viewModel::clearCache,
         categories = onOpenCategories,
         payees = onOpenPayees,
-        budgets = onOpenBudgets
+        budgets = onOpenBudgets,
+        fillCategory = viewModel::setFillCategory
     )
     SettingsContent(
         state = loaded,
         actions = actions,
-        viewModel = viewModel,
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(ZenithSpacing.space4)
+            .padding(bottom = LocalBottomBarInset.current)
     )
 
     val close = { dialog = null }
     when (dialog) {
-        SettingsDialog.Profile -> ProfileDialog(loaded.preferences, close) { name, upi ->
+        SettingsDialog.Profile -> ProfileSheet(loaded.preferences, close) { name, upi ->
             viewModel.setProfile(name, upi)
             close()
         }
-        SettingsDialog.NewAccount -> AccountDialog(null, close, { name, type, balance ->
-            viewModel.saveAccount(null, name, type, balance)
-            close()
-        })
-        SettingsDialog.EditAccount -> account?.let { existing ->
-            AccountDialog(
-                existing,
-                close,
-                { name, type, balance ->
-                    viewModel.saveAccount(existing, name, type, balance)
-                    close()
-                },
-                onArchive = {
-                    viewModel.archive(existing.id)
-                    close()
-                }
-            )
-        }
-        SettingsDialog.BackupPassphrase -> PassphraseDialog(
+        SettingsDialog.BackupPassphrase -> PassphraseSheet(
             title = "Back up",
             body = "The backup is encrypted. Keep the passphrase: it cannot be recovered.",
             confirm = "Choose file",
@@ -171,81 +135,50 @@ fun SettingsScreen(
             close()
             backupPicker.launch("zenith.zbackup")
         }
-        SettingsDialog.RestorePassphrase -> PassphraseDialog(
-            title = "Restore and replace everything?",
+        SettingsDialog.RestorePassphrase -> PassphraseSheet(
+            title = "Replace everything?",
             body = "All entries, people, accounts, categories and budgets on this device are replaced by " +
                 "the backup. Back up first if you want to keep them.",
             confirm = "Replace everything",
             minLength = 1,
+            destructive = true,
             onDismiss = close
         ) { typed ->
             restoreFile?.let { viewModel.restore(it, typed) }
             close()
         }
-        SettingsDialog.DeleteAll -> DeleteAllDialog(close) {
+        SettingsDialog.DeleteAll -> DeleteAllSheet(close) {
             viewModel.deleteAll(it)
             close()
         }
-        SettingsDialog.Help -> TextDialog(
-            "Help",
-            "Tap + to add an expense, income or money between friends. Insights shows the month, " +
+        SettingsDialog.Help -> ActionSheet(
+            title = "Help",
+            message = "Tap + to add an expense, income or money between friends. Insights shows the month, " +
                 "budgets and shared balances. Everything stays on this device, so back up from Settings " +
                 "before changing phones.",
-            close
+            dismissLabel = "Close",
+            onDismiss = close
         )
-        SettingsDialog.Privacy -> TextDialog(
-            "Privacy",
-            "Zenith has no account, no sign-in, no bank link and no internet permission. Your data is stored " +
-                "on this device. It leaves when you export, back up or share it yourself. If Android's backup " +
-                "is turned on for this phone, Android may also include it in your Google account backup or in " +
-                "a transfer to a new phone.",
-            close
+        SettingsDialog.Privacy -> ActionSheet(
+            title = "Privacy",
+            message = "Zenith has no account, no sign-in, no bank link and no internet permission. Your data is " +
+                "stored on this device. It leaves when you export, back up or share it yourself. If Android's " +
+                "backup is turned on for this phone, Android may also include it in your Google account backup " +
+                "or in a transfer to a new phone.",
+            dismissLabel = "Close",
+            onDismiss = close
         )
-        SettingsDialog.Licences -> LicencesDialog(close)
         null -> Unit
     }
 
-    message?.let { TextDialog("Zenith", it, viewModel::dismissMessage) }
+    message?.let { ActionSheet(title = "Zenith", message = it, dismissLabel = "Close", onDismiss = viewModel::dismissMessage) }
 }
 
 @Composable
-private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space1)) {
-        Text(
-            title,
-            style = ZenithType.subheading,
-            color = zenithColors().ink,
-            modifier = Modifier.padding(top = ZenithSpacing.space3).semantics { heading() }
-        )
-        ZenithCard(content = content)
-    }
-}
-
-@Composable
-private fun Label(text: String) {
-    Text(
-        text,
-        style = ZenithType.bodyStrong,
-        color = zenithColors().ink,
-        modifier = Modifier.padding(top = ZenithSpacing.space2)
-    )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun Chips(content: @Composable () -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) { content() }
-}
-
-@Composable
-private fun SettingsContent(
-    state: SettingsState,
-    actions: SettingsActions,
-    viewModel: SettingsViewModel?,
-    modifier: Modifier = Modifier
-) {
+private fun SettingsContent(state: SettingsState, actions: SettingsActions, modifier: Modifier = Modifier) {
     val colors = zenithColors()
     val preferences = state.preferences
+    val context = LocalContext.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
         Text(
             "Settings",
@@ -262,284 +195,139 @@ private fun SettingsContent(
                 onClick = { actions.open(SettingsDialog.Profile) }
             )
         }
-        Text("Stored on this device · works offline", style = ZenithType.caption, color = colors.inkMuted)
 
-        Section("App preferences") {
-            Label("Theme")
-            SegmentedControl(
-                ThemeMode.entries.map { it.name },
-                preferences.themeMode.ordinal,
-                { viewModel?.setThemeMode(ThemeMode.entries[it]) }
+        SettingsGroup("General") {
+            SettingsRow(
+                Lu.lucide_ic_palette, Tile.Indigo, "Appearance",
+                value = preferences.themeMode.name,
+                onClick = { actions.page(SettingsPage.Appearance) }
             )
-            Label("Colour")
-            SegmentedControl(
-                listOf("Colour", "Monochrome"),
-                preferences.palette.ordinal,
-                { viewModel?.setPalette(ZenithPalette.entries[it]) }
+            SettingsRow(
+                Lu.lucide_ic_sparkles, Tile.Plum, "Screen animation",
+                value = "${normalizeTransitionDurationMillis(preferences.transitionDurationMillis)} ms",
+                onClick = { actions.page(SettingsPage.Animation) }
             )
-            Label("Screen animation")
-            Chips {
-                TransitionStyle.entries.forEach { style ->
-                    FilterChip(style.label, preferences.transitionStyle == style, { viewModel?.setTransitionStyle(style) })
-                }
-            }
-            Chips {
-                val current = normalizeTransitionDurationMillis(preferences.transitionDurationMillis)
-                TransitionDurationOptions.forEach { millis ->
-                    FilterChip("$millis ms", current == millis, { viewModel?.setTransitionDuration(millis) })
-                }
-            }
-            Label("Month starts on day ${preferences.monthStartDay}")
-            Chips {
-                SecondaryButton(
-                    "Earlier",
-                    { viewModel?.setMonthStartDay(preferences.monthStartDay - 1) },
-                    enabled = preferences.monthStartDay > MonthStartDay.MIN
-                )
-                SecondaryButton(
-                    "Later",
-                    { viewModel?.setMonthStartDay(preferences.monthStartDay + 1) },
-                    enabled = preferences.monthStartDay < MonthStartDay.MAX
-                )
-            }
-            Label("Week starts on")
-            SegmentedControl(
-                listOf("Monday", "Sunday"),
-                preferences.weekStart.ordinal,
-                { viewModel?.setWeekStart(WeekStart.entries[it]) }
+            SettingsRow(
+                Lu.lucide_ic_calendar_days, Tile.Orange, "Month starts on",
+                value = "Day ${preferences.monthStartDay}",
+                onClick = { actions.page(SettingsPage.MonthStart) }
             )
-            Label("Default split")
-            SegmentedControl(
-                listOf("Equally", "By items", "Custom"),
-                preferences.defaultSplitMode.ordinal,
-                { viewModel?.setSplitMode(SplitMode.entries[it]) }
+            SettingsRow(
+                Lu.lucide_ic_calendar_range, Tile.Blue, "Week starts on",
+                value = weekStartLabels[preferences.weekStart],
+                onClick = { actions.page(SettingsPage.WeekStarts) }
             )
-            ZenithSwitch(
-                "Suggest a category from the merchant",
-                preferences.fillCategoryFromPayee,
-                { viewModel?.setFillCategory(it) }
+            SettingsRow(
+                Lu.lucide_ic_split, Tile.Teal, "Default split",
+                value = splitModeLabels[preferences.defaultSplitMode],
+                onClick = { actions.page(SettingsPage.Split) }
+            )
+            SettingsSwitchRow(
+                Lu.lucide_ic_wand_sparkles, Tile.Gold, "Suggest category",
+                checked = preferences.fillCategoryFromPayee,
+                onCheckedChange = actions.fillCategory
             )
         }
 
-        Section("Financial setup") {
-            state.accounts.forEach { account ->
-                ListRow(
-                    title = account.name,
-                    subtitle = accountTypeLabels[account.type],
-                    trailing = { AmountText(account.balance) },
-                    onClick = { actions.editAccount(account) }
-                )
-            }
-            SecondaryButton("Add account", { actions.open(SettingsDialog.NewAccount) }, Modifier.fillMaxWidth())
-            if (state.accounts.isNotEmpty()) {
-                Label("Default account for new entries")
-                Chips {
-                    FilterChip("None", preferences.defaultAccountId == null, { viewModel?.setDefaultAccount(null) })
-                    state.accounts.forEach {
-                        FilterChip(it.name, preferences.defaultAccountId == it.id, { viewModel?.setDefaultAccount(it.id) })
-                    }
-                }
-            }
-            ListRow(title = "Categories", onClick = actions.categories)
-            ListRow(title = "Budgets", onClick = actions.budgets)
-            ListRow(title = "People", onClick = actions.payees)
-        }
-
-        Section("Data and privacy") {
-            ListRow(title = "Privacy", subtitle = "What stays on this device", onClick = { actions.open(SettingsDialog.Privacy) })
-            ListRow(title = "Export transactions", subtitle = "CSV spreadsheet", onClick = actions.exportCsv)
-            ListRow(title = "Export everything", subtitle = "JSON, not encrypted", onClick = actions.exportJson)
-        }
-
-        Section("Back up") {
-            ListRow(
-                title = "Back up to a file",
-                subtitle = "Encrypted with your passphrase",
-                onClick = { actions.open(SettingsDialog.BackupPassphrase) }
+        SettingsGroup("Money") {
+            SettingsRow(
+                Lu.lucide_ic_wallet, Tile.Green, "Accounts",
+                value = state.accounts.size.toString(),
+                onClick = { actions.page(SettingsPage.Accounts) }
             )
+            SettingsRow(Lu.lucide_ic_tag, Tile.Indigo, "Categories", onClick = actions.categories)
+            SettingsRow(Lu.lucide_ic_target, Tile.Orange, "Budgets", onClick = actions.budgets)
+            SettingsRow(Lu.lucide_ic_users, Tile.Blue, "People", onClick = actions.payees)
         }
 
-        Section("Restore") {
-            ListRow(title = "Restore from a backup", subtitle = "Replaces everything", onClick = actions.restore)
+        SettingsGroup("Data") {
+            SettingsRow(Lu.lucide_ic_shield, Tile.Green, "Privacy", onClick = { actions.open(SettingsDialog.Privacy) })
+            SettingsRow(Lu.lucide_ic_file_text, Tile.Teal, "Export transactions", value = "CSV", onClick = actions.exportCsv)
+            SettingsRow(Lu.lucide_ic_download, Tile.Plum, "Export everything", value = "JSON", onClick = actions.exportJson)
+            SettingsRow(Lu.lucide_ic_upload, Tile.Blue, "Back up to a file", onClick = { actions.open(SettingsDialog.BackupPassphrase) })
+            SettingsRow(Lu.lucide_ic_archive_restore, Tile.Gold, "Restore from a backup", onClick = actions.restore)
+            SettingsRow(Lu.lucide_ic_brush, Tile.Indigo, "Clear cache", onClick = actions.clearCache)
+            SettingsRow(Lu.lucide_ic_trash_2, Tile.Red, "Delete all data", onClick = { actions.open(SettingsDialog.DeleteAll) })
         }
 
-        Section("Local data") {
-            ListRow(title = "Clear cache", subtitle = "Temporary files only", onClick = actions.clearCache)
-            ListRow(
-                title = "Delete all data",
-                subtitle = "Permanent",
-                onClick = { actions.open(SettingsDialog.DeleteAll) }
-            )
-        }
-
-        Section("About") {
-            val context = LocalContext.current
+        SettingsGroup("About") {
             val version = remember {
                 runCatching {
                     val info = context.packageManager.getPackageInfo(context.packageName, 0)
                     "${info.versionName} (build ${info.longVersionCode})"
                 }.getOrNull().orEmpty()
             }
-            ListRow(title = "Version", subtitle = version)
-            ListRow(title = "Help", onClick = { actions.open(SettingsDialog.Help) })
-            ListRow(title = "Open-source licences", onClick = { actions.open(SettingsDialog.Licences) })
+            SettingsRow(Lu.lucide_ic_circle_question_mark, Tile.Blue, "Help", onClick = { actions.open(SettingsDialog.Help) })
+            SettingsRow(Lu.lucide_ic_scale, Tile.Teal, "Open-source licences", onClick = { actions.page(SettingsPage.Licences) })
+            SettingsRow(Lu.lucide_ic_info, Tile.Indigo, "Version", value = version)
         }
+        Text("Stored on this device · works offline", style = ZenithType.caption, color = colors.inkMuted)
     }
 }
 
 @Composable
-private fun FormDialog(
-    title: String,
-    confirm: String,
-    enabled: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val colors = zenithColors()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.surfaceRaised,
-        title = { Text(title, style = ZenithType.subheading, color = colors.ink) },
-        text = {
-            Column(
-                Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
-                content = content
-            )
-        },
-        confirmButton = { TextButton(enabled = enabled, onClick = onConfirm) { Text(confirm) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
-}
-
-@Composable
-private fun TextDialog(title: String, body: String, onDismiss: () -> Unit) {
-    val colors = zenithColors()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.surfaceRaised,
-        title = { Text(title, style = ZenithType.subheading, color = colors.ink) },
-        text = { Text(body, style = ZenithType.body, color = colors.ink, modifier = Modifier.verticalScroll(rememberScrollState())) },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
-    )
-}
-
-@Composable
-private fun Field(value: String, onChange: (String) -> Unit, label: String, secret: Boolean = false) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(label) },
-        singleLine = true,
-        visualTransformation = if (secret) {
-            PasswordVisualTransformation()
-        } else {
-            androidx.compose.ui.text.input.VisualTransformation.None
-        }
-    )
-}
-
-@Composable
-private fun ProfileDialog(preferences: AppPreferences, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
+private fun ProfileSheet(preferences: AppPreferences, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
     var name by rememberSaveable { mutableStateOf(preferences.profileName) }
     var upi by rememberSaveable { mutableStateOf(preferences.upiId) }
-    FormDialog("Profile", "Save", true, { onSave(name, upi) }, onDismiss) {
-        Field(name, { name = it }, "Name")
-        Field(upi, { upi = it }, "UPI ID (optional)")
+    ActionSheet(title = "Profile", confirmLabel = "Save", onConfirm = { onSave(name, upi) }, onDismiss = onDismiss) {
+        ZenithTextField(name, { name = it }, "Name")
+        ZenithTextField(upi, { upi = it }, "UPI ID (optional)")
     }
 }
 
 @Composable
-private fun AccountDialog(
-    existing: AccountBalance?,
-    onDismiss: () -> Unit,
-    onSave: (String, AccountType, Long) -> Unit,
-    onArchive: (() -> Unit)? = null
-) {
-    var name by rememberSaveable { mutableStateOf(existing?.name.orEmpty()) }
-    var type by rememberSaveable { mutableStateOf(existing?.type ?: AccountType.BANK_TRANSFER) }
-    var opening by rememberSaveable {
-        mutableStateOf(existing?.openingBalance?.takeIf { it != 0L }?.let(MoneyFormatter::plain).orEmpty())
-    }
-    val balance = parseBalance(opening)
-    FormDialog(
-        title = if (existing == null) "Add account" else "Edit account",
-        confirm = "Save",
-        enabled = name.isNotBlank() && balance != null,
-        onConfirm = { balance?.let { onSave(name, type, it) } },
-        onDismiss = onDismiss
-    ) {
-        Field(name, { name = it }, "Name")
-        Chips { accountTypeLabels.forEach { (value, label) -> FilterChip(label, type == value, { type = value }) } }
-        Field(opening, { opening = it }, "Opening balance in ₹")
-        if (balance == null) Text("Enter a number, with up to two decimals", style = ZenithType.caption)
-        if (onArchive != null) {
-            Text("Archiving hides the account. Its entries stay.", style = ZenithType.caption)
-            ZenithTextButton("Archive account", onArchive)
-        }
-    }
-}
-
-@Composable
-private fun PassphraseDialog(
+private fun PassphraseSheet(
     title: String,
     body: String,
     confirm: String,
     minLength: Int,
+    destructive: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
     var passphrase by remember { mutableStateOf("") }
-    FormDialog(title, confirm, passphrase.length >= minLength, { onConfirm(passphrase) }, onDismiss) {
-        Text(body, style = ZenithType.body)
-        Field(passphrase, { passphrase = it }, "Passphrase", secret = true)
-        if (minLength > 1) Text("At least $minLength characters", style = ZenithType.caption)
-    }
-}
-
-@Composable
-private fun DeleteAllDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
-    var typed by remember { mutableStateOf("") }
-    FormDialog("Delete all data?", "Delete everything", typed == "DELETE", { onConfirm(typed) }, onDismiss) {
-        Text(
-            "Every entry, person, account and budget is removed, and settings reset. This cannot be undone. " +
-                "Back up first if you might want any of it.",
-            style = ZenithType.body
+    ActionSheet(
+        title = title,
+        message = body,
+        confirmLabel = confirm,
+        enabled = passphrase.length >= minLength,
+        destructive = destructive,
+        onConfirm = { onConfirm(passphrase) },
+        onDismiss = onDismiss
+    ) {
+        ZenithTextField(
+            passphrase,
+            { passphrase = it },
+            "Passphrase",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = PasswordVisualTransformation()
         )
-        Field(typed, { typed = it }, "Type DELETE")
+        if (minLength > 1) {
+            Text("At least $minLength characters", style = ZenithType.caption, color = zenithColors().inkMuted)
+        }
     }
 }
 
 @Composable
-private fun LicencesDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    val text = remember {
-        val libraries = "Zenith includes these, under the Apache License 2.0 (full text below): AndroidX " +
-            "(including Jetpack Compose, Material icons, Navigation, Room and DataStore), Kotlin and " +
-            "kotlinx.coroutines, JetBrains annotations, Dagger and Hilt, Guava, Okio, JSR 305, javax.inject, " +
-            "jakarta.inject and JSpecify.\n\nThe Fraunces and Work Sans fonts are under the SIL Open Font " +
-            "License 1.1, also below."
-        val texts = runCatching {
-            context.assets.list("licenses").orEmpty().joinToString("\n\n") { name ->
-                context.assets.open("licenses/$name").bufferedReader().use { it.readText() }
-            }
-        }.getOrDefault("")
-        "$libraries\n\n$texts"
+private fun DeleteAllSheet(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var typed by remember { mutableStateOf("") }
+    ActionSheet(
+        title = "Delete all data?",
+        message = "Every entry, person, account and budget is removed, and settings reset. This cannot be undone. " +
+            "Back up first if you might want any of it.",
+        confirmLabel = "Delete everything",
+        enabled = typed == "DELETE",
+        destructive = true,
+        onConfirm = { onConfirm(typed) },
+        onDismiss = onDismiss
+    ) {
+        ZenithTextField(typed, { typed = it }, "Type DELETE")
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = zenithColors().surfaceRaised,
-        title = { Text("Open-source licences", style = ZenithType.subheading) },
-        text = { Text(text, style = ZenithType.caption, modifier = Modifier.verticalScroll(rememberScrollState())) },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
-    )
 }
 
 @Preview
 @Composable
 private fun SettingsPreview() {
-    val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {})
-    PalettePreview { SettingsContent(SettingsState(AppPreferences(), emptyList()), actions, null) }
+    val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+    PalettePreview { SettingsContent(SettingsState(AppPreferences(), emptyList()), actions) }
 }

@@ -1,5 +1,9 @@
 package com.saadm.zenith.ui.categories
 
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import androidx.compose.ui.res.painterResource
+import com.saadm.zenith.ui.components.ZenithTextField
+import com.saadm.zenith.ui.components.ActionSheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,12 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,7 +75,10 @@ fun CategoriesScreen(onBack: () -> Unit, viewModel: CategoriesViewModel = hiltVi
                 onType = viewModel::show,
                 onOpen = { openId = it },
                 onAdd = { adding = true },
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(ZenithSpacing.space4)
+                    .padding(bottom = LocalBottomBarInset.current)
             )
         }
     }
@@ -159,23 +163,13 @@ private fun CategorySheet(
 
     ZenithBottomSheet(onDismiss) {
         Text(if (category == null) "Add category" else category.name, style = ZenithType.subheading, color = colors.ink)
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Name") },
-            singleLine = true,
-            isError = name.isNotEmpty() && problem != null,
-            supportingText = if (name.isNotEmpty() && problem != null) {
-                { Text(problem) }
-            } else null
-        )
+        ZenithTextField(name, { name = it }, "Name", error = problem.takeIf { name.isNotEmpty() })
         Text("Icon", style = ZenithType.bodyStrong, color = colors.ink)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space1)) {
             categoryIcons.forEach { choice ->
                 IconToggleButton(checked = icon == choice.key, onCheckedChange = { icon = choice.key }) {
                     Icon(
-                        choice.image,
+                        painterResource(choice.image),
                         contentDescription = choice.label,
                         tint = if (icon == choice.key) colors.onStrong else colors.ink,
                         modifier = Modifier
@@ -195,7 +189,10 @@ private fun CategorySheet(
         val targets = others.filter { it.id != category.id }
         if (targets.isNotEmpty()) {
             Text("Merge into", style = ZenithType.bodyStrong, color = colors.ink)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+                verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+            ) {
                 targets.forEach { target ->
                     FilterChip(target.name, mergeInto?.id == target.id, { mergeInto = target })
                 }
@@ -212,17 +209,14 @@ private fun CategorySheet(
 
     val target = mergeInto
     if (confirming && category != null && target != null) {
-        AlertDialog(
-            onDismissRequest = { confirming = false },
-            title = { Text("Merge ${category.name} into ${target.name}?") },
-            text = {
-                Text(
-                    "Every entry and budget in ${category.name} moves to ${target.name}. Where both have a budget " +
-                        "for a month, ${target.name}'s is kept. This cannot be undone."
-                )
-            },
-            confirmButton = { TextButton(onClick = { onMerge(target) }) { Text("Merge") } },
-            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } }
+        ActionSheet(
+            title = "Merge ${category.name} into ${target.name}?",
+            message = "Every entry and budget in ${category.name} moves to ${target.name}. Where both have a budget " +
+                "for a month, ${target.name}'s is kept. This cannot be undone.",
+            confirmLabel = "Merge",
+            destructive = true,
+            onConfirm = { onMerge(target) },
+            onDismiss = { confirming = false }
         )
     }
 }

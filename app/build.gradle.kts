@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     add("ksp", "androidx.room:room-compiler:2.8.4")
-    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.lucide.icons)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

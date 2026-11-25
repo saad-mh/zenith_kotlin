@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.components.charts
 
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,7 +39,8 @@ fun Gauge(
     spent: Long,
     limit: Long,
     paceFraction: Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    centre: (@Composable () -> Unit)? = null
 ) {
     val colors = zenithColors()
     val ratio = if (limit > 0) spent.toFloat() / limit else 0f
@@ -49,11 +52,11 @@ fun Gauge(
         if (over) " Over budget." else ""
 
     Box(
-        modifier = modifier.width(200.dp).semantics { contentDescription = description },
+        modifier = modifier.widthIn(max = 280.dp).fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = description },
         contentAlignment = Alignment.BottomCenter
     ) {
-        Canvas(Modifier.size(width = 200.dp, height = 110.dp)) {
-            val stroke = 14.dp.toPx()
+        Canvas(Modifier.fillMaxWidth().aspectRatio(1.85f)) {
+            val stroke = 22.dp.toPx()
             val inset = stroke / 2
             val arcSize = Size(size.width - stroke, (size.width - stroke))
             drawArc(
@@ -82,6 +85,12 @@ fun Gauge(
             val inner = radius - stroke
             val outer = radius + stroke / 2
             drawLine(
+                color = colors.surface,
+                start = Offset(centre.x + inner * cos(angle).toFloat(), centre.y + inner * sin(angle).toFloat()),
+                end = Offset(centre.x + outer * cos(angle).toFloat(), centre.y + outer * sin(angle).toFloat()),
+                strokeWidth = 6.dp.toPx()
+            )
+            drawLine(
                 color = colors.ink,
                 start = Offset(
                     centre.x + inner * cos(angle).toFloat(),
@@ -94,13 +103,17 @@ fun Gauge(
                 strokeWidth = 2.dp.toPx()
             )
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = percentText, style = ZenithType.heading, color = colors.ink)
-            Text(
-                text = if (over) "Over budget" else "of budget",
-                style = ZenithType.caption,
-                color = colors.inkMuted
-            )
+        if (centre != null) {
+            centre()
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = percentText, style = ZenithType.heading, color = colors.ink)
+                Text(
+                    text = if (over) "Over budget" else "of budget",
+                    style = ZenithType.caption,
+                    color = colors.inkMuted
+                )
+            }
         }
     }
 }

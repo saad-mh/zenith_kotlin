@@ -1,7 +1,7 @@
 package com.saadm.zenith.ui.components
 
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -9,16 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ChevronLeft
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -45,12 +41,11 @@ fun MonthSwitcher(
     Row(
         modifier = modifier
             .clip(pill)
-            .background(colors.surfaceRaised, pill)
-            .border(1.dp, colors.border, pill)
+            .background(colors.surfaceSunken, pill)
             .padding(horizontal = ZenithSpacing.space1),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        StepButton(icon = Icons.Rounded.ChevronLeft, description = "Previous month", onClick = onPrevious)
+        StepButton(icon = Lu.lucide_ic_chevron_left, description = "Previous month", onClick = onPrevious)
         Text(
             text = label,
             style = ZenithType.bodyStrong,
@@ -63,7 +58,7 @@ fun MonthSwitcher(
                 .padding(horizontal = ZenithSpacing.space2, vertical = ZenithSpacing.space3)
         )
         StepButton(
-            icon = Icons.Rounded.ChevronRight,
+            icon = Lu.lucide_ic_chevron_right,
             description = "Next month",
             enabled = nextEnabled,
             onClick = onNext
@@ -73,7 +68,7 @@ fun MonthSwitcher(
 
 @Composable
 private fun StepButton(
-    icon: ImageVector,
+    icon: Int,
     description: String,
     onClick: () -> Unit,
     enabled: Boolean = true
@@ -88,7 +83,7 @@ private fun StepButton(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(icon),
             contentDescription = null,
             tint = if (enabled) colors.ink else colors.inkMuted
         )

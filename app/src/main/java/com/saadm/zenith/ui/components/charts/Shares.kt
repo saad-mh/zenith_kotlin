@@ -43,7 +43,7 @@ fun ShareBar(slices: List<ShareSlice>, modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(12.dp)
+                .height(28.dp)
                 .semantics { contentDescription = description },
             horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
@@ -51,8 +51,8 @@ fun ShareBar(slices: List<ShareSlice>, modifier: Modifier = Modifier) {
                 Box(
                     Modifier
                         .weight(slice.amount.toFloat())
-                        .height(12.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(28.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .background(colors.chart(index))
                 )
             }

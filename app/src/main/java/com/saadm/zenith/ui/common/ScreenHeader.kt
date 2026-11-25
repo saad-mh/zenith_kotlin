@@ -1,5 +1,7 @@
 package com.saadm.zenith.ui.common
 
+import com.saadm.zenith.ui.components.Lu
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -7,8 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -31,11 +31,16 @@ fun ScreenHeader(
     trailing: @Composable RowScope.() -> Unit = {}
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = ZenithSpacing.space1, vertical = ZenithSpacing.space2),
+        modifier = modifier.fillMaxWidth().padding(
+            start = ZenithSpacing.space1,
+            top = ZenithSpacing.space2,
+            end = ZenithSpacing.space4,
+            bottom = ZenithSpacing.space2
+        ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = zenithColors().ink)
+            Icon(painterResource(Lu.lucide_ic_chevron_left), contentDescription = "Back", tint = zenithColors().ink)
         }
         // Wraps at large font sizes, so the title is never broken mid-word.
         FlowRow(

@@ -1,12 +1,9 @@
 package com.saadm.zenith.ui.navigation
 
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import androidx.compose.runtime.CompositionLocalProvider
+import com.saadm.zenith.ui.components.Lu
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.PersonAdd
-import androidx.compose.material.icons.rounded.PieChart
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,9 +20,9 @@ import com.saadm.zenith.ui.components.PrimaryActionSpec
 import com.saadm.zenith.ui.settings.TransitionStyle
 
 private val pillTabs = listOf(
-    PillTab(Destination.Overview.route, "Overview", Icons.Rounded.Home),
-    PillTab(Destination.Insights.route, "Insights", Icons.Rounded.PieChart),
-    PillTab(Destination.Settings.route, "Settings", Icons.Rounded.Settings),
+    PillTab(Destination.Overview.route, "Overview", Lu.lucide_ic_house),
+    PillTab(Destination.Insights.route, "Insights", Lu.lucide_ic_chart_pie),
+    PillTab(Destination.Settings.route, "Settings", Lu.lucide_ic_settings),
 )
 
 /** Scaffold with the floating pill bar, over the route graph. */
@@ -39,13 +36,13 @@ fun ZenithApp(transitionDurationMillis: Int, transitionStyle: TransitionStyle) {
 
     val primaryAction = if (currentRoute == Destination.Payees.route) {
         PrimaryActionSpec(
-            icon = Icons.Rounded.PersonAdd,
+            icon = Lu.lucide_ic_user_plus,
             contentDescription = "Add payee",
             onClick = { newPayeeRequests++ }
         )
     } else {
         PrimaryActionSpec(
-            icon = Icons.Rounded.Add,
+            icon = Lu.lucide_ic_plus,
             contentDescription = "Add transaction",
             onClick = { navController.navigate(Destination.ADD_ROUTE) { launchSingleTop = true } }
         )
@@ -63,13 +60,16 @@ fun ZenithApp(transitionDurationMillis: Int, transitionStyle: TransitionStyle) {
             }
         }
     ) { innerPadding ->
-        ZenithNavHost(
-            navController = navController,
-            newPayeeRequests = newPayeeRequests,
-            transitionDurationMillis = transitionDurationMillis,
-            transitionStyle = transitionStyle,
-            modifier = Modifier.padding(innerPadding)
-        )
+        // Only the top is padded: content scrolls behind the floating pill.
+        CompositionLocalProvider(LocalBottomBarInset provides innerPadding.calculateBottomPadding()) {
+            ZenithNavHost(
+                navController = navController,
+                newPayeeRequests = newPayeeRequests,
+                transitionDurationMillis = transitionDurationMillis,
+                transitionStyle = transitionStyle,
+                modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
+            )
+        }
     }
 }
 

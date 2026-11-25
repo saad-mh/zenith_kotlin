@@ -2,8 +2,6 @@ package com.saadm.zenith.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -17,17 +15,15 @@ fun AmountField(
     modifier: Modifier = Modifier,
     label: String = "Amount"
 ) {
-    OutlinedTextField(
+    ZenithTextField(
         value = value,
         onValueChange = onValueChange,
+        label = label,
         modifier = modifier.fillMaxWidth(),
-        label = { Text(label) },
-        prefix = { Text("₹") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        isError = value.isNotBlank() && MoneyFormatter.parse(value) == null,
-        supportingText = if (value.isNotBlank() && MoneyFormatter.parse(value) == null) {
-            { Text("Enter an amount above zero, with up to two decimals") }
-        } else null
+        prefix = "₹",
+        error = if (value.isNotBlank() && MoneyFormatter.parse(value) == null) {
+            "Enter an amount above zero, with up to two decimals"
+        } else null,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
     )
 }

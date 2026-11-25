@@ -1,5 +1,17 @@
 package com.saadm.zenith.ui.budgets
 
+import com.saadm.zenith.ui.components.charts.Gauge
+import com.saadm.zenith.ui.components.Lu
+import com.saadm.zenith.ui.components.categoryIcon
+import com.saadm.zenith.ui.components.BudgetTile
+import com.saadm.zenith.ui.common.LocalBottomBarInset
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
 import com.saadm.zenith.ui.components.TotalAmount
 import android.view.HapticFeedbackConstants
 import androidx.compose.ui.platform.LocalView
@@ -71,24 +83,33 @@ fun BudgetsScreen(onBack: () -> Unit, viewModel: BudgetsViewModel = hiltViewMode
 
     Column(Modifier.fillMaxSize()) {
         ScreenHeader("Budgets", onBack) {
-            state?.let {
-                MonthSwitcher(
-                    label = "${it.period.startDate.shortMonthName()} ${it.period.startDate.year}",
-                    onPrevious = viewModel::previousMonth,
-                    onNext = viewModel::nextMonth,
-                    nextEnabled = !it.isCurrentMonth,
-                    onLabelClick = { pickingMonth = true }
-                )
+            if (state?.budgets?.editable == true) {
+                FilterChip("New", false, { editing = Editing(null, null) }, icon = Lu.lucide_ic_plus)
             }
         }
         state?.let { loaded ->
-            BudgetsContent(
-                state = loaded,
-                onEdit = { categoryId, limit -> editing = Editing(categoryId, limit) },
-                onUseSuggestions = viewModel::useSuggestions,
-                onCopyLastMonth = viewModel::copyLastMonth,
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(ZenithSpacing.space4)
-            )
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(ZenithSpacing.space4)
+                    .padding(bottom = LocalBottomBarInset.current),
+                verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space3),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                MonthSwitcher(
+                    label = "${loaded.period.startDate.shortMonthName()} ${loaded.period.startDate.year}",
+                    onPrevious = viewModel::previousMonth,
+                    onNext = viewModel::nextMonth,
+                    nextEnabled = !loaded.isCurrentMonth,
+                    onLabelClick = { pickingMonth = true }
+                )
+                BudgetsContent(
+                    state = loaded,
+                    onEdit = { categoryId, limit -> editing = Editing(categoryId, limit) },
+                    onUseSuggestions = viewModel::useSuggestions,
+                    onCopyLastMonth = viewModel::copyLastMonth
+                )
+            }
         }
     }
 
@@ -146,51 +167,67 @@ private fun BudgetsContent(
             return@Column
         }
 
-        SummaryCard(state, summary)
-        if (budgets.editable) {
-            SecondaryButton("Add budget", onClick = { onEdit(null, null) }, modifier = Modifier.fillMaxWidth())
-        } else {
+        Summary(state, summary)
+        if (!budgets.editable) {
             Text("Past months are read-only.", style = ZenithType.caption, color = colors.inkMuted)
         }
-        val (onTrack, needsLook) = budgets.categories.partition { it.status == BudgetStatus.ON_TRACK }
-        listOf("Needs a look" to needsLook, "On track" to onTrack).forEach { (title, lines) ->
-            if (lines.isEmpty()) return@forEach
-            ZenithCard {
-                Text("$title · ${lines.size}", style = ZenithType.bodyStrong, color = colors.ink)
-                lines.forEach { line ->
-                    val id = line.categoryId ?: return@forEach
-                    BudgetLineRow(
-                        name = state.names[id] ?: "Uncategorized",
-                        line = line,
-                        pace = budgets.pace,
-                        onClick = if (budgets.editable) ({ onEdit(id, line.limit) }) else null
-                    )
+        // One tile per row at large font sizes, otherwise two.
+        val columns = if (LocalDensity.current.fontScale >= 1.3f) 1 else 2
+        val daysLeft = ChronoUnit.DAYS.between(state.today, state.period.endDate).takeIf { state.isCurrentMonth }
+        // Over and nearly-over first.
+        budgets.categories.filter { it.categoryId != null }.sortedBy { it.status == BudgetStatus.ON_TRACK }
+            .chunked(columns)
+            .forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)
+                ) {
+                    row.forEach { line ->
+                        val id = line.categoryId ?: return@forEach
+                        val category = state.expenseCategories.firstOrNull { it.id == id }
+                        BudgetTile(
+                            name = state.names[id] ?: "Uncategorized",
+                            icon = categoryIcon(category?.emoji)?.image,
+                            line = line,
+                            pace = budgets.pace.takeIf { state.isCurrentMonth },
+                            daysLeft = daysLeft,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            onClick = if (budgets.editable) ({ onEdit(id, line.limit) }) else null
+                        )
+                    }
+                    if (row.size < columns) Spacer(Modifier.weight(1f))
                 }
             }
-        }
         Text("Unused amounts don't carry over.", style = ZenithType.caption, color = colors.inkMuted)
     }
 }
 
 @Composable
-private fun SummaryCard(state: BudgetsState, summary: BudgetSummary) {
+private fun Summary(state: BudgetsState, summary: BudgetSummary) {
     val colors = zenithColors()
-    ZenithCard {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        val ratio = if (summary.limit > 0) summary.spent * 100 / summary.limit else 0
+        Text("Overall spent: $ratio%", style = ZenithType.caption, color = colors.inkMuted)
+        Gauge(
+            spent = summary.spent,
+            limit = summary.limit,
+            paceFraction = if (state.isCurrentMonth) state.budgets.pace else 1f
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                TotalAmount(summary.left)
+                Text(
+                    if (state.isCurrentMonth) "left this month" else "left at the end",
+                    style = ZenithType.caption,
+                    color = colors.inkMuted
+                )
+            }
+        }
         Text(
-            if (state.isCurrentMonth) "Left to spend · ${state.period.startDate.monthName()}"
-            else "Left at the end of ${state.period.startDate.monthName()}",
+            "${MoneyFormatter.format(summary.spent).text} of ${MoneyFormatter.format(summary.limit).text}",
             style = ZenithType.caption,
-            color = colors.inkMuted
+            color = colors.inkMuted,
+            modifier = Modifier.padding(vertical = ZenithSpacing.space2)
         )
-        TotalAmount(summary.left)
-        Text("of ${MoneyFormatter.format(summary.limit).text}", style = ZenithType.caption, color = colors.inkMuted)
-        ProgressTrack(
-            progress = if (summary.limit > 0) summary.spent.toFloat() / summary.limit else 0f,
-            description = "Spent ${MoneyFormatter.format(summary.spent).spoken} of " +
-                MoneyFormatter.format(summary.limit).spoken,
-            paceTick = state.budgets.pace.takeIf { state.isCurrentMonth }
-        )
-        Text("Spent ${MoneyFormatter.format(summary.spent).text}", style = ZenithType.caption, color = colors.inkMuted)
         StatusTag(
             summary.status,
             when (summary.status) {
@@ -201,12 +238,13 @@ private fun SummaryCard(state: BudgetsState, summary: BudgetSummary) {
         )
         if (state.isCurrentMonth) {
             val daysLeft = ChronoUnit.DAYS.between(state.today, state.period.endDate)
-            val perDay = BudgetRules
-                .perDayAllowance(summary.left, state.period, state.today) ?: 0L
+            val perDay = BudgetRules.perDayAllowance(summary.left, state.period, state.today) ?: 0L
             Text(
                 "$daysLeft days left · about ${MoneyFormatter.format(perDay / 100 * 100).text} a day",
                 style = ZenithType.bodyStrong,
-                color = colors.ink
+                color = colors.ink,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = ZenithSpacing.space2)
             )
             Text(
                 "${MoneyFormatter.format(abs(summary.underPace) / 100 * 100).text} " +
@@ -297,7 +335,10 @@ private fun BudgetSheet(
             if (categories.isEmpty()) {
                 Text("Every category already has a budget.", style = ZenithType.body, color = colors.inkMuted)
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+                verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+            ) {
                 categories.forEach { category ->
                     FilterChip(category.name, categoryId == category.id, { categoryId = category.id })
                 }
@@ -370,7 +411,7 @@ private fun BudgetsPreview() {
         suggestions = mapOf(1L to 600_000L, 2L to 300_000L)
     )
     PalettePreview {
-        BudgetsContent(state, { _, _ -> }, {}, {})
-        BudgetsContent(empty, { _, _ -> }, {}, {})
+        Column { BudgetsContent(state, { _, _ -> }, {}, {}) }
+        Column { BudgetsContent(empty, { _, _ -> }, {}, {}) }
     }
 }

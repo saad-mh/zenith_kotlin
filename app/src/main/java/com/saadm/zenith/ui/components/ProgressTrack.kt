@@ -58,6 +58,8 @@ fun ProgressTrack(
         }
         paceTick?.let { tick ->
             val x = size.width * tick.coerceIn(0f, 1f)
+            // A halo in the page colour keeps the tick visible over a filled bar.
+            drawLine(color = colors.surface, start = Offset(x, 0f), end = Offset(x, size.height), strokeWidth = 6.dp.toPx())
             drawLine(
                 color = colors.ink,
                 start = Offset(x, 0f),

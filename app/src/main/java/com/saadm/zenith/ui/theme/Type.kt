@@ -12,12 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.saadm.zenith.R
 
-// Variable fonts: one file per family, with the weight set on the wght axis (API 26+).
-val FrauncesFamily = FontFamily(
-    Font(R.font.fraunces_variable, FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
-    Font(R.font.fraunces_variable, FontWeight.SemiBold, variationSettings = FontVariation.Settings(FontVariation.weight(600))),
-)
-
+// Variable font: one file, with the weight set on the wght axis (API 26+).
 val WorkSansFamily = FontFamily(
     Font(R.font.work_sans_variable, FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),
     Font(R.font.work_sans_variable, FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
@@ -37,13 +32,13 @@ data class ZenithTypeScale(
 
 val ZenithType = ZenithTypeScale(
     display = TextStyle(
-        fontFamily = FrauncesFamily, fontWeight = FontWeight.Medium,
-        fontSize = 40.sp, lineHeight = 46.sp, letterSpacing = (-0.4).sp,
-        fontFeatureSettings = "lnum",
+        fontFamily = WorkSansFamily, fontWeight = FontWeight.Medium,
+        fontSize = 40.sp, lineHeight = 46.sp, letterSpacing = (-0.8).sp,
+        fontFeatureSettings = "tnum, lnum",
     ),
     heading = TextStyle(
-        fontFamily = FrauncesFamily, fontWeight = FontWeight.Medium,
-        fontSize = 24.sp, lineHeight = 30.sp,
+        fontFamily = WorkSansFamily, fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp, lineHeight = 30.sp, letterSpacing = (-0.3).sp,
         fontFeatureSettings = "lnum",
     ),
     subheading = TextStyle(

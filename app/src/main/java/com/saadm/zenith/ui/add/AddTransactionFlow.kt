@@ -1,5 +1,21 @@
 package com.saadm.zenith.ui.add
 
+import com.saadm.zenith.ui.components.categoryIcon
+import com.saadm.zenith.ui.components.ZenithTextField
+import com.saadm.zenith.ui.components.Lu
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import android.view.HapticFeedbackConstants
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -12,7 +28,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,18 +84,15 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
     val canSplit = !viewModel.isEdit && form.type == TxnType.EXPENSE
     val startSplit = { step = Step.Who }
 
-    ZenithBottomSheet(onDismissRequest) {
-        Text(
-            when {
-                viewModel.isEdit -> "Edit transaction"
-                viewModel.isRepeat -> "Repeat transaction"
-                else -> "Add transaction"
-            },
-            style = ZenithType.subheading,
-            color = zenithColors().ink
-        )
-        if (viewModel.keepsDraft) {
-            Text("Closing keeps this as a draft", style = ZenithType.caption, color = zenithColors().inkMuted)
+    val title = when {
+        viewModel.isEdit -> "Edit transaction"
+        viewModel.isRepeat -> "Repeat transaction"
+        else -> "Add transaction"
+    }
+    // The amount step uses the whole height; the other steps are as tall as their content.
+    ZenithBottomSheet(onDismissRequest, fill = step == Step.Amount) {
+        if (step != Step.Amount) {
+            Text(title, style = ZenithType.subheading, color = zenithColors().ink)
         }
         when (step) {
             Step.Details -> DetailsStep(
@@ -95,6 +107,9 @@ fun AddTransactionFlow(onDismissRequest: () -> Unit, viewModel: AddTxnViewModel 
                 onSplit = if (canSplit) startSplit else null
             )
             Step.Amount -> AmountStep(
+                title = title,
+                onClose = onDismissRequest,
+                keepsDraft = viewModel.keepsDraft,
                 form = form,
                 categories = options.categoriesFor(form),
                 payeeName = options.payees.firstOrNull { it.id == form.payeeId }?.name,
@@ -134,9 +149,8 @@ private fun saveLabel(form: AddForm): String {
     return "Save $what" + (form.paise?.let { " · ${MoneyFormatter.format(it).text}" } ?: "")
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TypeSwitch(form: AddForm, onChange: ((AddForm) -> AddForm) -> Unit) {
+private fun KindSwitch(form: AddForm, onChange: ((AddForm) -> AddForm) -> Unit) {
     val kinds = AddKind.entries
     SegmentedControl(
         options = kinds.map { it.label },
@@ -148,18 +162,29 @@ private fun TypeSwitch(form: AddForm, onChange: ((AddForm) -> AddForm) -> Unit) 
             }
         }
     )
-    if (form.kind.types.size > 1) {
-        val labels = if (form.kind == AddKind.Owed) listOf("They owe me", "I owe them") else listOf("I paid", "They paid")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
-            form.kind.types.forEachIndexed { index, type ->
-                FilterChip(labels[index], form.type == type, { onChange { it.copy(type = type) } })
-            }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DirectionChips(form: AddForm, onChange: ((AddForm) -> AddForm) -> Unit) {
+    if (form.kind.types.size <= 1) return
+    val labels = if (form.kind == AddKind.Owed) listOf("They owe me", "I owe them") else listOf("I paid", "They paid")
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+    ) {
+        form.kind.types.forEachIndexed { index, type ->
+            FilterChip(labels[index], form.type == type, { onChange { it.copy(type = type) } })
         }
     }
 }
 
 @Composable
 private fun AmountStep(
+    title: String,
+    onClose: () -> Unit,
+    keepsDraft: Boolean,
     form: AddForm,
     categories: List<CategoryEntity>,
     payeeName: String?,
@@ -171,49 +196,71 @@ private fun AmountStep(
     onSplit: (() -> Unit)?
 ) {
     val colors = zenithColors()
-    TypeSwitch(form, onChange)
-    val shown = displayAmount(form.amount)
-    Text(
-        "₹$shown",
-        style = ZenithType.display,
-        color = if (form.amount.isEmpty()) colors.inkMuted else colors.ink,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().semantics {
-            contentDescription = "$shown rupees"
-            liveRegion = LiveRegionMode.Polite
+    val gap = Arrangement.spacedBy(ZenithSpacing.space3)
+    Column(verticalArrangement = gap) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.size(44.dp).background(colors.surfaceSunken, CircleShape)
+            ) {
+                Icon(painterResource(Lu.lucide_ic_x), contentDescription = "Close $title", tint = colors.ink, modifier = Modifier.size(20.dp))
+            }
+            Box(Modifier.weight(1f)) { KindSwitch(form, onChange) }
         }
-    )
-    val sum = form.paise
-    if (isSum(form.amount) && sum != null) {
+        DirectionChips(form, onChange)
+    }
+
+    Column(Modifier.fillMaxWidth(), verticalArrangement = gap, horizontalAlignment = Alignment.CenterHorizontally) {
+        if (title != "Add transaction") Text(title, style = ZenithType.caption, color = colors.inkMuted)
+        val shown = displayAmount(form.amount)
         Text(
-            "= ${MoneyFormatter.format(sum).text}",
-            style = ZenithType.bodyStrong,
-            color = colors.ink,
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = colors.inkMuted, fontSize = ZenithType.heading.fontSize)) { append("₹ ") }
+                append(shown)
+            },
+            style = ZenithType.display.copy(fontSize = 56.sp, lineHeight = 64.sp),
+            color = if (form.amount.isEmpty()) colors.inkMuted else colors.ink,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().semantics {
+                contentDescription = "$shown rupees"
+                liveRegion = LiveRegionMode.Polite
+            }
+        )
+        val sum = form.paise
+        if (isSum(form.amount) && sum != null) {
+            Text("= ${MoneyFormatter.format(sum).text}", style = ZenithType.bodyStrong, color = colors.ink)
+        }
+        FilterChip(form.text.ifBlank { "Add note" }, false, onDetails, icon = Lu.lucide_ic_text_align_start)
+        if (form.amount.isNotEmpty() && keepsDraft) {
+            Text("Closing keeps this as a draft", style = ZenithType.caption, color = colors.inkMuted)
+        }
+        // A zero amount needs no telling off before anything is typed.
+        if (form.amount.isNotEmpty()) form.problem?.let { Text(it, style = ZenithType.caption, color = colors.inkMuted) }
+    }
+
+    Column(verticalArrangement = gap) {
+        if (categories.isNotEmpty()) {
+            CategoryChips(form, categories, onChange, Modifier.horizontalScroll(rememberScrollState()))
+        }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        ) {
+            FilterChip(dayLabel(form.date, today), false, onDetails, icon = Lu.lucide_ic_calendar)
+            if (form.needsPayee) FilterChip(payeeName ?: "Choose person", false, onDetails, icon = Lu.lucide_ic_user)
+            // A due moves no money, so it has no account.
+            if (form.kind != AddKind.Owed) {
+                FilterChip(accountName ?: "Paid with", false, onDetails, icon = Lu.lucide_ic_wallet)
+            }
+            if (onSplit != null && form.problem == null) FilterChip("Split", false, onSplit, icon = Lu.lucide_ic_split)
+        }
+        NumPad(
+            onKey = { key -> onChange { it.copy(amount = typeKey(it.amount, key)) } },
+            saveLabel = saveLabel(form),
+            canSave = form.problem == null,
+            onSave = onSave
         )
     }
-    if (categories.isNotEmpty()) {
-        CategoryChips(form, categories, onChange, Modifier.horizontalScroll(rememberScrollState()))
-    }
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
-    ) {
-        SecondaryButton(dayLabel(form.date, today), onDetails)
-        if (form.needsPayee) SecondaryButton(payeeName ?: "Choose person", onDetails)
-        SecondaryButton(accountName ?: "Paid with", onDetails)
-        SecondaryButton(form.text.ifBlank { "Add note" }, onDetails)
-    }
-    NumPad(onKey = { key -> onChange { it.copy(amount = typeKey(it.amount, key)) } })
-    form.problem?.let { Text(it, style = ZenithType.caption, color = colors.inkMuted) }
-    if (onSplit != null) {
-        PrimaryButton("Next · Who's in?", onSplit, Modifier.fillMaxWidth(), enabled = form.problem == null)
-        SecondaryButton("Save as personal", onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
-    } else {
-        PrimaryButton(saveLabel(form), onSave, Modifier.fillMaxWidth(), enabled = form.problem == null)
-    }
-    ZenithTextButton("More details", onDetails, Modifier.fillMaxWidth())
 }
 
 @Composable
@@ -228,7 +275,8 @@ private fun CategoryChips(
             FilterChip(
                 category.name,
                 form.categoryId == category.id,
-                { onChange { it.copy(categoryId = category.id, categoryPicked = true) } }
+                { onChange { it.copy(categoryId = category.id, categoryPicked = true) } },
+                icon = categoryIcon(category.emoji)?.image
             )
         }
     }
@@ -249,17 +297,14 @@ private fun DetailsStep(
 ) {
     val colors = zenithColors()
     ZenithTextButton("Back to amount", onBack)
-    OutlinedTextField(
-        value = form.text,
-        onValueChange = onText,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text("Merchant or note") },
-        singleLine = true
-    )
+    ZenithTextField(form.text, onText, "Merchant or note")
 
     if (form.needsPayee) {
         Label("Person")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        ) {
             options.payees.forEach { payee ->
                 FilterChip(payee.name, form.payeeId == payee.id, { onChange { it.copy(payeeId = payee.id) } })
             }
@@ -270,7 +315,10 @@ private fun DetailsStep(
     val categories = options.categoriesFor(form)
     if (categories.isNotEmpty()) {
         Label("Category")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        ) {
             categories.forEach { category ->
                 FilterChip(
                     category.name,
@@ -284,7 +332,10 @@ private fun DetailsStep(
     // A due moves no money, so it has no account.
     if (options.accounts.isNotEmpty() && form.kind != AddKind.Owed) {
         Label("Paid with")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ZenithSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space2)
+        ) {
             options.accounts.forEach { account ->
                 val selected = form.accountId == account.id
                 FilterChip(
@@ -319,7 +370,7 @@ private fun AmountStepPreview() {
     val categories = listOf(CategoryEntity(1, "Food", "", "#000000", TxnType.EXPENSE, 0))
     PalettePreview {
         Column(verticalArrangement = Arrangement.spacedBy(ZenithSpacing.space3)) {
-            AmountStep(AddForm(today, amount = "2450", categoryId = 1), categories, null, "HDFC UPI", today, {}, {}, {}, {})
+            AmountStep("Add transaction", {}, true, AddForm(today, amount = "2450", categoryId = 1), categories, null, "HDFC UPI", today, {}, {}, {}, {})
         }
     }
 }
