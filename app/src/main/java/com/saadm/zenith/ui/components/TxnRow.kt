@@ -178,18 +178,18 @@ data class TxnRowColors(
     val neutralBadgeContent: Color
 ) {
     fun amountColor(type: TxnType): Color = when (type) {
-        TxnType.INCOME, TxnType.DUE_FROM -> incomeAmount
-        TxnType.EXPENSE, TxnType.DUE_TO -> expenseAmount
+        TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> incomeAmount
+        TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> expenseAmount
     }
 
     fun badgeBackground(type: TxnType): Color = when (type) {
-        TxnType.INCOME, TxnType.DUE_FROM -> incomeBadgeBackground
-        TxnType.EXPENSE, TxnType.DUE_TO -> expenseBadgeBackground
+        TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> incomeBadgeBackground
+        TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> expenseBadgeBackground
     }
 
     fun badgeContent(type: TxnType): Color = when (type) {
-        TxnType.INCOME, TxnType.DUE_FROM -> incomeBadgeContent
-        TxnType.EXPENSE, TxnType.DUE_TO -> expenseBadgeContent
+        TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> incomeBadgeContent
+        TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> expenseBadgeContent
     }
 }
 
@@ -305,7 +305,7 @@ object TxnRowDefaults {
         // INR goes through MoneyFormatter (true minus, muted-cents text). Other currencies keep the
         // locale formatting until the currency preference (#13) lands.
         if (currency.equals("INR", ignoreCase = true)) {
-            val income = type == TxnType.INCOME || type == TxnType.DUE_FROM
+            val income = type == TxnType.INCOME || type == TxnType.DUE_FROM || type == TxnType.SETTLEMENT_FROM
             return MoneyFormatter.format(abs(amount)).copy(sign = if (income) "+" else "−").text
         }
         // Amount is provided in the smallest currency unit (e.g. cents/paise).
@@ -313,8 +313,8 @@ object TxnRowDefaults {
         val magnitude = abs(amount)
         val value = magnitude / 100.0
         val sign = when (type) {
-            TxnType.INCOME, TxnType.DUE_FROM -> ""
-            TxnType.EXPENSE, TxnType.DUE_TO -> "-"
+            TxnType.INCOME, TxnType.DUE_FROM, TxnType.SETTLEMENT_FROM -> ""
+            TxnType.EXPENSE, TxnType.DUE_TO, TxnType.SETTLEMENT_TO -> "-"
         }
 
         val formatted = runCatching {
@@ -352,6 +352,8 @@ object TxnRowDefaults {
         TxnType.EXPENSE -> "EX"
         TxnType.DUE_TO -> "DT"
         TxnType.DUE_FROM -> "DF"
+        TxnType.SETTLEMENT_FROM -> "SR"
+        TxnType.SETTLEMENT_TO -> "SP"
     }
 }
 

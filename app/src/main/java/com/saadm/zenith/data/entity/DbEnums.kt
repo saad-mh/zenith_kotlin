@@ -4,7 +4,9 @@ enum class TxnType {
     INCOME,
     EXPENSE,
     DUE_TO,
-    DUE_FROM
+    DUE_FROM,
+    SETTLEMENT_FROM,
+    SETTLEMENT_TO
 }
 
 enum class SettlementStatus {

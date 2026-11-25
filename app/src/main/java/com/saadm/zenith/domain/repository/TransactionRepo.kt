@@ -1,21 +1,21 @@
 package com.saadm.zenith.domain.repository
 
-import com.saadm.zenith.data.db.dao.TransactionDao
 import com.saadm.zenith.data.entity.TransactionEntity
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
-class TransactionRepo @Inject constructor(private val dao: TransactionDao) {
+/** Reads transactions. Summaries are computed from these lists by the analytics, not stored. */
+interface TransactionRepo {
 
-    fun observeAllActive(): Flow<List<TransactionEntity>> {
-        return dao.observeAllActive()
-    }
+    fun observeAllActive(): Flow<List<TransactionEntity>>
 
-    fun getRecentTransactions() : Flow<List<TransactionEntity>> {
-        return dao.getRecentTransactions()
-    }
+    fun getRecentTransactions(): Flow<List<TransactionEntity>>
 
-    fun delete(transaction: TransactionEntity) {
-        TODO("stop being a dumbass and complete this")
-    }
+    /** Hard delete: the row is removed, not flagged. */
+    suspend fun delete(transaction: TransactionEntity)
+
+    /** Transactions with `transactedAt` in [startMillis, endMillis), newest first. */
+    fun observeBetween(startMillis: Long, endMillis: Long): Flow<List<TransactionEntity>>
+
+    /** Matches the note, category name or payee name, ignoring case. A blank query matches nothing. */
+    fun observeSearch(query: String): Flow<List<TransactionEntity>>
 }
