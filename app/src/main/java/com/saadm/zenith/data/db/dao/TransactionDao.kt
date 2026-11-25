@@ -53,7 +53,7 @@ interface TransactionDao {
 		SELECT * FROM transactions
 		WHERE payeeId = :payeeId
 		  AND isDeleted = 0
-		  AND type IN ('DUE_TO', 'DUE_FROM')
+		  AND type IN ('DUE_TO', 'DUE_FROM', 'SETTLEMENT_FROM', 'SETTLEMENT_TO')
 		ORDER BY transactedAt DESC, id DESC
 		"""
 	)
@@ -64,7 +64,7 @@ interface TransactionDao {
 		SELECT * FROM transactions
 		WHERE payeeId = :payeeId
 		  AND isDeleted = 0
-		  AND type IN ('DUE_TO', 'DUE_FROM')
+		  AND type IN ('DUE_TO', 'DUE_FROM', 'SETTLEMENT_FROM', 'SETTLEMENT_TO')
 		ORDER BY transactedAt DESC, id DESC
 		"""
 	)

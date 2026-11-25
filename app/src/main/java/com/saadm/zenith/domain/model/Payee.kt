@@ -29,7 +29,7 @@ data class Payee(
      * Net balance from user's perspective.
      * Positive = payee owes to user; negative = user owes to payee.
      */
-    val netBalance: Long = dueFromAmount - dueToAmount,
+    val netBalance: Long = dueToAmount - dueFromAmount,
     /**
      * Total number of non-deleted transactions involving this payee.
      */
@@ -115,7 +115,8 @@ data class Payee(
             .filter { txn ->
                 txn.payeeId == id &&
                     !txn.isDeleted &&
-                    (txn.type == TxnType.DUE_TO || txn.type == TxnType.DUE_FROM)
+                    (txn.type == TxnType.DUE_TO || txn.type == TxnType.DUE_FROM ||
+                        txn.type == TxnType.SETTLEMENT_FROM || txn.type == TxnType.SETTLEMENT_TO)
             }
             .sortedWith(compareByDescending<TransactionEntity> { it.transactedAt }.thenByDescending { it.id })
             .toList()
