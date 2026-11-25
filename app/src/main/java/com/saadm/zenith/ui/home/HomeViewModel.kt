@@ -73,7 +73,8 @@ data class OverviewState(
     val spend: MonthSpend,
     val shared: SharedBalanceSummary,
     val nudge: Nudge?,
-    val recent: List<RecentTxn>
+    val recent: List<RecentTxn>,
+    val profileName: String = ""
 )
 
 private const val RECENT_COUNT = 5
@@ -102,7 +103,7 @@ class HomeViewModel @Inject constructor(
 
     /** Null until the first read, so the screen never shows a false zero. */
     val state: StateFlow<OverviewState?> =
-        combine(observeNetPosition(), spend, observeSharedBalances(), recent) { net, month, shared, rows ->
-            OverviewState(today, net, month, shared, oldestNudge(shared, today), rows)
+        combine(observeNetPosition(), spend, observeSharedBalances(), recent, settings.settings) { net, month, shared, rows, preferences ->
+            OverviewState(today, net, month, shared, oldestNudge(shared, today), rows, preferences.profileName)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
