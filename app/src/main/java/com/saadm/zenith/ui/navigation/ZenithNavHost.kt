@@ -183,7 +183,12 @@ fun ZenithNavHost(
         }
         composable(Destination.Settings.route) { SettingsScreen(onNavigateToPayee = openPayee) }
         composable(Destination.Budgets.route) { BudgetsScreen(onBack = { navController.popBackStack() }) }
-        composable(Destination.Transactions.route) { TransactionsScreen() }
+        composable(Destination.Transactions.route) {
+            TransactionsScreen(
+                onBack = { navController.popBackStack() },
+                onAdd = { navController.navigate(Destination.AddTransaction.route) { launchSingleTop = true } }
+            )
+        }
         composable(Destination.Payees.route) {
             PeopleScreen(onNavigateToPayee = openPayee, createRequests = newPayeeRequests)
         }
