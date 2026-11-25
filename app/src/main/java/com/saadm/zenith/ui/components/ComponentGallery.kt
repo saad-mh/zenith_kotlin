@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.saadm.zenith.data.entity.TxnType
 import com.saadm.zenith.ui.theme.ThemeMode
 import com.saadm.zenith.ui.theme.ZenithPalette
 import com.saadm.zenith.ui.theme.ZenithSpacing
@@ -99,17 +98,6 @@ fun ComponentGallery(modifier: Modifier = Modifier) {
                     trailing = { AmountText(amount = 42_000, tone = AmountTone.Negative) },
                     trailingCaption = "Expense",
                     onClick = {}
-                )
-            }
-            ZenithCard {
-                TxnRow(
-                    amount = 42_000,
-                    type = TxnType.EXPENSE,
-                    transactedAt = 1_700_000_000_000L,
-                    categoryId = 1L,
-                    note = "Lunch",
-                    currency = "INR",
-                    categoryLabelResolver = { "Food" }
                 )
             }
         }

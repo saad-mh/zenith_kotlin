@@ -84,7 +84,7 @@ import com.saadm.zenith.data.preferences.AppPreferences
 import com.saadm.zenith.data.preferences.AppPreferencesStore
 import com.saadm.zenith.ui.theme.ThemeMode
 import com.saadm.zenith.ui.theme.ZenithPalette
-import com.saadm.zenith.ui.people.PeopleManagementContent
+import com.saadm.zenith.ui.people.PeopleScreen
 import kotlinx.coroutines.launch
 import androidx.core.graphics.toColorInt
 import androidx.emoji2.emojipicker.EmojiPickerView
@@ -302,7 +302,7 @@ fun SettingsScreen(onNavigateToPayee: (Long) -> Unit = {}) {
                     }
                 )
 
-                SettingsDestination.People -> PeopleManagementContent(onNavigateToPayee)
+                SettingsDestination.People -> PeopleScreen(onNavigateToPayee, onBack = { destinationStack = destinationStack.dropLast(1) })
             }
         }
     }
